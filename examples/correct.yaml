@@ -1,0 +1,26 @@
+version: "1.0"
+
+provider: "openai"
+model: "gpt-4"
+api_key: "${OPENAI_API_KEY}"
+timeout: 30
+max_retries: 3
+fail_on_issues: true
+
+rules:
+  - name: "api-specification-compliance"
+    description: "Ensures implementation matches specifications"
+    enabled: true
+    files:
+      include:
+        - "**/*.go"
+      exclude:
+        - "**/*_test.go"
+        - "vendor/**"
+        - ".git/**"
+    specs:
+      - path: "./specs/*.md"
+        type: "markdown"
+        description: "Project specifications"
+    severity: "error"
+    confidence_threshold: 0.7

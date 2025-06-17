@@ -41,12 +41,14 @@ Semcheck is a Go 1.24-based tool for semantic checking of code implementations a
 
 IMPORTANT: When creating features using code, consider adding a few tests for those features!
 
+Sign off on phases once completed.
+
 ### Phase 1: Core Infrastructure
 
-- [ ] Initialize Go module with Go 1.24
-- [ ] Implement configuration parser for `semcheck.yaml`
-- [ ] Create CLI argument parsing
-- [ ] Set up project structure and dependencies
+- [x] Initialize Go module with Go 1.24
+- [x] Implement configuration parser for `semcheck.yaml`
+- [x] Create CLI argument parsing
+- [x] Set up project structure and dependencies
 
 ### Phase 2: Initial AI Integration
 
