@@ -31,10 +31,10 @@ type Request struct {
 type Client interface {
 	// Complete sends a completion request to the AI provider
 	Complete(ctx context.Context, req *Request) (*Response, error)
-	
+
 	// Name returns the name of the provider
 	Name() string
-	
+
 	// Validate checks if the client configuration is valid
 	Validate() error
 }

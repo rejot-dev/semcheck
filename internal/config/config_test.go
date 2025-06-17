@@ -10,7 +10,7 @@ func TestLoad(t *testing.T) {
 	// Create a temporary config file
 	tempDir := t.TempDir()
 	configPath := filepath.Join(tempDir, "test-config.yaml")
-	
+
 	validConfig := `version: "1.0"
 provider: openai
 model: gpt-4
@@ -31,18 +31,18 @@ rules:
     severity: "error"
     confidence_threshold: 0.8
 `
-	
+
 	err := os.WriteFile(configPath, []byte(validConfig), 0644)
 	if err != nil {
 		t.Fatalf("failed to write test config: %v", err)
 	}
-	
+
 	// Test loading valid config
 	config, err := Load(configPath)
 	if err != nil {
 		t.Fatalf("failed to load config: %v", err)
 	}
-	
+
 	// Verify config values
 	if config.Version != "1.0" {
 		t.Errorf("expected version '1.0', got %s", config.Version)
@@ -68,7 +68,7 @@ rules:
 	if len(config.Rules) != 1 {
 		t.Errorf("expected 1 rule, got %d", len(config.Rules))
 	}
-	
+
 	rule := config.Rules[0]
 	if rule.Name != "test-rule" {
 		t.Errorf("expected rule name 'test-rule', got %s", rule.Name)
@@ -109,13 +109,13 @@ func TestLoad_NonExistentFile(t *testing.T) {
 func TestLoad_InvalidYAML(t *testing.T) {
 	tempDir := t.TempDir()
 	configPath := filepath.Join(tempDir, "invalid.yaml")
-	
+
 	invalidYAML := `invalid: yaml: content: [unclosed`
 	err := os.WriteFile(configPath, []byte(invalidYAML), 0644)
 	if err != nil {
 		t.Fatalf("failed to write invalid config: %v", err)
 	}
-	
+
 	_, err = Load(configPath)
 	if err == nil {
 		t.Error("expected error for invalid YAML")
@@ -231,7 +231,7 @@ func TestConfig_validate(t *testing.T) {
 			wantError: true,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.config.validate()
@@ -260,12 +260,12 @@ func TestConfig_validate_Defaults(t *testing.T) {
 			},
 		},
 	}
-	
+
 	err := config.validate()
 	if err != nil {
 		t.Fatalf("validation failed: %v", err)
 	}
-	
+
 	// Check that defaults were set
 	if config.Timeout != 30 {
 		t.Errorf("expected default timeout 30, got %d", config.Timeout)
