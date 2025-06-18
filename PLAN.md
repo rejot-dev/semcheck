@@ -64,10 +64,10 @@ Sign off on phases once completed.
 
 ### Phase 3: Implement file matching
 
-- [ ] Read .gitignore file for exclude list
-- [ ] Match input files to rules and assigned file type: "spec" file, "impl" file or an "ignored" file
-- [ ] For implementation files, find the associated specification files based on the rules
-- [ ] For specification files, find the associated implementation files based on the rules
+- [x] Read .gitignore file for exclude list
+- [x] Match input files to rules and assigned file type: "spec" file, "impl" file or an "ignored" file
+- [x] For implementation files, find the associated specification files based on the rules
+- [x] For specification files, find the associated implementation files based on the rules
 
 ### Phase 4: Semantic Analysis
 

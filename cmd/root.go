@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"rejot.dev/semcheck/internal/config"
+	"rejot.dev/semcheck/internal/processor"
 	"rejot.dev/semcheck/internal/providers"
 )
 
@@ -47,9 +48,28 @@ func Execute() error {
 
 	fmt.Printf("Processing %d files with config: %s\n", len(files), *configPath)
 	fmt.Printf("Provider: %s\n", cfg.Provider)
-	for _, file := range files {
-		fmt.Printf("  - %s\n", file)
+
+	// Initialize file matcher
+	workingDir, err := os.Getwd()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error getting working directory: %v\n", err)
+		return err
 	}
+
+	matcher, err := processor.NewMatcher(cfg, workingDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating file matcher: %v\n", err)
+		return err
+	}
+
+	// Match files and show results
+	matchedResults, err := matcher.MatchFiles(files)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error matching files: %v\n", err)
+		return err
+	}
+
+	processor.DisplayMatchResults(matchedResults)
 
 	// Test AI client
 	if err := interimAIClientTest(cfg); err != nil {
@@ -94,7 +114,7 @@ func interimAIClientTest(cfg *config.Config) error {
 	defer cancel()
 
 	req := &providers.Request{
-		Prompt:      "What is the answer to the ultimate question of life, the universe, and everything?",
+		Prompt:      "Tell me a joke.",
 		MaxTokens:   20,
 		Temperature: 0.1,
 	}
