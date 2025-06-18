@@ -2,7 +2,14 @@
 
 ## Overview
 
-Semcheck is a Go 1.24-based tool for semantic checking of code implementations against specifications using AI language models. It integrates with pre-commit hooks to validate staged files.
+Semcheck is a Go 1.24-based tool for semantic checking implementations and specifications are consistent using AI language models.
+
+Semcheck is meant to be run as part of merge or pull request CI pipelines.
+
+- On changes to specifications, check all matching implementations
+- On changes to implementations, check all specifications
+
+A semcheck.yaml config file determines the mappings between implementation and spec.
 
 ## Architecture
 
@@ -39,7 +46,7 @@ Semcheck is a Go 1.24-based tool for semantic checking of code implementations a
 
 ## Implementation Phases
 
-IMPORTANT: When creating features using code, consider adding a few tests for those features!
+IMPORTANT: When creating features using code, consider adding tests for those features!
 
 Sign off on phases once completed.
 
@@ -55,25 +62,19 @@ Sign off on phases once completed.
 - [x] Create unified AI client interface
 - [x] Implement OpenAI API client (skip the other providers for now)
 
-### Phase 3: File Processing
+### Phase 3: Implement file matching
 
-- [ ] Implement file reading and parsing
-- [ ] Add support for multiple file formats
-- [ ] Create context extraction logic
+- [ ] Read .gitignore file for exclude list
+- [ ] Match input files to rules and assigned file type: "spec" file, "impl" file or an "ignored" file
+- [ ] For implementation files, find the associated specification files based on the rules
+- [ ] For specification files, find the associated implementation files based on the rules
 
 ### Phase 4: Semantic Analysis
 
 - [ ] Implement spec-to-implementation comparison
 - [ ] Create reporting system
-- [ ] Add exit code handling
 
-### Phase 5: Integration & Testing
-
-- [ ] Pre-commit hook integration
-- [ ] Comprehensive testing suite
-- [ ] Documentation and examples
-
-### Phase 6: Expansion
+### Phase 5: Expansion
 
 - [ ] Implement Local LLM client
 - [ ] Implement Anthropic client
@@ -112,7 +113,7 @@ semcheck/
 ├── specs/
 │   └── semcheck.md
 └── examples/
-    └── semcheck.yaml
+    └── correct.yaml
 ```
 
 ## Error Handling

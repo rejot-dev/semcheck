@@ -114,6 +114,10 @@ func interimAIClientTest(cfg *config.Config) error {
 
 func showUsage() {
 	fmt.Printf("Usage: %s [options] <files...>\n\n", os.Args[0])
+	fmt.Printf("Semcheck is a tool for semantic checking of code implementations against specifications using LLMs.\n\n")
+	fmt.Println("Arguments:")
+	fmt.Println("  <files...> - Files to check, either specifications or implementation files. Semcheck will use rules to determine which it is.")
 	fmt.Println("Options:")
 	flag.PrintDefaults()
+
 }
