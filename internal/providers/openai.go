@@ -61,12 +61,12 @@ func (c *OpenAIClient) Complete(ctx context.Context, req *Request) (*Response, e
 	// Set defaults
 	maxTokens := req.MaxTokens
 	if maxTokens == 0 {
-		maxTokens = 1000
+		maxTokens = 3000
 	}
 
 	temperature := req.Temperature
 	if temperature == 0 {
-		temperature = 0.1
+		temperature = 0.8
 	}
 
 	// Create chat completion request
@@ -104,7 +104,7 @@ func (c *OpenAIClient) Complete(ctx context.Context, req *Request) (*Response, e
 			CompletionTokens: int(resp.Usage.CompletionTokens),
 			TotalTokens:      int(resp.Usage.TotalTokens),
 		},
-		Confidence: 1.0, // OpenAI doesn't provide confidence scores
+		Confidence: 1.0, // TODO: remove this?
 	}
 
 	return response, nil

@@ -71,8 +71,8 @@ Sign off on phases once completed.
 
 ### Phase 4: Semantic Analysis
 
-- [ ] Implement spec-to-implementation comparison
-- [ ] Create reporting system
+- [x] Implement spec-to-implementation comparison
+- [x] Create reporting system
 
 ### Phase 5: Expansion
 

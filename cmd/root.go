@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"rejot.dev/semcheck/internal/checker"
 	"rejot.dev/semcheck/internal/config"
 	"rejot.dev/semcheck/internal/processor"
 	"rejot.dev/semcheck/internal/providers"
@@ -71,18 +72,36 @@ func Execute() error {
 
 	processor.DisplayMatchResults(matchedResults)
 
-	// Test AI client
-	if err := interimAIClientTest(cfg); err != nil {
-		fmt.Fprintf(os.Stderr, "AI client test failed: %v\n", err)
+	// Create AI client for semantic analysis
+	client, err := createAIClient(cfg)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating AI client: %v\n", err)
 		return err
+	}
+
+	// Perform semantic analysis
+	semanticChecker := checker.NewSemanticChecker(cfg, client, workingDir)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.Timeout)*time.Second)
+	defer cancel()
+
+	checkResult, err := semanticChecker.CheckFiles(ctx, matchedResults)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Semantic analysis failed: %v\n", err)
+		return err
+	}
+
+	// Display results
+	checker.DisplayCheckResults(checkResult)
+
+	// Determine exit code based on results
+	if checkResult.ShouldFail(cfg) {
+		return fmt.Errorf("semantic analysis failed with errors")
 	}
 
 	return nil
 }
 
-func interimAIClientTest(cfg *config.Config) error {
-	fmt.Println("\n--- Testing AI Client ---")
-
+func createAIClient(cfg *config.Config) (providers.Client, error) {
 	// Convert config to provider config
 	providerConfig := &providers.Config{
 		Provider:   cfg.Provider,
@@ -100,36 +119,14 @@ func interimAIClientTest(cfg *config.Config) error {
 	case "openai":
 		client, err = providers.NewOpenAIClient(providerConfig)
 	default:
-		return fmt.Errorf("unsupported provider: %s", cfg.Provider)
+		return nil, fmt.Errorf("unsupported provider: %s", cfg.Provider)
 	}
 
 	if err != nil {
-		return fmt.Errorf("failed to create client: %w", err)
+		return nil, fmt.Errorf("failed to create client: %w", err)
 	}
 
-	fmt.Printf("Created %s client with model: %s\n", client.Name(), cfg.Model)
-
-	// Test request
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	req := &providers.Request{
-		Prompt:      "Tell me a joke.",
-		MaxTokens:   20,
-		Temperature: 0.1,
-	}
-
-	fmt.Println("Sending test request...")
-	resp, err := client.Complete(ctx, req)
-	if err != nil {
-		return fmt.Errorf("API request failed: %w", err)
-	}
-
-	fmt.Printf("✓ AI Response: %s\n", resp.Content)
-	fmt.Printf("✓ Tokens used: %d prompt + %d completion = %d total\n",
-		resp.Usage.PromptTokens, resp.Usage.CompletionTokens, resp.Usage.TotalTokens)
-
-	return nil
+	return client, nil
 }
 
 func showUsage() {
