@@ -238,7 +238,6 @@ base_url: "${CUSTOM_LLM_ENDPOINT}"
 
 ### File Pattern Validation
 
-- Include patterns must match at least one file
 - Exclude patterns are applied after include patterns
 - Patterns support standard glob syntax: `*`, `**`, `?`, `[abc]`, `{a,b,c}`
 

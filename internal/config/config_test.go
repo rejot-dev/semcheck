@@ -230,6 +230,24 @@ func TestConfig_validate(t *testing.T) {
 			},
 			wantError: true,
 		},
+		{
+			name: "Config with confidence threshold",
+			config: Config{
+				Version:  "1.0",
+				Provider: "local",
+				Model:    "local-model",
+				Rules: []Rule{
+					{
+						Name:                "test",
+						Description:         "test rule",
+						Files:               FilePattern{Include: []string{"*.go"}},
+						Specs:               []Spec{{Path: "spec.md", Type: "markdown"}},
+						ConfidenceThreshold: 1.5, // too big
+					},
+				},
+			},
+			wantError: true,
+		},
 	}
 
 	for _, tt := range tests {
