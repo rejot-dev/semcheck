@@ -21,3 +21,21 @@ rules:
         type: "markdown"
         description: "Semcheck Config Specification"
     severity: "error"
+  
+  - name: "readme-file"
+    description: "Make sure examples in the readme make sense"
+    enabled: true
+    files:
+      include:
+        - "./README.md"
+    specs:
+      - path: "./internal/config/config.go"
+        type: "markdown"
+        description: "Configuration example"
+      - path: "./Justfile"
+        type: "markdown"
+        description: "Justfile instructions"
+      - path: "./cmd/root.go"
+        type: "markdown"
+        description: "Command line interface"
+    severity: "warning"
