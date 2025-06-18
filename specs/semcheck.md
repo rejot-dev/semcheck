@@ -173,7 +173,7 @@ rules:
     # Custom confidence threshold (OPTIONAL)
     # AI confidence level required to report an issue (0.0-1.0)
     # Higher values reduce false positives but may miss subtle issues
-    # Default: 0.7
+    # Default: 0.8
     confidence_threshold: 0.8
 
   # Example of a second rule with different focus
@@ -234,7 +234,7 @@ base_url: "${CUSTOM_LLM_ENDPOINT}"
 - `fail_on_issues`: true
 - `rules[].enabled`: true
 - `rules[].severity`: "error"
-- `rules[].confidence_threshold`: 0.7
+- `rules[].confidence_threshold`: 0.8
 
 ### File Pattern Validation
 

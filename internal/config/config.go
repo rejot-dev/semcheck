@@ -89,7 +89,7 @@ func (c *Config) validate() error {
 	}
 
 	ruleNames := make(map[string]bool)
-	for _, rule := range c.Rules {
+	for i, rule := range c.Rules {
 		if rule.Name == "" {
 			return fmt.Errorf("rule name is required")
 		}
@@ -107,7 +107,13 @@ func (c *Config) validate() error {
 		if len(rule.Specs) == 0 {
 			return fmt.Errorf("at least one spec is required for rule: %s", rule.Name)
 		}
-		if rule.ConfidenceThreshold < 0 || rule.ConfidenceThreshold > 1 {
+
+		// Set default confidence threshold if not provided
+		if rule.ConfidenceThreshold == 0 {
+			c.Rules[i].ConfidenceThreshold = 0.8
+		}
+
+		if c.Rules[i].ConfidenceThreshold < 0 || c.Rules[i].ConfidenceThreshold > 1 {
 			return fmt.Errorf("confidence_threshold must be between 0 and 1 for rule: %s", rule.Name)
 		}
 		for _, spec := range rule.Specs {
