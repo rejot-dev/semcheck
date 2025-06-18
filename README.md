@@ -16,7 +16,7 @@ Semcheck validates that your code implementations match their specifications by 
 ### Building from Source
 
 ```bash
-git clone <repository-url>
+git clone git@github.com:rejot-dev/semcheck.git
 cd semcheck
 go build -o semcheck .
 ```
@@ -95,3 +95,7 @@ semcheck/
 just test
 just test-coverage
 ```
+
+## Ideal Situation
+
+![The Office meme: 'Corporate needs you to find the difference between these pictures' showing 'specification' and 'implementation', with semcheck saying 'they are the same picture'](./assets/office-meme.webp)
