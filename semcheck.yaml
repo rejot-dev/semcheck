@@ -1,0 +1,23 @@
+version: "1.0"
+
+provider: "openai"
+model: "gpt-4"
+api_key: "${OPENAI_API_KEY}"
+timeout: 300
+max_retries: 3
+fail_on_issues: true
+
+rules:
+  - name: "config-file-definition"
+    description: "Make sure config files are correctly implemented"
+    enabled: true
+    files:
+      include:
+        - "./internal/config/*.go"
+      exclude:
+        - "./internal/config/*_test.go"
+    specs:
+      - path: "./specs/semcheck.md"
+        type: "markdown"
+        description: "Semcheck Config Specification"
+    severity: "error"
