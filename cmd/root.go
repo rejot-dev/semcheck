@@ -17,6 +17,7 @@ var (
 	configPath = flag.String("config", "semcheck.yaml", "path to configuration file")
 	showHelp   = flag.Bool("help", false, "show help message")
 	showVer    = flag.Bool("version", false, "show version")
+	showConfig = flag.Bool("show-config", false, "print full configuration")
 )
 
 const version = "0.1.0"
@@ -34,17 +35,22 @@ func Execute() error {
 		return nil
 	}
 
+	cfg, err := config.Load(*configPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)
+		return err
+	}
+
+	if *showConfig {
+		cfg.PrintAsYAML()
+		return nil
+	}
+
 	files := flag.Args()
 	if len(files) == 0 {
 		fmt.Fprintf(os.Stderr, "Error: no files specified\n")
 		showUsage()
 		return fmt.Errorf("no files specified")
-	}
-
-	cfg, err := config.Load(*configPath)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)
-		return err
 	}
 
 	fmt.Printf("Processing %d files with config: %s\n", len(files), *configPath)

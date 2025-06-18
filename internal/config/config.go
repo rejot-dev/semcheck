@@ -136,3 +136,26 @@ func (c *Config) validate() error {
 
 	return nil
 }
+
+// maskAPIKey masks the API key for secure display
+func maskAPIKey(apiKey string) string {
+	if len(apiKey) <= 11 {
+		return "[MASKED]"
+	}
+	return apiKey[:7] + "[MASKED]" + apiKey[len(apiKey)-4:]
+}
+
+func (c *Config) PrintAsYAML() error {
+	// Create a copy of the config with masked API key
+	configCopy := *c
+	configCopy.APIKey = maskAPIKey(c.APIKey)
+
+	yamlData, err := yaml.Marshal(&configCopy)
+	if err != nil {
+		return fmt.Errorf("failed to marshal config to YAML: %w", err)
+	}
+
+	// Add a newline to the end of the YAML string
+	fmt.Println(string(yamlData))
+	return nil
+}
