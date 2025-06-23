@@ -13,10 +13,11 @@ import (
 )
 
 type CheckResult struct {
-	Issues    []providers.SemanticIssue
-	Processed int
-	Passed    int
-	Failed    int
+	Issues      []providers.SemanticIssue
+	Processed   int
+	Passed      int
+	Failed      int
+	HasFailures bool
 }
 
 type SemanticChecker struct {
@@ -58,15 +59,20 @@ func (c *SemanticChecker) CheckFiles(ctx context.Context, matchedFiles []process
 				if len(issues) == 0 {
 					result.Passed++
 				} else {
-					// Check if any issues are errors
-					hasErrors := false
+					// Check if any issues meet the rule's severity threshold for failure
+					shouldFailForRule := false
+					ruleSeverityLevel := severityLevel(strings.ToUpper(rule.Severity))
+
 					for _, issue := range issues {
-						if issue.Level == "ERROR" {
-							hasErrors = true
+						issueSeverityLevel := severityLevel(issue.Level)
+						if issueSeverityLevel >= ruleSeverityLevel {
+							shouldFailForRule = true
+							result.HasFailures = true
 							break
 						}
 					}
-					if hasErrors {
+
+					if shouldFailForRule {
 						result.Failed++
 					} else {
 						result.Passed++
@@ -275,18 +281,25 @@ func displayIssue(issue providers.SemanticIssue) {
 	fmt.Println()
 }
 
+// severityLevel returns the numeric value for severity comparison
+func severityLevel(level string) int {
+	switch level {
+	case "INFO":
+		return 1
+	case "WARNING":
+		return 2
+	case "ERROR":
+		return 3
+	default:
+		return 0
+	}
+}
+
 // ShouldFail determines if the check results should cause the tool to exit with error
 func (r *CheckResult) ShouldFail(config *config.Config) bool {
 	if !config.FailOnIssues {
 		return false
 	}
 
-	// Fail if there are any error-level issues
-	for _, issue := range r.Issues {
-		if issue.Level == "ERROR" {
-			return true
-		}
-	}
-
-	return false
+	return r.HasFailures
 }

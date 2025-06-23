@@ -142,14 +142,19 @@ rules:
       compared to the specifications.
 
     # Severity level for issues found by this rule (OPTIONAL)
-    # Controls how violations are reported and handled
+    # Controls failure behavior for this rule's violations
     # Values: "error", "warning", "info"
+    # Behavior:
+    #   - "error": Build fails if any ERROR-level issues are found
+    #   - "warning": Build fails if any WARNING or ERROR-level issues are found
+    #   - "info": Build fails if any INFO, WARNING, or ERROR-level issues are found
     # Default: "error"
     severity: "error"
 
     # Custom confidence threshold (OPTIONAL)
     # AI confidence level required to report an issue (0.0-1.0)
-    # Higher values reduce false positives but may miss subtle issues
+    # This filters out potentially false positives based on AI uncertainty
+    # Issues below this threshold are ignored
     # Default: 0.8
     confidence_threshold: 0.8
 

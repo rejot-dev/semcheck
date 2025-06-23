@@ -7,7 +7,7 @@ default:
 dogfood: build
     ./semcheck **/*
 
-pre-commit: build
+pre-commit: check build
     ./semcheck $(git diff --name-only --cached)
 
 # Build the semcheck binary

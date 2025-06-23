@@ -111,8 +111,18 @@ func (c *Config) validate() error {
 			c.Rules[i].ConfidenceThreshold = 0.8
 		}
 
+		// Set default severity if not provided
+		if rule.Severity == "" {
+			c.Rules[i].Severity = "error"
+		}
+
 		if c.Rules[i].ConfidenceThreshold < 0 || c.Rules[i].ConfidenceThreshold > 1 {
 			return fmt.Errorf("confidence_threshold must be between 0 and 1 for rule: %s", rule.Name)
+		}
+
+		// Validate severity values
+		if c.Rules[i].Severity != "error" && c.Rules[i].Severity != "warning" && c.Rules[i].Severity != "info" {
+			return fmt.Errorf("severity must be 'error', 'warning', or 'info' for rule: %s", rule.Name)
 		}
 		for _, spec := range rule.Specs {
 			if spec.Path == "" {

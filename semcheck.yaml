@@ -1,3 +1,5 @@
+# This file configures a semantic checker to validate code implementations against their specifications.
+# It maps the relation between code and specification, use it to find which code to update when changing specs.
 version: "1.0"
 
 provider: "openai"
