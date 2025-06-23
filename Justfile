@@ -4,6 +4,12 @@
 default:
     @just --list
 
+dogfood: build
+    ./semcheck **/*
+
+pre-commit: build
+    ./semcheck $(git diff --name-only --cached)
+
 # Build the semcheck binary
 build:
     go build -o semcheck .

@@ -13,12 +13,10 @@ Semcheck validates that your code implementations match their specifications by 
 - Go 1.24 or later
 - [Just](https://github.com/casey/just) (optional, for development)
 
-### Building from Source
+### Install
 
 ```bash
-git clone git@github.com:rejot-dev/semcheck.git
-cd semcheck
-go build -o semcheck .
+go install github.com/rejot-dev/semcheck/cmd/root@latest
 ```
 
 ## Configuration
@@ -56,13 +54,13 @@ rules:
 
 ```bash
 # Check specific files
-./semcheck file1.go file2.go
+semcheck file1.go file2.go
 
 # Use custom config
-./semcheck -config my-config.yaml file1.go
+semcheck -config my-config.yaml file1.go
 
 # Show help
-./semcheck -help
+semcheck -help
 ```
 
 ### Development
@@ -74,27 +72,21 @@ This project includes a [Justfile](./Justfile) for starting common development t
 just
 ```
 
-### Project Structure
-
-```
-semcheck/
-├── cmd/           # CLI command implementation
-├── internal/
-│   ├── config/    # Configuration parsing and validation
-│   ├── providers/ # AI provider implementations
-│   ├── processor/ # File processing logic
-│   └── checker/   # Semantic checking logic
-├── examples/      # Example configurations
-├── specs/         # Project specifications
-└── Justfile       # Development task runner
-```
-
 ### Running Tests
 
 ```bash
 just test
 just test-coverage
 ```
+
+### Check self
+
+Semcheck has its own semcheck configuration, use the `dogfood` task in the Justfile
+
+```bash
+just dogfood
+```
+
 
 ## Ideal Situation
 
