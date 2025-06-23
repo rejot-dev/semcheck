@@ -1,7 +1,7 @@
 version: "1.0"
 
 provider: "openai"
-model: "gpt-4"
+model: "gpt-4o"
 api_key: "${OPENAI_API_KEY}"
 timeout: 300
 max_retries: 3
@@ -9,7 +9,7 @@ fail_on_issues: true
 
 rules:
   - name: "config-file-definition"
-    description: "Make sure config files are correctly implemented"
+    description: "Make sure config files are implemented according to spec"
     enabled: true
     files:
       include:
@@ -26,6 +26,9 @@ rules:
     files:
       include:
         - "./README.md"
+    prompt: |
+      Consider the README documentation as an implementation of the code.
+      The README does not have to document every field in the config or document every default value.
     specs:
       - path: "./internal/config/config.go" # Configuration example
       - path: "./Justfile"  # Justfile instructions

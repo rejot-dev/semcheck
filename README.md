@@ -43,7 +43,6 @@ rules:
         - "*_test.go"
     specs:
       - path: "docs/api.md"
-        type: "markdown"
     severity: "error"
     confidence_threshold: 0.8
 ```
@@ -86,7 +85,6 @@ Semcheck has its own semcheck configuration, use the `dogfood` task in the Justf
 ```bash
 just dogfood
 ```
-
 
 ## Ideal Situation
 

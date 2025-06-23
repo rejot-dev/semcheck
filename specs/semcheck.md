@@ -24,11 +24,8 @@ version: "1.0"
 provider: "openai"
 
 # Model name to use for analysis (REQUIRED)
-# The specific model varies by provider:
-# OpenAI: "gpt-4", "gpt-4-turbo", "gpt-3.5-turbo"
-# Anthropic: "claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"
-# Local: depends on your local setup, e.g., "llama2", "codellama"
-model: "gpt-4"
+# The specific model varies by provider, cannot be statically checked.
+model: "gpt-4o"
 
 # API authentication key (REQUIRED for cloud providers)
 # Best practice: Use environment variables for security
