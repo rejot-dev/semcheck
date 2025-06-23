@@ -44,19 +44,24 @@ type MatcherResult struct {
 	Path         string
 	Type         FileType
 	MatchedRules []string
-	RelatedFiles []string
-	IgnoreReason IgnoreReason // Only set when Type == FileTypeIgnored
+	Counterparts []string
+	IgnoreReason IgnoreReason
 }
+
+// mapping rule names to a list of files
+type RuleFileMap map[string][]string
 
 type Matcher struct {
 	config         *config.Config
 	gitignoreRules []string
+	implFiles      RuleFileMap
 	workingDir     string
 }
 
 func NewMatcher(cfg *config.Config, workingDir string) (*Matcher, error) {
 	m := &Matcher{
 		config:     cfg,
+		implFiles:  make(RuleFileMap),
 		workingDir: workingDir,
 	}
 
@@ -64,7 +69,55 @@ func NewMatcher(cfg *config.Config, workingDir string) (*Matcher, error) {
 		return nil, fmt.Errorf("failed to load gitignore: %w", err)
 	}
 
+	if err := m.resolveImplFiles(); err != nil {
+		return nil, fmt.Errorf("failed to resolve implementation files: %w", err)
+	}
+
 	return m, nil
+}
+
+func (m *Matcher) resolveImplFiles() error {
+	// find all impl files in the current working directory by rule
+	for _, rule := range m.config.Rules {
+		if !rule.Enabled {
+			continue
+		}
+		var files []string
+
+		err := filepath.WalkDir(m.workingDir, func(path string, d os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if d.IsDir() {
+				return nil
+			}
+
+			relPath, err := filepath.Rel(m.workingDir, path)
+			if err != nil {
+				return err
+			}
+
+			// Check if file matches this rule's patterns
+			if m.matchesPatterns(relPath, rule.Files.Exclude) {
+				return nil
+			}
+
+			if m.matchesPatterns(relPath, rule.Files.Include) {
+				files = append(files, relPath)
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			return fmt.Errorf("failed to resolve impl files: %w", err)
+		}
+
+		m.implFiles[rule.Name] = files
+	}
+
+	return nil
 }
 
 func (m *Matcher) loadGitignore() error {
@@ -99,62 +152,6 @@ func (m *Matcher) MatchFiles(inputFiles []string) ([]MatcherResult, error) {
 		results = append(results, matched)
 	}
 
-	results, err := m.includeRelatedFiles(results)
-	if err != nil {
-		return nil, err
-	}
-
-	// Find related files for display purposes
-	for i := range results {
-		if results[i].Type != FileTypeIgnored {
-			related, err := m.findRelatedFiles(results[i])
-			if err != nil {
-				return nil, fmt.Errorf("failed to find related files for %s: %w", results[i].Path, err)
-			}
-			results[i].RelatedFiles = related
-		}
-	}
-
-	return results, nil
-}
-
-func (m *Matcher) includeRelatedFiles(initialResults []MatcherResult) ([]MatcherResult, error) {
-	// Matches implementation files to specification files and vice versa.
-
-	// Create a map to track files already included
-	included := make(map[string]bool)
-	var results []MatcherResult
-
-	// Add initial results to the map and results slice
-	for _, result := range initialResults {
-		included[result.Path] = true
-		results = append(results, result)
-	}
-
-	// For each non-ignored file, find its related files and add them if not already included
-	i := 0
-	for i < len(results) {
-		result := results[i]
-		if result.Type != FileTypeIgnored {
-			relatedFiles, err := m.findRelatedFiles(result)
-			if err != nil {
-				return nil, fmt.Errorf("failed to find related files for %s: %w", result.Path, err)
-			}
-
-			// Add related files to processing if not already included
-			for _, relatedPath := range relatedFiles {
-				if !included[relatedPath] {
-					relatedResult := m.matchFile(relatedPath)
-					if relatedResult.Type != FileTypeIgnored {
-						included[relatedPath] = true
-						results = append(results, relatedResult)
-					}
-				}
-			}
-		}
-		i++
-	}
-
 	return results, nil
 }
 
@@ -187,6 +184,11 @@ func (m *Matcher) matchFile(filePath string) MatcherResult {
 		if m.matchesPatterns(filePath, rule.Files.Include) {
 			matched.Type = FileTypeImpl
 			matched.MatchedRules = append(matched.MatchedRules, rule.Name)
+			matched.Counterparts = make([]string, len(rule.Specs))
+			// TODO: check this is the best way to do this
+			for i, spec := range rule.Specs {
+				matched.Counterparts[i] = spec.Path
+			}
 			matched.IgnoreReason = IgnoreReasonNone // Clear ignore reason since it matched
 		}
 
@@ -195,6 +197,7 @@ func (m *Matcher) matchFile(filePath string) MatcherResult {
 			if m.matchesPattern(filePath, spec.Path) {
 				matched.Type = FileTypeSpec
 				matched.MatchedRules = append(matched.MatchedRules, rule.Name)
+				matched.Counterparts = m.implFiles[rule.Name]
 				matched.IgnoreReason = IgnoreReasonNone // Clear ignore reason since it matched
 			}
 		}
@@ -332,122 +335,6 @@ func (m *Matcher) matchesPathPattern(filePath, pattern string) bool {
 	return false
 }
 
-func (m *Matcher) findRelatedFiles(file MatcherResult) ([]string, error) {
-	var related []string
-
-	for _, rule := range m.config.Rules {
-		// Skip if this file doesn't match this rule
-		found := false
-		for _, matchedRule := range file.MatchedRules {
-			if matchedRule == rule.Name {
-				found = true
-				break
-			}
-		}
-		if !found {
-			continue
-		}
-
-		if file.Type == FileTypeImpl {
-			// Find associated spec files
-			for _, spec := range rule.Specs {
-				specFiles, err := m.expandGlobPattern(spec.Path)
-				if err != nil {
-					return nil, fmt.Errorf("failed to expand spec pattern %s: %w", spec.Path, err)
-				}
-				related = append(related, specFiles...)
-			}
-		} else if file.Type == FileTypeSpec {
-			// Find associated implementation files
-			implFiles, err := m.findImplementationFiles(rule)
-			if err != nil {
-				return nil, fmt.Errorf("failed to find implementation files: %w", err)
-			}
-			related = append(related, implFiles...)
-		}
-	}
-
-	// Remove duplicates and the file itself
-	return m.deduplicate(related, file.Path), nil
-}
-
-func (m *Matcher) expandGlobPattern(pattern string) ([]string, error) {
-	var searchPattern string
-
-	const relativePrefixLen = len("./")
-	if strings.HasPrefix(pattern, "./") {
-		searchPattern = filepath.Join(m.workingDir, pattern[relativePrefixLen:])
-	} else if !filepath.IsAbs(pattern) {
-		searchPattern = filepath.Join(m.workingDir, pattern)
-	} else {
-		searchPattern = pattern
-	}
-
-	matches, err := filepath.Glob(searchPattern)
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert back to relative paths
-	var result []string
-	for _, match := range matches {
-		rel, err := filepath.Rel(m.workingDir, match)
-		if err == nil {
-			result = append(result, rel)
-		} else {
-			result = append(result, match)
-		}
-	}
-
-	return result, nil
-}
-
-func (m *Matcher) findImplementationFiles(rule config.Rule) ([]string, error) {
-	var files []string
-
-	err := filepath.WalkDir(m.workingDir, func(path string, d os.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if d.IsDir() {
-			return nil
-		}
-
-		relPath, err := filepath.Rel(m.workingDir, path)
-		if err != nil {
-			return err
-		}
-
-		// Check if file matches this rule's patterns
-		if m.matchesPatterns(relPath, rule.Files.Exclude) {
-			return nil
-		}
-
-		if m.matchesPatterns(relPath, rule.Files.Include) {
-			files = append(files, relPath)
-		}
-
-		return nil
-	})
-
-	return files, err
-}
-
-func (m *Matcher) deduplicate(items []string, exclude string) []string {
-	seen := make(map[string]bool)
-	var result []string
-
-	for _, item := range items {
-		if item != exclude && !seen[item] {
-			seen[item] = true
-			result = append(result, item)
-		}
-	}
-
-	return result
-}
-
 func DisplayMatchResults(matchedResults []MatcherResult) {
 	fmt.Println("\n--- File Matching Results ---")
 
@@ -472,8 +359,8 @@ func DisplayMatchResults(matchedResults []MatcherResult) {
 				fmt.Printf(" [rules: %v]", file.MatchedRules)
 			}
 			fmt.Println()
-			if len(file.RelatedFiles) > 0 {
-				fmt.Printf("    → Related implementations: %v\n", file.RelatedFiles)
+			if len(file.Counterparts) > 0 {
+				fmt.Printf("    → Related implementations: %v\n", file.Counterparts)
 			}
 		}
 	}
@@ -486,8 +373,8 @@ func DisplayMatchResults(matchedResults []MatcherResult) {
 				fmt.Printf(" [rules: %v]", file.MatchedRules)
 			}
 			fmt.Println()
-			if len(file.RelatedFiles) > 0 {
-				fmt.Printf("    → Related specifications: %v\n", file.RelatedFiles)
+			if len(file.Counterparts) > 0 {
+				fmt.Printf("    → Related specifications: %v\n", file.Counterparts)
 			}
 		}
 	}

@@ -51,6 +51,8 @@ rules:
 
 ### Basic Usage
 
+**Note:** A configuration file ( by default named `semcheck.yaml`) is required for the tool to function. See the [Configuration](#configuration) section above for setup instructions.
+
 ```bash
 # Check specific files
 semcheck file1.go file2.go

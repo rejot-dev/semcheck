@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -40,50 +39,6 @@ func (m *mockClient) Validate() error {
 	return nil
 }
 
-func TestSemanticChecker_groupFilesByRules(t *testing.T) {
-	checker := &SemanticChecker{}
-
-	matchedFiles := []processor.MatcherResult{
-		{
-			Path:         "spec.md",
-			Type:         processor.FileTypeSpec,
-			MatchedRules: []string{"rule1", "rule2"},
-		},
-		{
-			Path:         "impl.go",
-			Type:         processor.FileTypeImpl,
-			MatchedRules: []string{"rule1"},
-		},
-		{
-			Path:         "ignored.log",
-			Type:         processor.FileTypeIgnored,
-			MatchedRules: []string{"rule1"},
-		},
-		{
-			Path:         "other.go",
-			Type:         processor.FileTypeImpl,
-			MatchedRules: []string{"rule2"},
-		},
-	}
-
-	result := checker.groupFilesByRules(matchedFiles)
-
-	expected := map[string]*ruleFileGroup{
-		"rule1": {
-			specificationFiles:  []string{"spec.md"},
-			implementationFiles: []string{"impl.go"},
-		},
-		"rule2": {
-			specificationFiles:  []string{"spec.md"},
-			implementationFiles: []string{"other.go"},
-		},
-	}
-
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("groupFilesByRules() = %+v, expected %+v", result, expected)
-	}
-}
-
 func TestSemanticChecker_CheckFiles(t *testing.T) {
 	tmpDir := t.TempDir()
 
@@ -95,11 +50,17 @@ func Add(a, b int) int {
 }`
 
 	specPath := filepath.Join(tmpDir, "spec.md")
+	specPath2 := filepath.Join(tmpDir, "spec2.md")
 	implPath := filepath.Join(tmpDir, "impl.go")
 
 	err := os.WriteFile(specPath, []byte(specContent), 0644)
 	if err != nil {
 		t.Fatalf("Failed to create spec file: %v", err)
+	}
+
+	err = os.WriteFile(specPath2, []byte(specContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create spec 2 file: %v", err)
 	}
 
 	err = os.WriteFile(implPath, []byte(implContent), 0644)
@@ -128,11 +89,19 @@ func Add(a, b int) int {
 			Path:         "spec.md",
 			Type:         processor.FileTypeSpec,
 			MatchedRules: []string{"test-rule"},
+			Counterparts: []string{"impl.go"},
+		},
+		{
+			Path:         "spec2.md",
+			Type:         processor.FileTypeSpec,
+			MatchedRules: []string{"test-rule"},
+			Counterparts: []string{"impl.go"},
 		},
 		{
 			Path:         "impl.go",
 			Type:         processor.FileTypeImpl,
 			MatchedRules: []string{"test-rule"},
+			Counterparts: []string{"spec.md", "spec2.md"},
 		},
 	}
 
@@ -142,12 +111,12 @@ func Add(a, b int) int {
 		t.Fatalf("CheckFiles failed: %v", err)
 	}
 
-	if result.Processed != 1 {
-		t.Errorf("Expected 1 processed, got %d", result.Processed)
+	if result.Processed != 2 {
+		t.Errorf("Expected 2 processed, got %d", result.Processed)
 	}
 
-	if result.Passed != 1 {
-		t.Errorf("Expected 1 passed, got %d", result.Passed)
+	if result.Passed != 2 {
+		t.Errorf("Expected 2 passed, got %d", result.Passed)
 	}
 
 	if result.Failed != 0 {
@@ -163,7 +132,7 @@ func TestSemanticChecker_buildComparisonPrompt(t *testing.T) {
 		Prompt: "Check for proper error handling",
 	}
 
-	prompt := checker.buildComparisonPrompt(rule, "spec.md", "spec content", "impl.go", "impl content")
+	prompt := checker.buildComparisonPrompt(rule, "spec.md", "spec content", []string{"impl.go"}, []string{"impl content"})
 
 	if !strings.Contains(prompt, "Check for proper error handling") {
 		t.Error("Prompt should contain custom rule instructions")

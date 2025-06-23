@@ -34,85 +34,76 @@ func NewSemanticChecker(cfg *config.Config, client providers.Client, workingDir 
 	}
 }
 
-func (c *SemanticChecker) CheckFiles(ctx context.Context, matchedFiles []processor.MatcherResult) (*CheckResult, error) {
+func compareKey(ruleName string, path string) string {
+	return fmt.Sprintf("%s:%s", ruleName, path)
+}
+
+func (c *SemanticChecker) CheckFiles(ctx context.Context, matches []processor.MatcherResult) (*CheckResult, error) {
 	result := &CheckResult{}
 
-	// Group files by rules for efficient processing
-	ruleGroups := c.groupFilesByRules(matchedFiles)
+	compared := make(map[string]bool)
 
-	for ruleName, group := range ruleGroups {
-		rule := c.findRule(ruleName)
-		if rule == nil {
+	for _, match := range matches {
+		if match.Type == processor.FileTypeIgnored {
 			continue
 		}
 
-		for _, implFile := range group.implementationFiles {
-			for _, specFile := range group.specificationFiles {
-				issues, err := c.compareSpecToImpl(ctx, rule, specFile, implFile)
-				if err != nil {
-					return nil, fmt.Errorf("failed to compare %s to %s: %w", specFile, implFile, err)
+		for _, ruleName := range match.MatchedRules {
+			rule := c.findRule(ruleName)
+			if rule == nil {
+				continue
+			}
+
+			// Check if we've already compared this file
+			// Assuming that if either specification or implementation file was used in a previous comparison
+			// it's been sufficiently analyzed already
+			// FIXME: this might not be entirely optimal
+			if compared[compareKey(ruleName, match.Path)] {
+				continue
+			}
+
+			issues, err := c.compareSpecToImpl(ctx, rule, match.Path, match.Counterparts)
+
+			// Register files as compared
+			compared[compareKey(ruleName, match.Path)] = true
+			for _, counterpart := range match.Counterparts {
+				compared[compareKey(ruleName, counterpart)] = true
+			}
+
+			if err != nil {
+				return nil, fmt.Errorf("failed to compare %s to %s: %w", match.Path, match.Counterparts, err)
+			}
+
+			result.Issues = append(result.Issues, issues...)
+			result.Processed++
+
+			if len(issues) == 0 {
+				result.Passed++
+			} else {
+				// Check if any issues meet the rule's severity threshold for failure
+				shouldFailForRule := false
+				ruleSeverityLevel := severityLevel(strings.ToUpper(rule.Severity))
+
+				for _, issue := range issues {
+					issueSeverityLevel := severityLevel(issue.Level)
+					if issueSeverityLevel >= ruleSeverityLevel {
+						shouldFailForRule = true
+						result.HasFailures = true
+						break
+					}
 				}
 
-				result.Issues = append(result.Issues, issues...)
-				result.Processed++
-
-				if len(issues) == 0 {
-					result.Passed++
+				if shouldFailForRule {
+					result.Failed++
 				} else {
-					// Check if any issues meet the rule's severity threshold for failure
-					shouldFailForRule := false
-					ruleSeverityLevel := severityLevel(strings.ToUpper(rule.Severity))
-
-					for _, issue := range issues {
-						issueSeverityLevel := severityLevel(issue.Level)
-						if issueSeverityLevel >= ruleSeverityLevel {
-							shouldFailForRule = true
-							result.HasFailures = true
-							break
-						}
-					}
-
-					if shouldFailForRule {
-						result.Failed++
-					} else {
-						result.Passed++
-					}
+					result.Passed++
 				}
 			}
+
 		}
 	}
 
 	return result, nil
-}
-
-type ruleFileGroup struct {
-	implementationFiles []string
-	specificationFiles  []string
-}
-
-func (c *SemanticChecker) groupFilesByRules(matchedFiles []processor.MatcherResult) map[string]*ruleFileGroup {
-	groups := make(map[string]*ruleFileGroup)
-
-	for _, file := range matchedFiles {
-		if file.Type == processor.FileTypeIgnored {
-			continue
-		}
-
-		for _, ruleName := range file.MatchedRules {
-			if groups[ruleName] == nil {
-				groups[ruleName] = &ruleFileGroup{}
-			}
-
-			switch file.Type {
-			case processor.FileTypeSpec:
-				groups[ruleName].specificationFiles = append(groups[ruleName].specificationFiles, file.Path)
-			case processor.FileTypeImpl:
-				groups[ruleName].implementationFiles = append(groups[ruleName].implementationFiles, file.Path)
-			}
-		}
-	}
-
-	return groups
 }
 
 func (c *SemanticChecker) findRule(name string) *config.Rule {
@@ -124,7 +115,7 @@ func (c *SemanticChecker) findRule(name string) *config.Rule {
 	return nil
 }
 
-func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Rule, specFile, implFile string) ([]providers.SemanticIssue, error) {
+func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Rule, specFile string, implFiles []string) ([]providers.SemanticIssue, error) {
 	// Read specification file
 	specContent, err := c.readFile(specFile)
 	if err != nil {
@@ -132,13 +123,17 @@ func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Ru
 	}
 
 	// Read implementation file
-	implContent, err := c.readFile(implFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read implementation file %s: %w", implFile, err)
+	var implContents []string
+	for _, implFile := range implFiles {
+		implContent, err := c.readFile(implFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read implementation file %s: %w", implFile, err)
+		}
+		implContents = append(implContents, implContent)
 	}
 
 	// Create AI prompt for comparison
-	prompt := c.buildComparisonPrompt(rule, specFile, specContent, implFile, implContent)
+	prompt := c.buildComparisonPrompt(rule, specFile, specContent, implFiles, implContents)
 
 	// Get AI analysis
 	req := &providers.Request{
@@ -172,7 +167,7 @@ func (c *SemanticChecker) readFile(filePath string) (string, error) {
 	return string(content), nil
 }
 
-func (c *SemanticChecker) buildComparisonPrompt(rule *config.Rule, specFile, specContent, implFile, implContent string) string {
+func (c *SemanticChecker) buildComparisonPrompt(rule *config.Rule, specFile, specContent string, implFiles []string, implContent []string) string {
 	var prompt strings.Builder
 
 	prompt.WriteString("You are a code reviewer analyzing whether an implementation matches its specification.\n\n")
@@ -188,17 +183,19 @@ func (c *SemanticChecker) buildComparisonPrompt(rule *config.Rule, specFile, spe
 	prompt.WriteString(specContent)
 	prompt.WriteString("\n```\n\n")
 
-	prompt.WriteString(fmt.Sprintf("IMPLEMENTATION FILE: %s\n", implFile))
-	prompt.WriteString("```\n")
-	prompt.WriteString(implContent)
-	prompt.WriteString("\n```\n\n")
+	for i, implFile := range implFiles {
+		prompt.WriteString(fmt.Sprintf("IMPLEMENTATION FILE: %s\n", implFile))
+		prompt.WriteString("```\n")
+		prompt.WriteString(implContent[i])
+		prompt.WriteString("\n```\n\n")
+	}
 
 	prompt.WriteString("Please analyze whether the implementation correctly follows the specification.\n")
 	prompt.WriteString("Focus on semantic correctness, not formatting.\n\n")
 	prompt.WriteString("Return issues as structured JSON with the following fields:\n")
-	prompt.WriteString("- level: ERROR, WARNING, or INFO\n")
+	prompt.WriteString("- level: ERROR, WARNING, or INFO for how troublesome the issue is\n")
 	prompt.WriteString("- message: Brief description of the issue\n")
-	prompt.WriteString("- confidence: Your confidence level (0.0-1.0)\n")
+	prompt.WriteString("- confidence: Your confidence level that the issue applies in this case (0.0-1.0)\n")
 	prompt.WriteString("- suggestion: How to fix this issue\n")
 	prompt.WriteString("- line_number: The line number of the issue (optional)\n\n")
 	prompt.WriteString("If no issues are found, return an empty array.")
