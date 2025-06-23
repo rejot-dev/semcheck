@@ -369,3 +369,105 @@ func TestMatcher_MatchFiles(t *testing.T) {
 		}
 	}
 }
+
+func TestMatcher_MatchFiles_IncludesRelatedFiles(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create test files
+	testFiles := []string{
+		"src/main.go",
+		"src/utils.go",
+		"specs/api.md",
+		"specs/utils.md",
+	}
+
+	for _, file := range testFiles {
+		fullPath := filepath.Join(tmpDir, file)
+		err := os.MkdirAll(filepath.Dir(fullPath), 0755)
+		if err != nil {
+			t.Fatalf("Failed to create directory: %v", err)
+		}
+		err = os.WriteFile(fullPath, []byte("test content"), 0644)
+		if err != nil {
+			t.Fatalf("Failed to create test file %s: %v", file, err)
+		}
+	}
+
+	cfg := &config.Config{
+		Rules: []config.Rule{
+			{
+				Name:    "go-files",
+				Enabled: true,
+				Files: config.FilePattern{
+					Include: []string{"src/**/*.go"},
+				},
+				Specs: []config.Spec{
+					{
+						Path: "specs/*.md",
+					},
+				},
+			},
+		},
+	}
+
+	matcher, err := NewMatcher(cfg, tmpDir)
+	if err != nil {
+		t.Fatalf("NewMatcher failed: %v", err)
+	}
+
+	t.Run("spec file includes related implementations", func(t *testing.T) {
+		// Only provide spec file, should automatically include implementation files
+		inputFiles := []string{"specs/api.md"}
+		results, err := matcher.MatchFiles(inputFiles)
+		if err != nil {
+			t.Fatalf("MatchFiles failed: %v", err)
+		}
+
+		// Should have the spec file plus all related implementation files
+		resultPaths := make(map[string]FileType)
+		for _, result := range results {
+			resultPaths[result.Path] = result.Type
+		}
+
+		// Verify spec file is included
+		if resultPaths["specs/api.md"] != FileTypeSpec {
+			t.Errorf("Expected specs/api.md to be included as spec file")
+		}
+
+		// Verify related implementation files are automatically included
+		if resultPaths["src/main.go"] != FileTypeImpl {
+			t.Errorf("Expected src/main.go to be automatically included as implementation file")
+		}
+		if resultPaths["src/utils.go"] != FileTypeImpl {
+			t.Errorf("Expected src/utils.go to be automatically included as implementation file")
+		}
+	})
+
+	t.Run("implementation file includes related specs", func(t *testing.T) {
+
+		// Only provide implementation file, should automatically include spec files
+		inputFiles := []string{"src/main.go"}
+		results, err := matcher.MatchFiles(inputFiles)
+		if err != nil {
+			t.Fatalf("MatchFiles failed: %v", err)
+		}
+
+		resultPaths := make(map[string]FileType)
+		for _, result := range results {
+			resultPaths[result.Path] = result.Type
+		}
+
+		// Verify implementation file is included
+		if resultPaths["src/main.go"] != FileTypeImpl {
+			t.Errorf("Expected src/main.go to be included as implementation file")
+		}
+
+		// Verify related spec files are automatically included
+		if resultPaths["specs/api.md"] != FileTypeSpec {
+			t.Errorf("Expected specs/api.md to be automatically included as spec file")
+		}
+		if resultPaths["specs/utils.md"] != FileTypeSpec {
+			t.Errorf("Expected specs/utils.md to be automatically included as spec file")
+		}
+	})
+}

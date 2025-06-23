@@ -195,6 +195,10 @@ api_key: "${ANTHROPIC_API_KEY}"
 base_url: "${CUSTOM_LLM_ENDPOINT}"
 ```
 
+## File Matching Behavior
+
+When you provide a list of files to semcheck, semcheck will automatically match implementation to specification and vice versa based on the rules in your configuration. These matches are then fed to the AI to perform the semantic mapping.
+
 ## Validation Rules
 
 ### Required Fields

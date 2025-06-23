@@ -99,7 +99,12 @@ func (m *Matcher) MatchFiles(inputFiles []string) ([]MatcherResult, error) {
 		results = append(results, matched)
 	}
 
-	// Find related files for each matched file
+	results, err := m.includeRelatedFiles(results)
+	if err != nil {
+		return nil, err
+	}
+
+	// Find related files for display purposes
 	for i := range results {
 		if results[i].Type != FileTypeIgnored {
 			related, err := m.findRelatedFiles(results[i])
@@ -108,6 +113,46 @@ func (m *Matcher) MatchFiles(inputFiles []string) ([]MatcherResult, error) {
 			}
 			results[i].RelatedFiles = related
 		}
+	}
+
+	return results, nil
+}
+
+func (m *Matcher) includeRelatedFiles(initialResults []MatcherResult) ([]MatcherResult, error) {
+	// Matches implementation files to specification files and vice versa.
+
+	// Create a map to track files already included
+	included := make(map[string]bool)
+	var results []MatcherResult
+
+	// Add initial results to the map and results slice
+	for _, result := range initialResults {
+		included[result.Path] = true
+		results = append(results, result)
+	}
+
+	// For each non-ignored file, find its related files and add them if not already included
+	i := 0
+	for i < len(results) {
+		result := results[i]
+		if result.Type != FileTypeIgnored {
+			relatedFiles, err := m.findRelatedFiles(result)
+			if err != nil {
+				return nil, fmt.Errorf("failed to find related files for %s: %w", result.Path, err)
+			}
+
+			// Add related files to processing if not already included
+			for _, relatedPath := range relatedFiles {
+				if !included[relatedPath] {
+					relatedResult := m.matchFile(relatedPath)
+					if relatedResult.Type != FileTypeIgnored {
+						included[relatedPath] = true
+						results = append(results, relatedResult)
+					}
+				}
+			}
+		}
+		i++
 	}
 
 	return results, nil
@@ -238,7 +283,28 @@ func (m *Matcher) matchesGlobPattern(filePath, pattern string) bool {
 	if strings.Contains(pattern, "**/") {
 		parts := strings.Split(pattern, "**/")
 		if len(parts) == 2 {
-			return strings.HasPrefix(filePath, parts[0]) && strings.HasSuffix(filePath, parts[1])
+			hasPrefix := strings.HasPrefix(filePath, parts[0])
+			// For the suffix, we need to match it as a pattern, not a literal string
+			if hasPrefix {
+				// Extract the part of the filePath after the prefix
+				remaining := filePath[len(parts[0]):]
+				// Check if the remaining part matches the suffix pattern
+				matched, _ := filepath.Match(parts[1], remaining)
+				if matched {
+					return true
+				}
+				// Also check if any subdirectory matches
+				if strings.Contains(remaining, "/") {
+					pathParts := strings.Split(remaining, "/")
+					for i := range pathParts {
+						subPath := strings.Join(pathParts[i:], "/")
+						if matched, _ := filepath.Match(parts[1], subPath); matched {
+							return true
+						}
+					}
+				}
+			}
+			return false
 		}
 	}
 
