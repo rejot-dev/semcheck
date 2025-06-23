@@ -126,26 +126,6 @@ rules:
         # Supports various documentation formats
         path: "specs/api.md"
 
-        # Specification format (REQUIRED)
-        # Supported types:
-        #   - "markdown": General documentation in Markdown
-        #   - "openapi": OpenAPI/Swagger specifications
-        #   - "asyncapi": AsyncAPI specifications for messaging
-        #   - "json-schema": JSON Schema definitions
-        #   - "protobuf": Protocol Buffer definitions
-        type: "markdown"
-
-        # Optional description of this specification's scope
-        description: "REST API endpoints and data models"
-
-      - path: "docs/architecture.md"
-        type: "markdown"
-        description: "High-level system architecture and design principles"
-
-      - path: "openapi.yaml"
-        type: "openapi"
-        description: "Detailed API contract with request/response schemas"
-
     # Additional context for AI analysis (OPTIONAL)
     # Custom instructions to guide the semantic checking process
     # Use cases:
@@ -188,8 +168,7 @@ rules:
         - "**/*_test.go"
     specs:
       - path: "docs/security-requirements.md"
-        type: "markdown"
-        description: "Security standards and requirements"
+
     prompt: |
       Focus specifically on security vulnerabilities:
       - SQL injection prevention

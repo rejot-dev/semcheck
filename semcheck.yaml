@@ -18,8 +18,6 @@ rules:
         - "./internal/config/*_test.go"
     specs:
       - path: "./specs/semcheck.md"
-        type: "markdown"
-        description: "Semcheck Config Specification"
     severity: "error"
   
   - name: "readme-file"
@@ -29,13 +27,7 @@ rules:
       include:
         - "./README.md"
     specs:
-      - path: "./internal/config/config.go"
-        type: "markdown"
-        description: "Configuration example"
-      - path: "./Justfile"
-        type: "markdown"
-        description: "Justfile instructions"
-      - path: "./cmd/root.go"
-        type: "markdown"
-        description: "Command line interface"
+      - path: "./internal/config/config.go" # Configuration example
+      - path: "./Justfile"  # Justfile instructions
+      - path: "./cmd/root.go" # Command line interface
     severity: "warning"

@@ -27,7 +27,6 @@ rules:
         - "*.go"
     specs:
       - path: "spec.md"
-        type: "markdown"
     severity: "error"
     confidence_threshold: 0.8
 `
@@ -88,9 +87,6 @@ rules:
 	if rule.Specs[0].Path != "spec.md" {
 		t.Errorf("expected spec path 'spec.md', got %s", rule.Specs[0].Path)
 	}
-	if rule.Specs[0].Type != "markdown" {
-		t.Errorf("expected spec type 'markdown', got %s", rule.Specs[0].Type)
-	}
 	if rule.Severity != "error" {
 		t.Errorf("expected severity 'error', got %s", rule.Severity)
 	}
@@ -140,7 +136,7 @@ func TestConfig_validate(t *testing.T) {
 						Name:        "test",
 						Description: "test rule",
 						Files:       FilePattern{Include: []string{"*.go"}},
-						Specs:       []Spec{{Path: "spec.md", Type: "markdown"}},
+						Specs:       []Spec{{Path: "spec.md"}},
 					},
 				},
 			},
@@ -213,7 +209,7 @@ func TestConfig_validate(t *testing.T) {
 						Name:        "test",
 						Description: "test rule",
 						Files:       FilePattern{Include: []string{"*.go"}},
-						Specs:       []Spec{{Path: "spec.md", Type: "markdown"}},
+						Specs:       []Spec{{Path: "spec.md"}},
 					},
 				},
 			},
@@ -241,7 +237,7 @@ func TestConfig_validate(t *testing.T) {
 						Name:                "test",
 						Description:         "test rule",
 						Files:               FilePattern{Include: []string{"*.go"}},
-						Specs:               []Spec{{Path: "spec.md", Type: "markdown"}},
+						Specs:               []Spec{{Path: "spec.md"}},
 						ConfidenceThreshold: 1.5, // too big
 					},
 				},
@@ -274,7 +270,7 @@ func TestConfig_validate_Defaults(t *testing.T) {
 				Name:        "test",
 				Description: "test rule",
 				Files:       FilePattern{Include: []string{"*.go"}},
-				Specs:       []Spec{{Path: "spec.md", Type: "markdown"}},
+				Specs:       []Spec{{Path: "spec.md"}},
 			},
 		},
 	}

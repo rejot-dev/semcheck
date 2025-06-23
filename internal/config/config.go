@@ -36,9 +36,7 @@ type FilePattern struct {
 }
 
 type Spec struct {
-	Path        string `yaml:"path"`
-	Type        string `yaml:"type"`
-	Description string `yaml:"description,omitempty"`
+	Path string `yaml:"path"`
 }
 
 func Load(path string) (*Config, error) {
@@ -119,9 +117,6 @@ func (c *Config) validate() error {
 		for _, spec := range rule.Specs {
 			if spec.Path == "" {
 				return fmt.Errorf("spec path is required for rule: %s", rule.Name)
-			}
-			if spec.Type == "" {
-				return fmt.Errorf("spec type is required for rule: %s", rule.Name)
 			}
 		}
 	}

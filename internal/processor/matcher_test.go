@@ -160,7 +160,6 @@ func TestMatcher_matchFile(t *testing.T) {
 				Specs: []config.Spec{
 					{
 						Path: "./specs/*.md",
-						Type: "markdown",
 					},
 				},
 			},
@@ -299,7 +298,6 @@ func TestMatcher_MatchFiles(t *testing.T) {
 				Specs: []config.Spec{
 					{
 						Path: "./specs/*.md",
-						Type: "markdown",
 					},
 				},
 			},
