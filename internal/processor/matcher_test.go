@@ -93,6 +93,37 @@ func TestMatcher_matchesPattern(t *testing.T) {
 			pattern:  "vendor/**",
 			expected: false,
 		},
+		// Test relative path equivalence
+		{
+			name:     "relative prefix pattern vs normal file path",
+			filePath: "local/file.md",
+			pattern:  "./local/file.md",
+			expected: true,
+		},
+		{
+			name:     "normal pattern vs relative prefix file path",
+			filePath: "./local/file.md",
+			pattern:  "local/file.md",
+			expected: true,
+		},
+		{
+			name:     "both with relative prefix",
+			filePath: "./local/file.md",
+			pattern:  "./local/file.md",
+			expected: true,
+		},
+		{
+			name:     "relative prefix glob pattern vs normal file path",
+			filePath: "local/file.md",
+			pattern:  "./local/*.md",
+			expected: true,
+		},
+		{
+			name:     "normal glob pattern vs relative prefix file path",
+			filePath: "./local/file.md",
+			pattern:  "local/*.md",
+			expected: true,
+		},
 	}
 
 	for _, tt := range tests {

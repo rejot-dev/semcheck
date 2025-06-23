@@ -186,10 +186,13 @@ func (m *Matcher) matchesPatterns(filePath string, patterns []string) bool {
 }
 
 func (m *Matcher) matchesPattern(filePath, pattern string) bool {
-	// Handle patterns that start with ./
+	// Normalize both file path and pattern by removing ./ prefix
 	const relativePrefixLen = len("./")
 	if strings.HasPrefix(pattern, "./") {
 		pattern = pattern[relativePrefixLen:]
+	}
+	if strings.HasPrefix(filePath, "./") {
+		filePath = filePath[relativePrefixLen:]
 	}
 
 	matched, err := filepath.Match(pattern, filePath)
