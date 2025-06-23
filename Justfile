@@ -4,11 +4,24 @@
 default:
     @just --list
 
+# Run semcheck against itself on all files
+# uses find because glob patterns are handled differently per shell used
 dogfood: build
-    ./semcheck **/*
+    ./semcheck $(find . -type f -name "*" | grep -v ".git")
 
 pre-commit: check build
     ./semcheck $(git diff --name-only --cached)
+
+# Install pre-commit hook
+install-pre-commit:
+    @echo "Installing pre-commit hook..."
+    @mkdir -p .git/hooks
+    @echo '#!/bin/sh' > .git/hooks/pre-commit
+    @echo 'just pre-commit' >> .git/hooks/pre-commit
+    @echo 'exit $?' >> .git/hooks/pre-commit
+    @chmod +x .git/hooks/pre-commit
+    @echo "✅ Pre-commit hook installed successfully!"
+    @echo "The hook will run 'just pre-commit' before each commit."
 
 # Build the semcheck binary
 build:
