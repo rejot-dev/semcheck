@@ -2,8 +2,10 @@ package providers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
+	"github.com/invopop/jsonschema"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 )
@@ -52,6 +54,24 @@ func (c *OpenAIClient) Validate() error {
 	return nil
 }
 
+func generateSchema[T any]() interface{} {
+	// Structured Outputs uses a subset of JSON schema
+	// These flags are necessary to comply with the subset
+	reflector := jsonschema.Reflector{
+		AllowAdditionalProperties: false,
+		DoNotReference:            true,
+	}
+	var v T
+	schema := reflector.Reflect(v)
+	return schema
+}
+
+type StructuredResponse struct {
+	Issues []SemanticIssue `json:"issues" jsonschema_description:"List of issues found"`
+}
+
+var StructuredResponseSchema = generateSchema[StructuredResponse]()
+
 // Complete sends a completion request to OpenAI API
 func (c *OpenAIClient) Complete(ctx context.Context, req *Request) (*Response, error) {
 	if err := c.Validate(); err != nil {
@@ -69,7 +89,18 @@ func (c *OpenAIClient) Complete(ctx context.Context, req *Request) (*Response, e
 		temperature = 0.8
 	}
 
-	// Create chat completion request
+	// Generate schema for structured output
+	schema := generateSchema[StructuredResponse]()
+
+	// Create structured output response format following the example pattern
+	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
+		Name:        "semantic_analysis",
+		Description: openai.String("Semantic analysis results"),
+		Schema:      schema,
+		Strict:      openai.Bool(false),
+	}
+
+	// Create chat completion request with structured output
 	chatReq := openai.ChatCompletionNewParams{
 		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.UserMessage(req.Prompt),
@@ -77,6 +108,11 @@ func (c *OpenAIClient) Complete(ctx context.Context, req *Request) (*Response, e
 		Model:       openai.ChatModel(c.model),
 		MaxTokens:   openai.Int(int64(maxTokens)),
 		Temperature: openai.Float(temperature),
+		ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
+			OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{
+				JSONSchema: schemaParam,
+			},
+		},
 	}
 
 	// Apply timeout if specified
@@ -96,15 +132,20 @@ func (c *OpenAIClient) Complete(ctx context.Context, req *Request) (*Response, e
 		return nil, fmt.Errorf("no choices in response")
 	}
 
+	// Parse structured JSON response
+	var structuredResp StructuredResponse
+	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &structuredResp); err != nil {
+		return nil, fmt.Errorf("failed to parse structured response: %w", err)
+	}
+
 	// Convert to our response format
 	response := &Response{
-		Content: resp.Choices[0].Message.Content,
 		Usage: Usage{
 			PromptTokens:     int(resp.Usage.PromptTokens),
 			CompletionTokens: int(resp.Usage.CompletionTokens),
 			TotalTokens:      int(resp.Usage.TotalTokens),
 		},
-		Confidence: 1.0, // TODO: remove this?
+		Issues: structuredResp.Issues,
 	}
 
 	return response, nil

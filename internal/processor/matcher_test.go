@@ -11,7 +11,7 @@ import (
 
 func TestNewMatcher(t *testing.T) {
 	tmpDir := t.TempDir()
-	
+
 	// Create a test .gitignore file
 	gitignoreContent := `# Test gitignore
 *.log
@@ -172,34 +172,34 @@ func TestMatcher_matchFile(t *testing.T) {
 	}
 
 	tests := []struct {
-		name           string
-		filePath       string
-		expectedType   FileType
-		expectedRules  []string
+		name          string
+		filePath      string
+		expectedType  FileType
+		expectedRules []string
 	}{
 		{
-			name:           "go implementation file",
-			filePath:       "src/main.go",
-			expectedType:   FileTypeImpl,
-			expectedRules:  []string{"go-files"},
+			name:          "go implementation file",
+			filePath:      "src/main.go",
+			expectedType:  FileTypeImpl,
+			expectedRules: []string{"go-files"},
 		},
 		{
-			name:           "test file excluded",
-			filePath:       "src/main_test.go",
-			expectedType:   FileTypeIgnored,
-			expectedRules:  nil,
+			name:          "test file excluded",
+			filePath:      "src/main_test.go",
+			expectedType:  FileTypeIgnored,
+			expectedRules: nil,
 		},
 		{
-			name:           "spec file",
-			filePath:       "specs/api.md",
-			expectedType:   FileTypeSpec,
-			expectedRules:  []string{"go-files"},
+			name:          "spec file",
+			filePath:      "specs/api.md",
+			expectedType:  FileTypeSpec,
+			expectedRules: []string{"go-files"},
 		},
 		{
-			name:           "ignored log file",
-			filePath:       "debug.log",
-			expectedType:   FileTypeIgnored,
-			expectedRules:  nil,
+			name:          "ignored log file",
+			filePath:      "debug.log",
+			expectedType:  FileTypeIgnored,
+			expectedRules: nil,
 		},
 	}
 
@@ -238,7 +238,7 @@ func TestMatcher_deduplicate(t *testing.T) {
 			expected: []string{"a.go", "b.go", "c.go"},
 		},
 		{
-			name:     "empty input", 
+			name:     "empty input",
 			items:    []string{},
 			exclude:  "a.go",
 			expected: nil,
@@ -261,7 +261,7 @@ func TestMatcher_MatchFiles(t *testing.T) {
 	// Create test files
 	testFiles := []string{
 		"main.go",
-		"main_test.go", 
+		"main_test.go",
 		"specs/api.md",
 		"debug.log",
 	}

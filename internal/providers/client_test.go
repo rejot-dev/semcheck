@@ -49,13 +49,12 @@ func TestClientInterface(t *testing.T) {
 			client: &mockClient{
 				name: "mock",
 				response: &Response{
-					Content:    "test response",
-					Confidence: 0.95,
 					Usage: Usage{
 						PromptTokens:     10,
 						CompletionTokens: 5,
 						TotalTokens:      15,
 					},
+					Issues: []SemanticIssue{},
 				},
 				valid: true,
 			},
@@ -109,8 +108,9 @@ func TestClientInterface(t *testing.T) {
 			if !tt.wantError && err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
-			if !tt.wantError && resp != nil && resp.Content != tt.wantResult {
-				t.Errorf("Complete() content = %v, want %v", resp.Content, tt.wantResult)
+			if !tt.wantError && resp != nil && len(resp.Issues) != 0 {
+				// For successful completion, we expect empty issues array
+				t.Errorf("Complete() returned unexpected issues: %v", resp.Issues)
 			}
 		})
 	}
@@ -140,22 +140,28 @@ func TestRequest(t *testing.T) {
 
 func TestResponse(t *testing.T) {
 	resp := &Response{
-		Content:    "test content",
-		Confidence: 0.85,
 		Usage: Usage{
 			PromptTokens:     20,
 			CompletionTokens: 30,
 			TotalTokens:      50,
 		},
+		Issues: []SemanticIssue{
+			{
+				Level:      "ERROR",
+				Message:    "test issue",
+				Confidence: 0.9,
+				Suggestion: "fix this",
+			},
+		},
 	}
 
-	if resp.Content != "test content" {
-		t.Errorf("expected content 'test content', got %s", resp.Content)
-	}
-	if resp.Confidence != 0.85 {
-		t.Errorf("expected confidence 0.85, got %f", resp.Confidence)
-	}
 	if resp.Usage.TotalTokens != 50 {
 		t.Errorf("expected total tokens 50, got %d", resp.Usage.TotalTokens)
+	}
+	if len(resp.Issues) != 1 {
+		t.Errorf("expected 1 issue, got %d", len(resp.Issues))
+	}
+	if resp.Issues[0].Level != "ERROR" {
+		t.Errorf("expected issue level 'ERROR', got %s", resp.Issues[0].Level)
 	}
 }

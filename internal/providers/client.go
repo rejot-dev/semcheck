@@ -7,9 +7,8 @@ import (
 
 // Response represents the response from an AI provider
 type Response struct {
-	Content    string  `json:"content"`
-	Confidence float64 `json:"confidence"`
-	Usage      Usage   `json:"usage"`
+	Usage  Usage           `json:"usage"`
+	Issues []SemanticIssue `json:"issues,omitempty"`
 }
 
 // Usage represents token usage information
@@ -37,6 +36,15 @@ type Client interface {
 
 	// Validate checks if the client configuration is valid
 	Validate() error
+}
+
+// SemanticIssue represents a single issue found during semantic analysis
+type SemanticIssue struct {
+	Level      string  `json:"level" jsonschema_description:"Severity level of the issue"`
+	Message    string  `json:"message" jsonschema_description:"Description of the issue"`
+	Confidence float64 `json:"confidence" jsonschema_description:"Confidence level of the issue (0.0-1.0)"`
+	Suggestion string  `json:"suggestion" jsonschema_description:"Suggestion for fixing the issue (optional)"`
+	LineNumber int     `json:"line_number,omitempty" jsonschema_description:"Line number of the issue (optional)"`
 }
 
 // Config holds common configuration for AI providers

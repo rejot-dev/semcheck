@@ -15,7 +15,8 @@ import (
 
 // Mock client for testing
 type mockClient struct {
-	responses map[string]string
+	responses          map[string]string
+	structuredResponse []providers.SemanticIssue
 }
 
 func (m *mockClient) Name() string {
@@ -23,156 +24,20 @@ func (m *mockClient) Name() string {
 }
 
 func (m *mockClient) Complete(ctx context.Context, req *providers.Request) (*providers.Response, error) {
-	response, exists := m.responses[req.Prompt]
-	if !exists {
-		response = "NO_ISSUES_FOUND"
-	}
-
-	return &providers.Response{
-		Content: response,
+	resp := &providers.Response{
 		Usage: providers.Usage{
 			PromptTokens:     100,
 			CompletionTokens: 50,
 			TotalTokens:      150,
 		},
-	}, nil
+		Issues: m.structuredResponse,
+	}
+
+	return resp, nil
 }
 
 func (m *mockClient) Validate() error {
 	return nil
-}
-
-func TestSemanticChecker_parseIssueBlock(t *testing.T) {
-	rule := &config.Rule{
-		Name:                "test-rule",
-		ConfidenceThreshold: 0.7,
-	}
-
-	checker := &SemanticChecker{}
-
-	tests := []struct {
-		name     string
-		block    string
-		expected *Issue
-	}{
-		{
-			name: "valid error issue",
-			block: `ISSUE: ERROR
-MESSAGE: Function signature does not match specification
-CONFIDENCE: 0.9
-SUGGESTION: Update function to match the specified interface`,
-			expected: &Issue{
-				Level:      IssueLevelError,
-				Message:    "Function signature does not match specification",
-				File:       "test.go",
-				Rule:       "test-rule",
-				Confidence: 0.9,
-				Suggestion: "Update function to match the specified interface",
-			},
-		},
-		{
-			name: "low confidence issue filtered out",
-			block: `ISSUE: WARNING
-MESSAGE: Minor inconsistency found
-CONFIDENCE: 0.5
-SUGGESTION: Consider updating`,
-			expected: nil, // Below threshold
-		},
-		{
-			name: "missing required fields",
-			block: `ISSUE: ERROR
-CONFIDENCE: 0.8`,
-			expected: nil, // No message
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := checker.parseIssueBlock(tt.block, rule, "test.go")
-			if !reflect.DeepEqual(result, tt.expected) {
-				t.Errorf("parseIssueBlock() = %+v, expected %+v", result, tt.expected)
-			}
-		})
-	}
-}
-
-func TestSemanticChecker_parseAIResponse(t *testing.T) {
-	rule := &config.Rule{
-		Name:                "test-rule",
-		ConfidenceThreshold: 0.7,
-	}
-
-	checker := &SemanticChecker{}
-
-	tests := []struct {
-		name     string
-		response string
-		expected []Issue
-	}{
-		{
-			name:     "no issues found",
-			response: "NO_ISSUES_FOUND",
-			expected: nil,
-		},
-		{
-			name: "single issue",
-			response: `ISSUE: ERROR
-MESSAGE: Test issue
-CONFIDENCE: 0.8
-SUGGESTION: Fix it
----`,
-			expected: []Issue{
-				{
-					Level:      IssueLevelError,
-					Message:    "Test issue",
-					File:       "test.go",
-					Rule:       "test-rule",
-					Confidence: 0.8,
-					Suggestion: "Fix it",
-				},
-			},
-		},
-		{
-			name: "multiple issues",
-			response: `ISSUE: WARNING
-MESSAGE: First issue
-CONFIDENCE: 0.9
-SUGGESTION: Fix first
----
-ISSUE: ERROR
-MESSAGE: Second issue
-CONFIDENCE: 0.8
-SUGGESTION: Fix second
----`,
-			expected: []Issue{
-				{
-					Level:      IssueLevelWarning,
-					Message:    "First issue",
-					File:       "test.go",
-					Rule:       "test-rule",
-					Confidence: 0.9,
-					Suggestion: "Fix first",
-				},
-				{
-					Level:      IssueLevelError,
-					Message:    "Second issue",
-					File:       "test.go",
-					Rule:       "test-rule",
-					Confidence: 0.8,
-					Suggestion: "Fix second",
-				},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := checker.parseAIResponse(tt.response, rule, "test.go")
-			if !reflect.DeepEqual(result, tt.expected) {
-				t.Errorf("parseAIResponse() = %+v, expected %+v", result, tt.expected)
-			}
-		})
-	}
 }
 
 func TestSemanticChecker_groupFilesByRules(t *testing.T) {
@@ -252,7 +117,8 @@ func Add(a, b int) int {
 	}
 
 	client := &mockClient{
-		responses: make(map[string]string),
+		responses:          make(map[string]string),
+		structuredResponse: []providers.SemanticIssue{}, // No issues found
 	}
 
 	checker := NewSemanticChecker(cfg, client, tmpDir)
@@ -317,25 +183,5 @@ func TestSemanticChecker_buildComparisonPrompt(t *testing.T) {
 
 	if !strings.Contains(prompt, "impl content") {
 		t.Error("Prompt should contain impl content")
-	}
-}
-
-func TestIssueLevel_String(t *testing.T) {
-	tests := []struct {
-		level    IssueLevel
-		expected string
-	}{
-		{IssueLevelInfo, "info"},
-		{IssueLevelWarning, "warning"},
-		{IssueLevelError, "error"},
-		{IssueLevel(999), "unknown"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.expected, func(t *testing.T) {
-			if got := tt.level.String(); got != tt.expected {
-				t.Errorf("IssueLevel.String() = %v, expected %v", got, tt.expected)
-			}
-		})
 	}
 }

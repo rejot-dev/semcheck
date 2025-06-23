@@ -12,46 +12,16 @@ import (
 	"rejot.dev/semcheck/internal/providers"
 )
 
-type IssueLevel int
-
-const (
-	IssueLevelInfo IssueLevel = iota
-	IssueLevelWarning
-	IssueLevelError
-)
-
-func (l IssueLevel) String() string {
-	switch l {
-	case IssueLevelInfo:
-		return "info"
-	case IssueLevelWarning:
-		return "warning"
-	case IssueLevelError:
-		return "error"
-	default:
-		return "unknown"
-	}
-}
-
-type Issue struct {
-	Level       IssueLevel
-	Message     string
-	File        string
-	Rule        string
-	Confidence  float64
-	Suggestion  string
-}
-
 type CheckResult struct {
-	Issues    []Issue
+	Issues    []providers.SemanticIssue
 	Processed int
 	Passed    int
 	Failed    int
 }
 
 type SemanticChecker struct {
-	config    *config.Config
-	client    providers.Client
+	config     *config.Config
+	client     providers.Client
 	workingDir string
 }
 
@@ -91,7 +61,7 @@ func (c *SemanticChecker) CheckFiles(ctx context.Context, matchedFiles []process
 					// Check if any issues are errors
 					hasErrors := false
 					for _, issue := range issues {
-						if issue.Level == IssueLevelError {
+						if issue.Level == "ERROR" {
 							hasErrors = true
 							break
 						}
@@ -148,7 +118,7 @@ func (c *SemanticChecker) findRule(name string) *config.Rule {
 	return nil
 }
 
-func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Rule, specFile, implFile string) ([]Issue, error) {
+func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Rule, specFile, implFile string) ([]providers.SemanticIssue, error) {
 	// Read specification file
 	specContent, err := c.readFile(specFile)
 	if err != nil {
@@ -176,8 +146,13 @@ func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Ru
 		return nil, fmt.Errorf("AI request failed: %w", err)
 	}
 
-	// Parse AI response into issues
-	issues := c.parseAIResponse(resp.Content, rule, implFile)
+	// Filter issues by confidence threshold
+	var issues []providers.SemanticIssue
+	for _, semanticIssue := range resp.Issues {
+		if semanticIssue.Confidence >= rule.ConfidenceThreshold {
+			issues = append(issues, semanticIssue)
+		}
+	}
 
 	return issues, nil
 }
@@ -195,7 +170,7 @@ func (c *SemanticChecker) buildComparisonPrompt(rule *config.Rule, specFile, spe
 	var prompt strings.Builder
 
 	prompt.WriteString("You are a code reviewer analyzing whether an implementation matches its specification.\n\n")
-	
+
 	if rule.Prompt != "" {
 		prompt.WriteString("Special instructions for this rule:\n")
 		prompt.WriteString(rule.Prompt)
@@ -213,102 +188,16 @@ func (c *SemanticChecker) buildComparisonPrompt(rule *config.Rule, specFile, spe
 	prompt.WriteString("\n```\n\n")
 
 	prompt.WriteString("Please analyze whether the implementation correctly follows the specification.\n")
-	prompt.WriteString("Report any issues found using this exact format:\n\n")
-	prompt.WriteString("ISSUE: [ERROR|WARNING|INFO]\n")
-	prompt.WriteString("MESSAGE: [Brief description of the issue]\n")
-	prompt.WriteString("CONFIDENCE: [0.0-1.0]\n")
-	prompt.WriteString("SUGGESTION: [How to fix this issue]\n")
-	prompt.WriteString("---\n\n")
-	prompt.WriteString("If no issues are found, respond with: NO_ISSUES_FOUND\n")
-	prompt.WriteString("Focus on semantic correctness, not formatting.")
+	prompt.WriteString("Focus on semantic correctness, not formatting.\n\n")
+	prompt.WriteString("Return issues as structured JSON with the following fields:\n")
+	prompt.WriteString("- level: ERROR, WARNING, or INFO\n")
+	prompt.WriteString("- message: Brief description of the issue\n")
+	prompt.WriteString("- confidence: Your confidence level (0.0-1.0)\n")
+	prompt.WriteString("- suggestion: How to fix this issue\n")
+	prompt.WriteString("- line_number: The line number of the issue (optional)\n\n")
+	prompt.WriteString("If no issues are found, return an empty array.")
 
 	return prompt.String()
-}
-
-func (c *SemanticChecker) parseAIResponse(response string, rule *config.Rule, implFile string) []Issue {
-	var issues []Issue
-
-	if strings.Contains(response, "NO_ISSUES_FOUND") {
-		return issues
-	}
-
-	// Split response into individual issue blocks
-	blocks := strings.Split(response, "---")
-
-	for _, block := range blocks {
-		block = strings.TrimSpace(block)
-		if block == "" {
-			continue
-		}
-
-		issue := c.parseIssueBlock(block, rule, implFile)
-		if issue != nil {
-			issues = append(issues, *issue)
-		}
-	}
-
-	return issues
-}
-
-func (c *SemanticChecker) parseIssueBlock(block string, rule *config.Rule, implFile string) *Issue {
-	lines := strings.Split(block, "\n")
-	issue := &Issue{
-		File: implFile,
-		Rule: rule.Name,
-	}
-
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-
-		if strings.HasPrefix(line, "ISSUE:") {
-			levelStr := strings.TrimSpace(strings.TrimPrefix(line, "ISSUE:"))
-			switch strings.ToUpper(levelStr) {
-			case "ERROR":
-				issue.Level = IssueLevelError
-			case "WARNING":
-				issue.Level = IssueLevelWarning
-			case "INFO":
-				issue.Level = IssueLevelInfo
-			default:
-				issue.Level = IssueLevelWarning
-			}
-		} else if strings.HasPrefix(line, "MESSAGE:") {
-			issue.Message = strings.TrimSpace(strings.TrimPrefix(line, "MESSAGE:"))
-		} else if strings.HasPrefix(line, "CONFIDENCE:") {
-			confidenceStr := strings.TrimSpace(strings.TrimPrefix(line, "CONFIDENCE:"))
-			if conf, err := parseFloat(confidenceStr); err == nil {
-				issue.Confidence = conf
-			}
-		} else if strings.HasPrefix(line, "SUGGESTION:") {
-			issue.Suggestion = strings.TrimSpace(strings.TrimPrefix(line, "SUGGESTION:"))
-		}
-	}
-
-	// Only return issue if it has required fields and meets confidence threshold
-	if issue.Message != "" && issue.Confidence >= rule.ConfidenceThreshold {
-		return issue
-	}
-
-	return nil
-}
-
-func parseFloat(s string) (float64, error) {
-	// Simple float parsing - in production you'd use strconv.ParseFloat
-	var result float64
-	n, err := fmt.Sscanf(s, "%f", &result)
-	if err != nil || n != 1 {
-		return 0, fmt.Errorf("invalid float: %s", s)
-	}
-	if result < 0 {
-		result = 0
-	}
-	if result > 1 {
-		result = 1
-	}
-	return result, nil
 }
 
 // DisplayCheckResults formats and displays the semantic analysis results
@@ -332,17 +221,17 @@ func DisplayCheckResults(result *CheckResult) {
 	}
 
 	// Group issues by level
-	errorIssues := make([]Issue, 0)
-	warningIssues := make([]Issue, 0)
-	infoIssues := make([]Issue, 0)
+	errorIssues := make([]providers.SemanticIssue, 0)
+	warningIssues := make([]providers.SemanticIssue, 0)
+	infoIssues := make([]providers.SemanticIssue, 0)
 
 	for _, issue := range result.Issues {
 		switch issue.Level {
-		case IssueLevelError:
+		case "ERROR":
 			errorIssues = append(errorIssues, issue)
-		case IssueLevelWarning:
+		case "WARNING":
 			warningIssues = append(warningIssues, issue)
-		case IssueLevelInfo:
+		case "INFO":
 			infoIssues = append(infoIssues, issue)
 		}
 	}
@@ -371,13 +260,15 @@ func DisplayCheckResults(result *CheckResult) {
 		}
 	}
 
-	fmt.Printf("\nSummary: %d errors, %d warnings, %d info\n", 
+	fmt.Printf("\nSummary: %d errors, %d warnings, %d info\n",
 		len(errorIssues), len(warningIssues), len(infoIssues))
 }
 
-func displayIssue(issue Issue) {
+func displayIssue(issue providers.SemanticIssue) {
 	fmt.Printf("  • %s (confidence: %.1f)\n", issue.Message, issue.Confidence)
-	fmt.Printf("    File: %s | Rule: %s\n", issue.File, issue.Rule)
+	if issue.LineNumber > 0 {
+		fmt.Printf("    Line: %d\n", issue.LineNumber)
+	}
 	if issue.Suggestion != "" {
 		fmt.Printf("    💡 %s\n", issue.Suggestion)
 	}
@@ -392,7 +283,7 @@ func (r *CheckResult) ShouldFail(config *config.Config) bool {
 
 	// Fail if there are any error-level issues
 	for _, issue := range r.Issues {
-		if issue.Level == IssueLevelError {
+		if issue.Level == "ERROR" {
 			return true
 		}
 	}
