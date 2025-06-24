@@ -304,7 +304,7 @@ func severityLevel(level string) int {
 
 // ShouldFail determines if the check results should cause the tool to exit with error
 func (r *CheckResult) ShouldFail(config *config.Config) bool {
-	if !config.FailOnIssues {
+	if config.FailOnIssues == nil || !*config.FailOnIssues {
 		return false
 	}
 

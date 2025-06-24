@@ -15,7 +15,7 @@ type Config struct {
 	BaseURL      string `yaml:"base_url,omitempty"`
 	Timeout      int    `yaml:"timeout"`
 	MaxRetries   int    `yaml:"max_retries"`
-	FailOnIssues bool   `yaml:"fail_on_issues"`
+	FailOnIssues *bool  `yaml:"fail_on_issues,omitempty"`
 	Rules        []Rule `yaml:"rules"`
 }
 
@@ -144,6 +144,10 @@ func (c *Config) validate() error {
 	}
 	if c.MaxRetries == 0 {
 		c.MaxRetries = 3
+	}
+	if c.FailOnIssues == nil {
+		defaultFailOnIssues := true
+		c.FailOnIssues = &defaultFailOnIssues
 	}
 
 	return nil

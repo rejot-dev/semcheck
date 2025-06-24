@@ -68,7 +68,7 @@ rules:
 	if config.MaxRetries != 3 {
 		t.Errorf("expected max_retries 3, got %d", config.MaxRetries)
 	}
-	if !config.FailOnIssues {
+	if config.FailOnIssues == nil || !*config.FailOnIssues {
 		t.Error("expected fail_on_issues to be true")
 	}
 	if len(config.Rules) != 1 {
@@ -309,5 +309,45 @@ func TestConfig_validate_Defaults(t *testing.T) {
 	}
 	if config.MaxRetries != 3 {
 		t.Errorf("expected default max_retries 3, got %d", config.MaxRetries)
+	}
+	if config.FailOnIssues == nil || !*config.FailOnIssues {
+		t.Error("expected default fail_on_issues to be true")
+	}
+}
+
+func TestConfig_validate_ExplicitFailOnIssuesFalse(t *testing.T) {
+	// Create temp directory and spec file for test
+	tempDir := t.TempDir()
+	specPath := filepath.Join(tempDir, "spec.md")
+	err := os.WriteFile(specPath, []byte("# Test Spec"), 0644)
+	if err != nil {
+		t.Fatalf("failed to write test spec: %v", err)
+	}
+
+	explicitFalse := false
+	config := Config{
+		Version:      "1.0",
+		Provider:     "openai",
+		Model:        "gpt-4",
+		APIKey:       "test-key",
+		FailOnIssues: &explicitFalse,
+		Rules: []Rule{
+			{
+				Name:        "test",
+				Description: "test rule",
+				Files:       FilePattern{Include: []string{"*.go"}},
+				Specs:       []Spec{{Path: specPath}},
+			},
+		},
+	}
+
+	err = config.validate()
+	if err != nil {
+		t.Fatalf("validation failed: %v", err)
+	}
+
+	// Check that explicit false is preserved
+	if config.FailOnIssues == nil || *config.FailOnIssues {
+		t.Error("expected fail_on_issues to remain false when explicitly set")
 	}
 }
