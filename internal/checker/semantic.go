@@ -173,7 +173,7 @@ func (c *SemanticChecker) buildComparisonPrompt(rule *config.Rule, specFile, spe
 	prompt.WriteString("You are a code reviewer analyzing whether an implementation matches its specification.\n\n")
 
 	if rule.Prompt != "" {
-		prompt.WriteString("Special instructions for this rule:\n")
+		prompt.WriteString("SPECIAL INSTRUCTIONS FOR THIS RULE:\n")
 		prompt.WriteString(rule.Prompt)
 		prompt.WriteString("\n\n")
 	}

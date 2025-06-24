@@ -29,10 +29,10 @@ rules:
       include:
         - "./README.md"
     prompt: |
-      Consider the README documentation as an implementation of the code.
+      Make sure the example config, cli arguments and Justfile commands in this README file match the actual code and Justfile.
       The README does not have to document every field in the config or document every default value.
     specs:
       - path: "./internal/config/config.go" # Configuration example
       - path: "./Justfile"  # Justfile instructions
       - path: "./cmd/root.go" # Command line interface
-    severity: "warning"
+    severity: "error"
