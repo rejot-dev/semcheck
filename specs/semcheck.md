@@ -84,7 +84,7 @@ rules:
     # Used in reports and error messages
     description: "Ensures API implementation matches OpenAPI specification"
 
-    # Whether this rule is active (OPTIONAL)
+    # Whether this rule is active (REQUIRED)
     # Allows temporarily disabling rules without removing them
     # Default: true
     enabled: true

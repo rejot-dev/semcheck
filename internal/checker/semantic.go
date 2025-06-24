@@ -193,7 +193,8 @@ func (c *SemanticChecker) buildComparisonPrompt(rule *config.Rule, specFile, spe
 	}
 
 	prompt.WriteString("Please analyze whether the implementation correctly follows the specification.\n")
-	prompt.WriteString("Focus on semantic correctness, not formatting.\n\n")
+	prompt.WriteString("Focus on semantic correctness, not formatting.\n")
+	prompt.WriteString("ONLY REPORT ON FOUND INCONSISTENCIES, NEVER SUGGEST GENERAL IMPROVEMENTS\n")
 	prompt.WriteString("Return issues as structured JSON with the following fields:\n")
 	prompt.WriteString("- level: ERROR, WARNING, or INFO for how troublesome the issue is\n")
 	prompt.WriteString("- message: Brief description of the issue\n")

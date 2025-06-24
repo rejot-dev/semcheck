@@ -16,7 +16,7 @@ Semcheck validates that your code implementations match their specifications by 
 ### Install
 
 ```bash
-go install github.com/rejot-dev/semcheck/cmd/root@latest
+go install github.com/rejot-dev/semcheck/cmd/cli@latest
 ```
 
 ## Configuration
