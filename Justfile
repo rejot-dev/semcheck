@@ -40,14 +40,15 @@ test-verbose:
 
 # Run tests with coverage
 test-coverage:
-    go test -coverprofile=coverage.out ./...
+    go test -coverprofile=coverage.out.tmp ./...
+    cat coverage.out.tmp | grep -v "evals/cases" > coverage.out
     go tool cover -html=coverage.out -o coverage.html
     @echo "Coverage report generated: coverage.html"
 
 # Clean build artifacts
 clean:
     rm -f semcheck semcheck-eval
-    rm -f coverage.out coverage.html
+    rm -f coverage.out coverage.html coverage.out.tmp
 
 # Format code
 fmt:

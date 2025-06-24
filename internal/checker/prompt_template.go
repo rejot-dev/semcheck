@@ -8,11 +8,6 @@ package checker
 
 const PromptTemplate = `You are a code reviewer analyzing whether an implementation matches its specification.
 
-{{- if .RulePrompt }}
---- SPECIAL INSTRUCTIONS (override defaults) ---
-{{ .RulePrompt }}
-{{- end }}
-
 --- SPECIFICATION: {{ .SpecFile }} ---
 ~~~
 {{ .SpecContent }}
@@ -24,6 +19,12 @@ const PromptTemplate = `You are a code reviewer analyzing whether an implementat
 {{ index $.ImplContent $i }}
 ~~~
 {{- end }}
+
+{{- if .RulePrompt }}
+--- SPECIAL INSTRUCTIONS ---
+{{ .RulePrompt }}
+{{- end }}
+
 
 Focus on semantic correctness, not formatting.
 ONLY REPORT ON FOUND INCONSISTENCIES, NEVER SUGGEST GENERAL IMPROVEMENTS
