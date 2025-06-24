@@ -45,6 +45,7 @@ type Client interface {
 type SemanticIssue struct {
 	Level      string  `json:"level" jsonschema_description:"Severity level of the issue"`
 	Message    string  `json:"message" jsonschema_description:"Description of the issue"`
+	Reasoning  string  `json:"reasoning" jsonschema_description:"Reasoning why the found issue has it's severity level"`
 	Confidence float64 `json:"confidence" jsonschema_description:"Confidence level of the issue (0.0-1.0)"`
 	Suggestion string  `json:"suggestion" jsonschema_description:"Suggestion for fixing the issue (optional)"`
 	LineNumber int     `json:"line_number,omitempty" jsonschema_description:"Line number of the issue (optional)"`

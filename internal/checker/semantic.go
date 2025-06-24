@@ -118,6 +118,7 @@ func (c *SemanticChecker) findRule(name string) *config.Rule {
 }
 
 func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Rule, specFile string, implFiles []string) ([]providers.SemanticIssue, error) {
+	fmt.Printf("comparing spec %s to impls %v\n", specFile, implFiles)
 	// Read specification file
 	specContent, err := c.readFile(specFile)
 	if err != nil {
@@ -198,6 +199,7 @@ func (c *SemanticChecker) buildComparisonPrompt(rule *config.Rule, specFile, spe
 	prompt.WriteString("Return issues as structured JSON with the following fields:\n")
 	prompt.WriteString("- level: ERROR, WARNING, or INFO for how troublesome the issue is\n")
 	prompt.WriteString("- message: Brief description of the issue\n")
+	prompt.WriteString("- reasoning: Explain why this issue has the severity level you assigned\n")
 	prompt.WriteString("- confidence: Your confidence level that the issue applies in this case (0.0-1.0)\n")
 	prompt.WriteString("- suggestion: How to fix this issue\n")
 	prompt.WriteString("- line_number: The line number of the issue (optional)\n\n")
@@ -281,6 +283,9 @@ func displayIssue(issue providers.SemanticIssue) {
 	fmt.Printf("  • %s (confidence: %.1f)\n", issue.Message, issue.Confidence)
 	if issue.LineNumber > 0 {
 		fmt.Printf("    Line: %d\n", issue.LineNumber)
+	}
+	if issue.Reasoning != "" {
+		fmt.Printf("    🔍 %s\n", issue.Reasoning)
 	}
 	if issue.Suggestion != "" {
 		fmt.Printf("    💡 %s\n", issue.Suggestion)

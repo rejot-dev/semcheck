@@ -149,6 +149,7 @@ func TestResponse(t *testing.T) {
 			{
 				Level:      "ERROR",
 				Message:    "test issue",
+				Reasoning:  "test reasoning",
 				Confidence: 0.9,
 				Suggestion: "fix this",
 			},

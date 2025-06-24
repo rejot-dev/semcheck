@@ -146,7 +146,11 @@ func compareAndDisplayResults(checkResult *checker.CheckResult, expectations map
 		if len(issues) > 0 {
 			fmt.Printf("Issues:\n")
 			for _, issue := range issues {
-				fmt.Printf("  - %s\n", issue.Message)
+				fmt.Printf("  - (%s) %s", issue.Level, issue.Message)
+				if issue.Reasoning != "" {
+					fmt.Printf(" (reasoning: %s)", issue.Reasoning)
+				}
+				fmt.Printf("\n")
 			}
 		}
 
