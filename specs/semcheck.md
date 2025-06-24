@@ -212,15 +212,6 @@ When you provide a list of files to semcheck, semcheck will automatically match 
 - `rules[].files.include`: Must contain at least one pattern
 - `rules[].specs`: Must contain at least one specification
 
-### Optional Field Defaults
-
-- `timeout`: 30 seconds
-- `max_retries`: 3 attempts
-- `fail_on_issues`: true
-- `rules[].enabled`: true
-- `rules[].severity`: "error"
-- `rules[].confidence_threshold`: 0.8
-
 ### File Pattern Validation
 
 - Exclude patterns are applied after include patterns
