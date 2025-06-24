@@ -138,11 +138,11 @@ func TestSemanticChecker_buildComparisonPrompt(t *testing.T) {
 		t.Error("Prompt should contain custom rule instructions")
 	}
 
-	if !strings.Contains(prompt, "SPECIFICATION FILE: spec.md") {
+	if !strings.Contains(prompt, "spec.md") {
 		t.Error("Prompt should contain spec file name")
 	}
 
-	if !strings.Contains(prompt, "IMPLEMENTATION FILE: impl.go") {
+	if !strings.Contains(prompt, "impl.go") {
 		t.Error("Prompt should contain impl file name")
 	}
 

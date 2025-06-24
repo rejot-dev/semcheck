@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"rejot.dev/semcheck/internal/config"
 	"rejot.dev/semcheck/internal/processor"
@@ -171,45 +172,22 @@ func (c *SemanticChecker) readFile(filePath string) (string, error) {
 }
 
 func (c *SemanticChecker) buildComparisonPrompt(rule *config.Rule, specFile, specContent string, implFiles []string, implContent []string) string {
-	var prompt strings.Builder
+	tmpl := template.Must(template.New("prompt").Parse(PromptTemplate))
 
-	prompt.WriteString("You are a code reviewer analyzing whether an implementation matches its specification.\n\n")
-
-	if rule.Prompt != "" {
-		prompt.WriteString("SPECIAL INSTRUCTIONS FOR THIS RULE:\n")
-		prompt.WriteString(rule.Prompt)
-		prompt.WriteString("\n\n")
+	data := PromptData{
+		RulePrompt:  rule.Prompt,
+		SpecFile:    specFile,
+		SpecContent: specContent,
+		ImplFiles:   implFiles,
+		ImplContent: implContent,
 	}
 
-	prompt.WriteString(fmt.Sprintf("SPECIFICATION FILE: %s\n", specFile))
-	prompt.WriteString("```\n")
-	prompt.WriteString(specContent)
-	prompt.WriteString("\n```\n\n")
-
-	for i, implFile := range implFiles {
-		prompt.WriteString(fmt.Sprintf("IMPLEMENTATION FILE: %s\n", implFile))
-		prompt.WriteString("```\n")
-		prompt.WriteString(implContent[i])
-		prompt.WriteString("\n```\n\n")
+	var result strings.Builder
+	if err := tmpl.Execute(&result, data); err != nil {
+		return ""
 	}
 
-	prompt.WriteString("Please analyze whether the implementation correctly follows the specification.\n")
-	prompt.WriteString("Focus on semantic correctness, not formatting.\n")
-	prompt.WriteString("ONLY REPORT ON FOUND INCONSISTENCIES, NEVER SUGGEST GENERAL IMPROVEMENTS\n\n")
-	prompt.WriteString("SEVERITY LEVEL GUIDELINES:\n")
-	prompt.WriteString("- ERROR: Violations of explicit requirements, wrong function signatures or functionality that breaks the specification\n")
-	prompt.WriteString("- WARNING: Missing recommended features, performance issues, or non-standard implementations that could cause problems\n")
-	prompt.WriteString("- INFO: Undocumented defaults, missing optional features, or style issues that don't affect functionality\n\n")
-	prompt.WriteString("Return issues as structured JSON with the following fields:\n")
-	prompt.WriteString("- level: ERROR, WARNING, or INFO\n")
-	prompt.WriteString("- message: Brief description of the issue\n")
-	prompt.WriteString("- reasoning: Explain why this issue has the severity level you assigned\n")
-	prompt.WriteString("- confidence: Your confidence level that the issue applies in this case (0.0-1.0)\n")
-	prompt.WriteString("- suggestion: How to fix this issue\n")
-	prompt.WriteString("- line_number: The line number of the issue (optional)\n\n")
-	prompt.WriteString("If no issues are found, return an empty array.")
-
-	return prompt.String()
+	return result.String()
 }
 
 // DisplayCheckResults formats and displays the semantic analysis results
