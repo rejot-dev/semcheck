@@ -34,5 +34,5 @@ rules:
     specs:
       - path: "./internal/config/config.go" # Configuration example
       - path: "./Justfile"  # Justfile instructions
-      - path: "./cmd/root.go" # Command line interface
+      - path: "./cmd/cli/cli.go" # Command line interface
     severity: "error"

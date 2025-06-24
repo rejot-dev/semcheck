@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"context"
@@ -79,7 +79,7 @@ func Execute() error {
 	processor.DisplayMatchResults(matchedResults)
 
 	// Create AI client for semantic analysis
-	client, err := createAIClient(cfg)
+	client, err := providers.CreateAIClient(cfg)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error creating AI client: %v\n", err)
 		return err
@@ -105,34 +105,6 @@ func Execute() error {
 	}
 
 	return nil
-}
-
-func createAIClient(cfg *config.Config) (providers.Client, error) {
-	// Convert config to provider config
-	providerConfig := &providers.Config{
-		Provider:   cfg.Provider,
-		Model:      cfg.Model,
-		APIKey:     cfg.APIKey,
-		BaseURL:    cfg.BaseURL,
-		Timeout:    time.Duration(cfg.Timeout) * time.Second,
-		MaxRetries: cfg.MaxRetries,
-	}
-
-	var client providers.Client
-	var err error
-
-	switch cfg.Provider {
-	case "openai":
-		client, err = providers.NewOpenAIClient(providerConfig)
-	default:
-		return nil, fmt.Errorf("unsupported provider: %s", cfg.Provider)
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to create client: %w", err)
-	}
-
-	return client, nil
 }
 
 func showUsage() {

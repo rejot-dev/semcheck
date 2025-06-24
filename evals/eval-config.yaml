@@ -1,0 +1,56 @@
+version: "1.0"
+provider: "openai"
+model: "gpt-4o"
+api_key: "${OPENAI_API_KEY}"
+timeout: 60
+max_retries: 2
+fail_on_issues: false
+
+rules:
+  - name: "case1"
+    description: "Correct!"
+    enabled: true
+    files:
+      include:
+        - "./evals/cases/case1/impl.go"
+    specs:
+      - path: "./evals/cases/case1/spec.md"
+    severity: "error"
+
+
+  - name: "case2"
+    description: |
+      Subtract function is not implemented
+    enabled: true
+    files:
+      include:
+        - "./evals/cases/case2/impl.go"
+    specs:
+      - path: "./evals/cases/case2/spec.md"
+    severity: "error"
+
+
+  - name: "case3"
+    description: |
+     ProcessString has wrong signature - should return (string, error) but returns only string
+     FormatMessage has wrong parameter types - should accept ...interface{} but accepts only one string
+    enabled: true
+    files:
+      include:
+        - "./evals/cases/case3/impl.go"
+    specs:
+      - path: "./evals/cases/case3/spec.md"
+    severity: "error"
+
+
+  - name: "case4"
+    description: |
+      IsValidEmail has incorrect logic - only checks for @ but not domain
+      IsPositive has incorrect logic - returns true for 0 but should only return true for > 0
+    enabled: true
+    files:
+      include:
+        - "./evals/cases/case4/impl.go"
+    specs:
+      - path: "./evals/cases/case4/spec.md"
+    severity: "error"

@@ -2,7 +2,10 @@ package providers
 
 import (
 	"context"
+	"fmt"
 	"time"
+
+	"rejot.dev/semcheck/internal/config"
 )
 
 // Response represents the response from an AI provider
@@ -55,4 +58,32 @@ type Config struct {
 	BaseURL    string        `yaml:"base_url,omitempty"`
 	Timeout    time.Duration `yaml:"timeout"`
 	MaxRetries int           `yaml:"max_retries"`
+}
+
+func CreateAIClient(cfg *config.Config) (Client, error) {
+	// Convert config to provider config
+	providerConfig := &Config{
+		Provider:   cfg.Provider,
+		Model:      cfg.Model,
+		APIKey:     cfg.APIKey,
+		BaseURL:    cfg.BaseURL,
+		Timeout:    time.Duration(cfg.Timeout) * time.Second,
+		MaxRetries: cfg.MaxRetries,
+	}
+
+	var client Client
+	var err error
+
+	switch cfg.Provider {
+	case "openai":
+		client, err = NewOpenAIClient(providerConfig)
+	default:
+		return nil, fmt.Errorf("unsupported provider: %s", cfg.Provider)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create client: %w", err)
+	}
+
+	return client, nil
 }

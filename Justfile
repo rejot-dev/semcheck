@@ -9,7 +9,7 @@ default:
 dogfood: build
     ./semcheck $(find . -type f -name "*" | grep -v ".git")
 
-pre-commit: check build
+pre-commit: check build build-eval
     ./semcheck $(git diff --name-only --cached)
 
 # Install pre-commit hook
@@ -25,7 +25,10 @@ install-pre-commit:
 
 # Build the semcheck binary
 build:
-    go build -o semcheck .
+    go build -o semcheck ./cmd/cli
+
+build-eval:
+    go build -o semcheck-eval ./cmd/eval
 
 # Run tests for all packages
 test:
@@ -43,17 +46,16 @@ test-coverage:
 
 # Clean build artifacts
 clean:
-    rm -f semcheck
+    rm -f semcheck semcheck-eval
     rm -f coverage.out coverage.html
 
 # Format code
 fmt:
     go fmt ./...
 
-# Run with example config and a test file
-demo:
-    @just build
-    ./semcheck -config examples/correct.yaml main.go
+# Run evaluation suite to test semcheck performance
+eval: build-eval
+    ./semcheck-eval
 
 # Run all checks (format, test, lint)
 check: fmt test

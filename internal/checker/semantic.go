@@ -13,7 +13,7 @@ import (
 )
 
 type CheckResult struct {
-	Issues      []providers.SemanticIssue
+	Issues      map[string][]providers.SemanticIssue
 	Processed   int
 	Passed      int
 	Failed      int
@@ -39,7 +39,9 @@ func compareKey(ruleName string, path string) string {
 }
 
 func (c *SemanticChecker) CheckFiles(ctx context.Context, matches []processor.MatcherResult) (*CheckResult, error) {
-	result := &CheckResult{}
+	result := &CheckResult{
+		Issues: make(map[string][]providers.SemanticIssue),
+	}
 
 	compared := make(map[string]bool)
 
@@ -74,7 +76,7 @@ func (c *SemanticChecker) CheckFiles(ctx context.Context, matches []processor.Ma
 				return nil, fmt.Errorf("failed to compare %s to %s: %w", match.Path, match.Counterparts, err)
 			}
 
-			result.Issues = append(result.Issues, issues...)
+			result.Issues[ruleName] = append(result.Issues[ruleName], issues...)
 			result.Processed++
 
 			if len(issues) == 0 {
@@ -218,7 +220,12 @@ func DisplayCheckResults(result *CheckResult) {
 		fmt.Printf("❌ Failed: %d\n", result.Failed)
 	}
 
-	if len(result.Issues) == 0 {
+	totalIssues := 0
+	for _, issues := range result.Issues {
+		totalIssues += len(issues)
+	}
+
+	if totalIssues == 0 {
 		fmt.Println("\n🎉 No issues found! All implementations match their specifications.")
 		return
 	}
@@ -228,14 +235,16 @@ func DisplayCheckResults(result *CheckResult) {
 	warningIssues := make([]providers.SemanticIssue, 0)
 	infoIssues := make([]providers.SemanticIssue, 0)
 
-	for _, issue := range result.Issues {
-		switch issue.Level {
-		case "ERROR":
-			errorIssues = append(errorIssues, issue)
-		case "WARNING":
-			warningIssues = append(warningIssues, issue)
-		case "INFO":
-			infoIssues = append(infoIssues, issue)
+	for _, issues := range result.Issues {
+		for _, issue := range issues {
+			switch issue.Level {
+			case "ERROR":
+				errorIssues = append(errorIssues, issue)
+			case "WARNING":
+				warningIssues = append(warningIssues, issue)
+			case "INFO":
+				infoIssues = append(infoIssues, issue)
+			}
 		}
 	}
 
