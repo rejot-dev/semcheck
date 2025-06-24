@@ -54,3 +54,14 @@ rules:
     specs:
       - path: "./evals/cases/case4/spec.md"
     severity: "error"
+
+  - name: "case5"
+    description: |
+      Default value not implemented for function argument
+    enabled: true
+    files:
+      include:
+        - "./evals/cases/case5/impl.go"
+    specs:
+      - path: "./evals/cases/case5/spec.md"
+    severity: "error"
