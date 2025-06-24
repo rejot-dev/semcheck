@@ -58,10 +58,39 @@ rules:
   - name: "case5"
     description: |
       Default value not implemented for function argument
-    enabled: true
+    enabled: false
     files:
       include:
         - "./evals/cases/case5/impl.go"
     specs:
       - path: "./evals/cases/case5/spec.md"
+    severity: "error"
+
+  - name: "case6"
+    description: |
+      Complex file processing API implementation with multiple severity-level issues:
+      
+      ERROR level issues (3):
+      - ProcessFile missing required 'options ProcessOptions' parameter per specification
+      - Missing path traversal security validation (spec: "MUST validate file path to prevent directory traversal attacks")  
+      - ProcessBatch returns []*ProcessResult instead of []ProcessResult as specified
+      
+      WARNING level issues (4):
+      - Missing corruption detection (spec: "MUST detect and reject corrupted files")
+      - Missing recommended audit logging for ValidateFileSize
+      - Inefficient O(n²) algorithm in ProcessBatch (nested loops)
+      - Non-standard error message format (spec requires: "failed to process file [filename]: [reason]")
+      
+      INFO level issues (5):
+      - Undocumented default timeout value (30 seconds)
+      - Missing optional caching implementation
+      - Undocumented MaxRetries default value
+      - Additional utility functions not required by spec
+      - Incomplete integrity validation (only checks file extension)
+    enabled: true
+    files:
+      include:
+        - "./evals/cases/case6/impl.go"
+    specs:
+      - path: "./evals/cases/case6/spec.md"
     severity: "error"
