@@ -119,7 +119,7 @@ func (c *SemanticChecker) findRule(name string) *config.Rule {
 }
 
 func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Rule, specFile string, implFiles []string) ([]providers.SemanticIssue, error) {
-	fmt.Printf("comparing spec %s to impls %v\n", specFile, implFiles)
+	fmt.Printf("Comparing spec file %s to implementation files %v\n", specFile, implFiles)
 	// Read specification file
 	specContent, err := c.readFile(specFile)
 	if err != nil {
@@ -188,91 +188,6 @@ func (c *SemanticChecker) buildComparisonPrompt(rule *config.Rule, specFile, spe
 	}
 
 	return result.String()
-}
-
-// DisplayCheckResults formats and displays the semantic analysis results
-func DisplayCheckResults(result *CheckResult) {
-	fmt.Println("\n--- Semantic Analysis Results ---")
-
-	if result.Processed == 0 {
-		fmt.Println("No spec-implementation pairs found to analyze.")
-		return
-	}
-
-	fmt.Printf("Analyzed %d spec-implementation pairs\n", result.Processed)
-	fmt.Printf("✅ Passed: %d\n", result.Passed)
-	if result.Failed > 0 {
-		fmt.Printf("❌ Failed: %d\n", result.Failed)
-	}
-
-	totalIssues := 0
-	for _, issues := range result.Issues {
-		totalIssues += len(issues)
-	}
-
-	if totalIssues == 0 {
-		fmt.Println("\n🎉 No issues found! All implementations match their specifications.")
-		return
-	}
-
-	// Group issues by level
-	errorIssues := make([]providers.SemanticIssue, 0)
-	warningIssues := make([]providers.SemanticIssue, 0)
-	infoIssues := make([]providers.SemanticIssue, 0)
-
-	for _, issues := range result.Issues {
-		for _, issue := range issues {
-			switch issue.Level {
-			case "ERROR":
-				errorIssues = append(errorIssues, issue)
-			case "WARNING":
-				warningIssues = append(warningIssues, issue)
-			case "INFO":
-				infoIssues = append(infoIssues, issue)
-			}
-		}
-	}
-
-	// Display errors
-	if len(errorIssues) > 0 {
-		fmt.Printf("\n🚨 Errors (%d):\n", len(errorIssues))
-		for _, issue := range errorIssues {
-			displayIssue(issue)
-		}
-	}
-
-	// Display warnings
-	if len(warningIssues) > 0 {
-		fmt.Printf("\n⚠️  Warnings (%d):\n", len(warningIssues))
-		for _, issue := range warningIssues {
-			displayIssue(issue)
-		}
-	}
-
-	// Display info
-	if len(infoIssues) > 0 {
-		fmt.Printf("\n💡 Info (%d):\n", len(infoIssues))
-		for _, issue := range infoIssues {
-			displayIssue(issue)
-		}
-	}
-
-	fmt.Printf("\nSummary: %d errors, %d warnings, %d info\n",
-		len(errorIssues), len(warningIssues), len(infoIssues))
-}
-
-func displayIssue(issue providers.SemanticIssue) {
-	fmt.Printf("  • %s (confidence: %.1f)\n", issue.Message, issue.Confidence)
-	if issue.LineNumber > 0 {
-		fmt.Printf("    Line: %d\n", issue.LineNumber)
-	}
-	if issue.Reasoning != "" {
-		fmt.Printf("    🔍 %s\n", issue.Reasoning)
-	}
-	if issue.Suggestion != "" {
-		fmt.Printf("    💡 %s\n", issue.Suggestion)
-	}
-	fmt.Println()
 }
 
 // severityLevel returns the numeric value for severity comparison

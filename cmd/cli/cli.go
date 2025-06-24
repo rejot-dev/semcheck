@@ -14,10 +14,11 @@ import (
 )
 
 var (
-	configPath = flag.String("config", "semcheck.yaml", "path to configuration file")
-	showHelp   = flag.Bool("help", false, "show help message")
-	showVer    = flag.Bool("version", false, "show version")
-	showConfig = flag.Bool("show-config", false, "print full configuration")
+	configPath      = flag.String("config", "semcheck.yaml", "path to configuration file")
+	showHelp        = flag.Bool("help", false, "show help message")
+	showVer         = flag.Bool("version", false, "show version")
+	showConfig      = flag.Bool("show-config", false, "print full configuration")
+	includeAnalysis = flag.Bool("include-analysis", false, "Include additional analysis in results")
 )
 
 const version = "0.1.0"
@@ -97,7 +98,10 @@ func Execute() error {
 	}
 
 	// Display results
-	checker.DisplayCheckResults(checkResult)
+	reporter := checker.NewStdoutReporter(&checker.StdoutReporterOptions{
+		ShowAnalysis: *includeAnalysis,
+	})
+	reporter.Report(checkResult)
 
 	// Determine exit code based on results
 	if checkResult.ShouldFail(cfg) {
