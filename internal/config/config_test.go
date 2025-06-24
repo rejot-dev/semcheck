@@ -10,6 +10,13 @@ func TestLoad(t *testing.T) {
 	// Create a temporary config file
 	tempDir := t.TempDir()
 	configPath := filepath.Join(tempDir, "test-config.yaml")
+	specPath := filepath.Join(tempDir, "spec.md")
+
+	// Create the spec file that the config references
+	err := os.WriteFile(specPath, []byte("# Test Spec"), 0644)
+	if err != nil {
+		t.Fatalf("failed to write test spec: %v", err)
+	}
 
 	validConfig := `version: "1.0"
 provider: openai
@@ -26,12 +33,12 @@ rules:
       include:
         - "*.go"
     specs:
-      - path: "spec.md"
+      - path: "` + specPath + `"
     severity: "error"
     confidence_threshold: 0.8
 `
 
-	err := os.WriteFile(configPath, []byte(validConfig), 0644)
+	err = os.WriteFile(configPath, []byte(validConfig), 0644)
 	if err != nil {
 		t.Fatalf("failed to write test config: %v", err)
 	}
@@ -84,8 +91,8 @@ rules:
 	if len(rule.Specs) != 1 {
 		t.Errorf("expected 1 spec, got %d", len(rule.Specs))
 	}
-	if rule.Specs[0].Path != "spec.md" {
-		t.Errorf("expected spec path 'spec.md', got %s", rule.Specs[0].Path)
+	if rule.Specs[0].Path != specPath {
+		t.Errorf("expected spec path '%s', got %s", specPath, rule.Specs[0].Path)
 	}
 	if rule.Severity != "error" {
 		t.Errorf("expected severity 'error', got %s", rule.Severity)
@@ -119,6 +126,14 @@ func TestLoad_InvalidYAML(t *testing.T) {
 }
 
 func TestConfig_validate(t *testing.T) {
+	// Create temp directory and spec file for tests
+	tempDir := t.TempDir()
+	specPath := filepath.Join(tempDir, "spec.md")
+	err := os.WriteFile(specPath, []byte("# Test Spec"), 0644)
+	if err != nil {
+		t.Fatalf("failed to write test spec: %v", err)
+	}
+
 	tests := []struct {
 		name      string
 		config    Config
@@ -136,7 +151,7 @@ func TestConfig_validate(t *testing.T) {
 						Name:        "test",
 						Description: "test rule",
 						Files:       FilePattern{Include: []string{"*.go"}},
-						Specs:       []Spec{{Path: "spec.md"}},
+						Specs:       []Spec{{Path: specPath}},
 					},
 				},
 			},
@@ -209,7 +224,7 @@ func TestConfig_validate(t *testing.T) {
 						Name:        "test",
 						Description: "test rule",
 						Files:       FilePattern{Include: []string{"*.go"}},
-						Specs:       []Spec{{Path: "spec.md"}},
+						Specs:       []Spec{{Path: specPath}},
 					},
 				},
 			},
@@ -237,7 +252,7 @@ func TestConfig_validate(t *testing.T) {
 						Name:                "test",
 						Description:         "test rule",
 						Files:               FilePattern{Include: []string{"*.go"}},
-						Specs:               []Spec{{Path: "spec.md"}},
+						Specs:               []Spec{{Path: specPath}},
 						ConfidenceThreshold: 1.5, // too big
 					},
 				},
@@ -260,6 +275,14 @@ func TestConfig_validate(t *testing.T) {
 }
 
 func TestConfig_validate_Defaults(t *testing.T) {
+	// Create temp directory and spec file for test
+	tempDir := t.TempDir()
+	specPath := filepath.Join(tempDir, "spec.md")
+	err := os.WriteFile(specPath, []byte("# Test Spec"), 0644)
+	if err != nil {
+		t.Fatalf("failed to write test spec: %v", err)
+	}
+
 	config := Config{
 		Version:  "1.0",
 		Provider: "openai",
@@ -270,12 +293,12 @@ func TestConfig_validate_Defaults(t *testing.T) {
 				Name:        "test",
 				Description: "test rule",
 				Files:       FilePattern{Include: []string{"*.go"}},
-				Specs:       []Spec{{Path: "spec.md"}},
+				Specs:       []Spec{{Path: specPath}},
 			},
 		},
 	}
 
-	err := config.validate()
+	err = config.validate()
 	if err != nil {
 		t.Fatalf("validation failed: %v", err)
 	}

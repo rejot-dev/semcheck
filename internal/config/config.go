@@ -128,6 +128,13 @@ func (c *Config) validate() error {
 			if spec.Path == "" {
 				return fmt.Errorf("spec path is required for rule: %s", rule.Name)
 			}
+			// Validate that spec file exists and is readable
+			if _, err := os.Stat(spec.Path); err != nil {
+				if os.IsNotExist(err) {
+					return fmt.Errorf("spec file does not exist: %s for rule: %s", spec.Path, rule.Name)
+				}
+				return fmt.Errorf("spec file is not readable: %s for rule: %s (%v)", spec.Path, rule.Name, err)
+			}
 		}
 	}
 

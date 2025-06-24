@@ -228,5 +228,4 @@ When you provide a list of files to semcheck, semcheck will automatically match 
 
 ### Specification File Validation
 
-- All specified paths must exist and be readable
-- File types must match their actual format
+- All specified paths must exist and be readable at configuration load time
