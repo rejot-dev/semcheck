@@ -105,9 +105,9 @@ func (c *OpenAIClient) Complete(ctx context.Context, req *Request) (*Response, e
 		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.UserMessage(req.Prompt),
 		},
-		Model:       openai.ChatModel(c.model),
-		MaxTokens:   openai.Int(int64(maxTokens)),
-		Temperature: openai.Float(temperature),
+		Model:               openai.ChatModel(c.model),
+		MaxCompletionTokens: openai.Int(int64(req.MaxTokens)),
+		Temperature:         openai.Float(req.Temperature),
 		ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
 			OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{
 				JSONSchema: schemaParam,
