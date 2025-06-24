@@ -1,7 +1,7 @@
-rule_name,expected_errors
-case1,0
-case2,1
-case3,2
-case4,2
-case5,1
-case6,3
+rule_name,expected_errors,expected_warnings,expected_info
+case1,0,0,0
+case2,1,0,0
+case3,2,0,0
+case4,2,0,0
+case5,1,0,0
+case6,3,5,4

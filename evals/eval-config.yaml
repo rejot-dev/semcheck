@@ -58,7 +58,7 @@ rules:
   - name: "case5"
     description: |
       Default value not implemented for function argument
-    enabled: false
+    enabled: true
     files:
       include:
         - "./evals/cases/case5/impl.go"
@@ -75,15 +75,15 @@ rules:
       - Missing path traversal security validation (spec: "MUST validate file path to prevent directory traversal attacks")  
       - ProcessBatch returns []*ProcessResult instead of []ProcessResult as specified
       
-      WARNING level issues (4):
+      WARNING level issues (5):
       - Missing corruption detection (spec: "MUST detect and reject corrupted files")
       - Missing recommended audit logging for ValidateFileSize
       - Inefficient O(n²) algorithm in ProcessBatch (nested loops)
       - Non-standard error message format (spec requires: "failed to process file [filename]: [reason]")
-      
-      INFO level issues (5):
-      - Undocumented default timeout value (30 seconds)
       - Missing optional caching implementation
+      
+      INFO level issues (4):
+      - Undocumented default timeout value (30 seconds)
       - Undocumented MaxRetries default value
       - Additional utility functions not required by spec
       - Incomplete integrity validation (only checks file extension)
