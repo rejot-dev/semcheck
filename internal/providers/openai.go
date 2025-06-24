@@ -86,7 +86,7 @@ func (c *OpenAIClient) Complete(ctx context.Context, req *Request) (*Response, e
 
 	temperature := req.Temperature
 	if temperature == 0 {
-		temperature = 0.8
+		temperature = 0.1
 	}
 
 	// Generate schema for structured output
@@ -103,7 +103,8 @@ func (c *OpenAIClient) Complete(ctx context.Context, req *Request) (*Response, e
 	// Create chat completion request with structured output
 	chatReq := openai.ChatCompletionNewParams{
 		Messages: []openai.ChatCompletionMessageParamUnion{
-			openai.UserMessage(req.Prompt),
+			openai.UserMessage(req.UserPrompt),
+			openai.SystemMessage(req.SystemPrompt),
 		},
 		Model:               openai.ChatModel(c.model),
 		MaxCompletionTokens: openai.Int(int64(req.MaxTokens)),

@@ -59,7 +59,7 @@ func TestClientInterface(t *testing.T) {
 				valid: true,
 			},
 			request: &Request{
-				Prompt:      "test prompt",
+				UserPrompt:  "test prompt",
 				MaxTokens:   100,
 				Temperature: 0.1,
 			},
@@ -74,7 +74,7 @@ func TestClientInterface(t *testing.T) {
 				valid: true,
 			},
 			request: &Request{
-				Prompt: "test prompt",
+				UserPrompt: "test prompt",
 			},
 			wantError: true,
 		},
@@ -85,7 +85,7 @@ func TestClientInterface(t *testing.T) {
 				valid: false,
 			},
 			request: &Request{
-				Prompt: "test prompt",
+				UserPrompt: "test prompt",
 			},
 			wantError: true,
 		},
@@ -118,14 +118,14 @@ func TestClientInterface(t *testing.T) {
 
 func TestRequest(t *testing.T) {
 	req := &Request{
-		Prompt:      "test prompt",
+		UserPrompt:  "test prompt",
 		MaxTokens:   500,
 		Temperature: 0.7,
 		Timeout:     30 * time.Second,
 	}
 
-	if req.Prompt != "test prompt" {
-		t.Errorf("expected prompt 'test prompt', got %s", req.Prompt)
+	if req.UserPrompt != "test prompt" {
+		t.Errorf("expected prompt 'test prompt', got %s", req.UserPrompt)
 	}
 	if req.MaxTokens != 500 {
 		t.Errorf("expected MaxTokens 500, got %d", req.MaxTokens)

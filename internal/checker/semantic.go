@@ -136,14 +136,15 @@ func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Ru
 		implContents = append(implContents, implContent)
 	}
 
-	// Create AI prompt for comparison
-	prompt := c.buildComparisonPrompt(rule, specFile, specContent, implFiles, implContents)
+	// Create AI user prompt for comparison
+	userPrompt := c.buildUserPrompt(rule, specFile, specContent, implFiles, implContents)
 
 	// Get AI analysis
 	req := &providers.Request{
-		Prompt:      prompt,
-		MaxTokens:   2000,
-		Temperature: 0.1,
+		SystemPrompt: SystemPrompt,
+		UserPrompt:   userPrompt,
+		MaxTokens:    3000,
+		Temperature:  0.1,
 	}
 
 	resp, err := c.client.Complete(ctx, req)
@@ -171,9 +172,7 @@ func (c *SemanticChecker) readFile(filePath string) (string, error) {
 	return string(content), nil
 }
 
-func (c *SemanticChecker) buildComparisonPrompt(rule *config.Rule, specFile, specContent string, implFiles []string, implContent []string) string {
-	tmpl := template.Must(template.New("prompt").Parse(PromptTemplate))
-
+func (c *SemanticChecker) buildUserPrompt(rule *config.Rule, specFile, specContent string, implFiles []string, implContent []string) string {
 	data := PromptData{
 		RulePrompt:  rule.Prompt,
 		SpecFile:    specFile,
@@ -182,12 +181,15 @@ func (c *SemanticChecker) buildComparisonPrompt(rule *config.Rule, specFile, spe
 		ImplContent: implContent,
 	}
 
-	var result strings.Builder
-	if err := tmpl.Execute(&result, data); err != nil {
+	// Build user prompt
+	userTmpl := template.Must(template.New("user").Parse(UserPromptTemplate))
+	var userResult strings.Builder
+	// TODO: actual error handling?
+	if err := userTmpl.Execute(&userResult, data); err != nil {
 		return ""
 	}
 
-	return result.String()
+	return userResult.String()
 }
 
 // severityLevel returns the numeric value for severity comparison

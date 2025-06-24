@@ -132,25 +132,29 @@ func TestSemanticChecker_buildComparisonPrompt(t *testing.T) {
 		Prompt: "Check for proper error handling",
 	}
 
-	prompt := checker.buildComparisonPrompt(rule, "spec.md", "spec content", []string{"impl.go"}, []string{"impl content"})
+	userPrompt := checker.buildUserPrompt(rule, "spec.md", "spec content", []string{"impl.go"}, []string{"impl content"})
 
-	if !strings.Contains(prompt, "Check for proper error handling") {
-		t.Error("Prompt should contain custom rule instructions")
+	if !strings.Contains(userPrompt, "Check for proper error handling") {
+		t.Error("User prompt should contain custom rule instructions")
 	}
 
-	if !strings.Contains(prompt, "spec.md") {
-		t.Error("Prompt should contain spec file name")
+	if !strings.Contains(userPrompt, "spec.md") {
+		t.Error("User prompt should contain spec file name")
 	}
 
-	if !strings.Contains(prompt, "impl.go") {
-		t.Error("Prompt should contain impl file name")
+	if !strings.Contains(userPrompt, "impl.go") {
+		t.Error("User prompt should contain impl file name")
 	}
 
-	if !strings.Contains(prompt, "spec content") {
-		t.Error("Prompt should contain spec content")
+	if !strings.Contains(userPrompt, "spec content") {
+		t.Error("User prompt should contain spec content")
 	}
 
-	if !strings.Contains(prompt, "impl content") {
-		t.Error("Prompt should contain impl content")
+	if !strings.Contains(userPrompt, "impl content") {
+		t.Error("User prompt should contain impl content")
+	}
+
+	if !strings.Contains(SystemPrompt, "SEVERITY LEVEL GUIDELINES") {
+		t.Error("System prompt should contain severity guidelines")
 	}
 }
