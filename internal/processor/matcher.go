@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"rejot.dev/semcheck/internal/config"
+	"github.com/rejot-dev/semcheck/internal/config"
 )
 
 type FileType int

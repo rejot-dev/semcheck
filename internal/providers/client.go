@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"rejot.dev/semcheck/internal/config"
+	"github.com/rejot-dev/semcheck/internal/config"
 )
 
 // Response represents the response from an AI provider

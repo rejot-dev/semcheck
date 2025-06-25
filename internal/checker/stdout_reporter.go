@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"rejot.dev/semcheck/internal/providers"
+	"github.com/rejot-dev/semcheck/internal/providers"
 )
 
 var (

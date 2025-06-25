@@ -25,7 +25,7 @@ install-pre-commit:
 
 # Build the semcheck binary
 build:
-    go build -o semcheck ./cmd/cli
+    go build -o semcheck .
 
 build-eval:
     go build -o semcheck-eval ./cmd/eval

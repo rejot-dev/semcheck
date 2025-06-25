@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"rejot.dev/semcheck/internal/config"
+	"github.com/rejot-dev/semcheck/internal/config"
 )
 
 func TestNewMatcher(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"rejot.dev/semcheck/internal/config"
+	"github.com/rejot-dev/semcheck/internal/config"
 )
 
 // mockClient implements the Client interface for testing

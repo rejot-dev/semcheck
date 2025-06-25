@@ -1,4 +1,4 @@
-module rejot.dev/semcheck
+module github.com/rejot-dev/semcheck
 
 go 1.24.2
 

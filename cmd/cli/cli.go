@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"context"
@@ -7,10 +7,10 @@ import (
 	"os"
 	"time"
 
-	"rejot.dev/semcheck/internal/checker"
-	"rejot.dev/semcheck/internal/config"
-	"rejot.dev/semcheck/internal/processor"
-	"rejot.dev/semcheck/internal/providers"
+	"github.com/rejot-dev/semcheck/internal/checker"
+	"github.com/rejot-dev/semcheck/internal/config"
+	"github.com/rejot-dev/semcheck/internal/processor"
+	"github.com/rejot-dev/semcheck/internal/providers"
 )
 
 var (

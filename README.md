@@ -10,7 +10,6 @@ Semcheck validates that your code implementations match their specifications by 
 
 - Non-intrusive: don't have to change existing code or specification files
 - BYOM: Bring Your Own Model
-- 
 
 ## Installation
 
@@ -22,7 +21,7 @@ Semcheck validates that your code implementations match their specifications by 
 ### Install
 
 ```bash
-go install github.com/rejot-dev/semcheck/cmd/cli@latest
+go install github.com/rejot-dev/semcheck@latest
 ```
 
 ## Configuration
