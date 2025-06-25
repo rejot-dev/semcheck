@@ -19,6 +19,7 @@ var (
 	showVer         = flag.Bool("version", false, "show version")
 	showConfig      = flag.Bool("show-config", false, "print full configuration")
 	includeAnalysis = flag.Bool("include-analysis", false, "Include additional analysis in results")
+	initConfig      = flag.Bool("init", false, "create a semcheck.yaml file interactively")
 )
 
 const version = "0.1.0"
@@ -34,6 +35,10 @@ func Execute() error {
 	if *showVer {
 		fmt.Printf("semcheck version %s\n", version)
 		return nil
+	}
+
+	if *initConfig {
+		return runInit()
 	}
 
 	cfg, err := config.Load(*configPath)

@@ -40,7 +40,7 @@ func NewOpenAIClient(config *Config) (*OpenAIClient, error) {
 
 // Name returns the provider name
 func (c *OpenAIClient) Name() string {
-	return "openai"
+	return string(ProviderOpenAI)
 }
 
 // Validate checks if the client configuration is valid

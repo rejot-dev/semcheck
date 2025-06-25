@@ -26,7 +26,13 @@ go install github.com/rejot-dev/semcheck@latest
 
 ## Configuration
 
-Create a `semcheck.yaml` configuration file:
+Semcheck needs a configuration file to functions, one can be generated using the `-init` flag.
+
+```bash
+semcheck -init
+```
+
+This creates (by default) a `semcheck.yaml` configuration file, edit this file further to fit your needs.
 
 ```yaml
 version: "1.0"
@@ -56,13 +62,17 @@ rules:
 
 ### Basic Usage
 
-**Note:** A configuration file ( by default named `semcheck.yaml`) is required for the tool to function. See the [Configuration](#configuration) section above for setup instructions.
-
 ```bash
-# Check specific files
-semcheck file1.go file2.go
+# Init config file
+semcheck -init
 
-# Use custom config
+# Pass either implementation or specification files, semcheck will figure out which rules to check based on the files you pass here
+semcheck spec.md spec2.md impl.go
+
+# Run semcheck on your change set
+semcheck $(git diff --name-only --cached)
+
+# Use custom config file
 semcheck -config my-config.yaml file1.go
 
 # Show help

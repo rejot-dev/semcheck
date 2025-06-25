@@ -103,6 +103,7 @@ rules:
         - "pkg/**/*.go"
 
       # Files to exclude from analysis (OPTIONAL)
+      # .gitignore files are excluded automatically
       # Useful for excluding:
       #   - Test files that may not follow same patterns
       #   - Generated code that shouldn't be manually modified

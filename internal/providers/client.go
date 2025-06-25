@@ -8,6 +8,53 @@ import (
 	"github.com/rejot-dev/semcheck/internal/config"
 )
 
+type Provider string
+
+const (
+	ProviderOpenAI    Provider = "openai"
+	ProviderAnthropic Provider = "anthropic"
+)
+
+func ToProvider(provider string) (Provider, error) {
+	switch provider {
+	case "openai":
+		return ProviderOpenAI, nil
+	case "anthropic":
+		return ProviderAnthropic, nil
+	default:
+		return "", fmt.Errorf("invalid provider: %s", provider)
+	}
+}
+
+func GetAllProviders() []Provider {
+	return []Provider{ProviderOpenAI, ProviderAnthropic}
+}
+
+type ProviderDefaults struct {
+	Model     string
+	ApiKeyVar string
+}
+
+func GetProviderDefaults(provider Provider) ProviderDefaults {
+	switch provider {
+	case ProviderOpenAI:
+		return ProviderDefaults{
+			Model:     "gpt-4o",
+			ApiKeyVar: "OPENAI_API_KEY",
+		}
+	case ProviderAnthropic:
+		return ProviderDefaults{
+			Model:     "claude-sonnet-4-0",
+			ApiKeyVar: "ANTHROPIC_API_KEY",
+		}
+	default:
+		return ProviderDefaults{
+			Model:     "<unknown>",
+			ApiKeyVar: "<unknown>",
+		}
+	}
+}
+
 // Response represents the response from an AI provider
 type Response struct {
 	Usage  Usage
@@ -54,7 +101,7 @@ type SemanticIssue struct {
 
 // Config holds common configuration for AI providers
 type Config struct {
-	Provider   string
+	Provider   Provider
 	Model      string
 	APIKey     string
 	BaseURL    string
@@ -64,8 +111,14 @@ type Config struct {
 
 func CreateAIClient(cfg *config.Config) (Client, error) {
 	// Convert config to provider config
+
+	provider, providerErr := ToProvider(cfg.Provider)
+	if providerErr != nil {
+		return nil, fmt.Errorf("invalid provider: %s", cfg.Provider)
+	}
+
 	providerConfig := &Config{
-		Provider:   cfg.Provider,
+		Provider:   provider,
 		Model:      cfg.Model,
 		APIKey:     cfg.APIKey,
 		BaseURL:    cfg.BaseURL,
@@ -76,13 +129,13 @@ func CreateAIClient(cfg *config.Config) (Client, error) {
 	var client Client
 	var err error
 
-	switch cfg.Provider {
-	case "openai":
+	switch provider {
+	case ProviderOpenAI:
 		client, err = NewOpenAIClient(providerConfig)
-	case "anthropic":
+	case ProviderAnthropic:
 		client, err = NewAnthropicClient(providerConfig)
 	default:
-		return nil, fmt.Errorf("unsupported provider: %s", cfg.Provider)
+		return nil, fmt.Errorf("unsupported provider: %s", provider)
 	}
 
 	if err != nil {
