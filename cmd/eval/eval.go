@@ -89,7 +89,7 @@ func RunEvaluation() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.Timeout)*time.Second)
 	defer cancel()
 
-	checkResult, err := semanticChecker.CheckFiles(ctx, matchedResults)
+	checkResult, err := semanticChecker.CheckFiles(ctx, matchedResults, matcher)
 	if err != nil {
 		return fmt.Errorf("semantic analysis failed: %w", err)
 	}

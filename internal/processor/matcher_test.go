@@ -136,7 +136,7 @@ func TestMatcher_matchesPattern(t *testing.T) {
 	}
 }
 
-func TestMatcher_isIgnoredByGitignore(t *testing.T) {
+func TestMatcher_matchesPatterns(t *testing.T) {
 	matcher := &Matcher{
 		gitignoreRules: []string{"*.log", "temp/", ".DS_Store"},
 	}
@@ -170,9 +170,9 @@ func TestMatcher_isIgnoredByGitignore(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := matcher.isIgnoredByGitignore(tt.filePath)
+			result := matcher.matchesPatterns(tt.filePath, matcher.gitignoreRules)
 			if result != tt.expected {
-				t.Errorf("isIgnoredByGitignore(%q) = %v, expected %v", tt.filePath, result, tt.expected)
+				t.Errorf("matchesPatterns(%q, gitignore) = %v, expected %v", tt.filePath, result, tt.expected)
 			}
 		})
 	}
@@ -203,45 +203,50 @@ func TestMatcher_matchFile(t *testing.T) {
 	}
 
 	tests := []struct {
-		name          string
-		filePath      string
-		expectedType  FileType
-		expectedRules []string
+		name         string
+		filePath     string
+		expectedType FileType
+		expectedRule string
 	}{
 		{
-			name:          "go implementation file",
-			filePath:      "src/main.go",
-			expectedType:  FileTypeImpl,
-			expectedRules: []string{"go-files"},
+			name:         "go implementation file",
+			filePath:     "src/main.go",
+			expectedType: FileTypeImpl,
+			expectedRule: "go-files",
 		},
 		{
-			name:          "test file excluded",
-			filePath:      "src/main_test.go",
-			expectedType:  FileTypeIgnored,
-			expectedRules: nil,
+			name:         "test file excluded",
+			filePath:     "src/main_test.go",
+			expectedType: FileTypeIgnored,
+			expectedRule: "",
 		},
 		{
-			name:          "spec file",
-			filePath:      "specs/api.md",
-			expectedType:  FileTypeSpec,
-			expectedRules: []string{"go-files"},
+			name:         "spec file",
+			filePath:     "specs/api.md",
+			expectedType: FileTypeSpec,
+			expectedRule: "go-files",
 		},
 		{
-			name:          "ignored log file",
-			filePath:      "debug.log",
-			expectedType:  FileTypeIgnored,
-			expectedRules: nil,
+			name:         "ignored log file",
+			filePath:     "debug.log",
+			expectedType: FileTypeIgnored,
+			expectedRule: "",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := matcher.matchFile(tt.filePath)
+			results := matcher.matchFile(tt.filePath)
+			if len(results) == 0 {
+				t.Errorf("matchFile(%q) returned no results", tt.filePath)
+				return
+			}
+			result := results[0] // For these simple tests, expect one result
 			if result.Type != tt.expectedType {
 				t.Errorf("matchFile(%q).Type = %v, expected %v", tt.filePath, result.Type, tt.expectedType)
 			}
-			if !reflect.DeepEqual(result.MatchedRules, tt.expectedRules) {
-				t.Errorf("matchFile(%q).MatchedRules = %v, expected %v", tt.filePath, result.MatchedRules, tt.expectedRules)
+			if result.RuleName != tt.expectedRule {
+				t.Errorf("matchFile(%q).RuleName = %v, expected %v", tt.filePath, result.RuleName, tt.expectedRule)
 			}
 		})
 	}
@@ -320,13 +325,265 @@ func TestMatcher_MatchFiles(t *testing.T) {
 	}
 
 	for _, result := range results {
-		expectedType, exists := expectedTypes[result.Path]
+		expectedType, exists := expectedTypes[string(result.Path)]
 		if !exists {
 			t.Errorf("Unexpected file in results: %s", result.Path)
 			continue
 		}
 		if result.Type != expectedType {
 			t.Errorf("File %s: expected type %v, got %v", result.Path, expectedType, result.Type)
+		}
+	}
+}
+
+func TestMatcher_GetCounterparts(t *testing.T) {
+	cfg := &config.Config{
+		Rules: []config.Rule{
+			{
+				Name:    "test-rule",
+				Enabled: true,
+				Files: config.FilePattern{
+					Include: []string{"**/*.go"},
+				},
+				Specs: []config.Spec{
+					{Path: "spec1.md"},
+					{Path: "spec2.md"},
+				},
+			},
+		},
+	}
+
+	matcher := &Matcher{
+		config: cfg,
+		implFiles: RuleFileMap{
+			"test-rule": []NormalizedPath{"impl1.go", "impl2.go"},
+		},
+	}
+
+	// Test getting impl files for rule
+	implFiles := matcher.GetRuleImplFiles("test-rule")
+	expectedImpl := []NormalizedPath{"impl1.go", "impl2.go"}
+	if !reflect.DeepEqual(implFiles, expectedImpl) {
+		t.Errorf("GetRuleImplFiles: expected %v, got %v", expectedImpl, implFiles)
+	}
+
+	// Test getting spec files for rule
+	specFiles := matcher.GetRuleSpecFiles("test-rule")
+	expectedSpec := []NormalizedPath{"spec1.md", "spec2.md"}
+	if !reflect.DeepEqual(specFiles, expectedSpec) {
+		t.Errorf("GetRuleSpecFiles: expected %v, got %v", expectedSpec, specFiles)
+	}
+
+	// Test non-existent rule
+	nilResult := matcher.GetRuleImplFiles("non-existent")
+	if nilResult != nil {
+		t.Errorf("GetRuleImplFiles for non-existent rule: expected nil, got %v", nilResult)
+	}
+}
+
+func TestMatcher_MultipleRulesPerFile(t *testing.T) {
+	cfg := &config.Config{
+		Rules: []config.Rule{
+			{
+				Name:    "go-specs",
+				Enabled: true,
+				Files: config.FilePattern{
+					Include: []string{"**/*.go"},
+				},
+				Specs: []config.Spec{
+					{Path: "docs/*.md"},
+				},
+			},
+			{
+				Name:    "markdown-impl",
+				Enabled: true,
+				Files: config.FilePattern{
+					Include: []string{"**/*.md"},
+				},
+				Specs: []config.Spec{
+					{Path: "specs/*.txt"},
+				},
+			},
+		},
+	}
+
+	matcher := &Matcher{
+		config: cfg,
+	}
+
+	// Test a file that matches as impl in one rule and spec in another
+	results := matcher.matchFile("docs/api.md")
+
+	// Should return 2 results - one for each rule with different types
+	if len(results) != 2 {
+		t.Errorf("Expected 2 results for file matching multiple rules, got %d", len(results))
+	}
+
+	// Verify the results have correct types for each rule
+	ruleTypes := make(map[string]FileType)
+	for _, result := range results {
+		ruleTypes[result.RuleName] = result.Type
+	}
+
+	// For go-specs rule, docs/*.md should be a spec file
+	if ruleTypes["go-specs"] != FileTypeSpec {
+		t.Errorf("Expected FileTypeSpec for go-specs rule, got %v", ruleTypes["go-specs"])
+	}
+
+	// For markdown-impl rule, *.md should be an impl file
+	if ruleTypes["markdown-impl"] != FileTypeImpl {
+		t.Errorf("Expected FileTypeImpl for markdown-impl rule, got %v", ruleTypes["markdown-impl"])
+	}
+
+	// Verify both results have the same path
+	for _, result := range results {
+		if string(result.Path) != "docs/api.md" {
+			t.Errorf("Expected path 'docs/api.md', got '%s'", result.Path)
+		}
+	}
+}
+
+func TestMatcher_PathNormalizationDuplicates(t *testing.T) {
+	cfg := &config.Config{
+		Rules: []config.Rule{
+			{
+				Name:    "test-rule",
+				Enabled: true,
+				Files: config.FilePattern{
+					Include: []string{"src/**/*.go"}, // Different pattern to avoid overlap
+				},
+				Specs: []config.Spec{
+					{Path: "./docs/*.md"},
+				},
+			},
+		},
+	}
+
+	matcher := &Matcher{
+		config: cfg,
+	}
+
+	// Test both normalized and non-normalized paths via MatchFiles (which should deduplicate)
+	inputFiles := []string{
+		"docs/api.md",
+		"./docs/api.md", // Same file with different path representation
+	}
+
+	results, err := matcher.MatchFiles(inputFiles)
+	if err != nil {
+		t.Fatalf("MatchFiles failed: %v", err)
+	}
+
+	// Both inputs should be processed since MatchFiles deduplicates
+	if len(results) != 1 {
+		t.Errorf("Expected 1 results, got %d", len(results))
+		for i, result := range results {
+			t.Logf("Result %d: Path=%s, RuleName=%s, Type=%d", i, result.Path, result.RuleName, result.Type)
+		}
+		return
+	}
+
+	// Both results should have the same normalized path
+	for _, result := range results {
+		if string(result.Path) != "docs/api.md" {
+			t.Errorf("Expected normalized path 'docs/api.md', got '%s'", result.Path)
+		}
+	}
+}
+
+func TestMatcher_FileMatchingBothSpecAndImpl(t *testing.T) {
+	cfg := &config.Config{
+		Rules: []config.Rule{
+			{
+				Name:    "overlapping-rule",
+				Enabled: true,
+				Files: config.FilePattern{
+					Include: []string{"**/*.md"}, // This includes docs/api.md as impl
+				},
+				Specs: []config.Spec{
+					{Path: "docs/*.md"}, // This includes docs/api.md as spec
+				},
+			},
+		},
+	}
+
+	matcher := &Matcher{
+		config: cfg,
+	}
+
+	// Test a file that matches both as spec and impl in the same rule
+	results := matcher.matchFile("docs/api.md")
+
+	// This SHOULD return 2 results - one as spec, one as impl
+	if len(results) != 2 {
+		t.Errorf("Expected 2 results (spec and impl), got %d", len(results))
+	}
+
+	// Verify we have both types
+	types := make(map[FileType]bool)
+	for _, result := range results {
+		types[result.Type] = true
+		if result.RuleName != "overlapping-rule" {
+			t.Errorf("Expected rule name 'overlapping-rule', got '%s'", result.RuleName)
+		}
+		if string(result.Path) != "docs/api.md" {
+			t.Errorf("Expected path 'docs/api.md', got '%s'", result.Path)
+		}
+	}
+
+	if !types[FileTypeSpec] {
+		t.Errorf("Expected to find FileTypeSpec result")
+	}
+	if !types[FileTypeImpl] {
+		t.Errorf("Expected to find FileTypeImpl result")
+	}
+}
+
+func TestMatcher_GetCounterpartsNormalization(t *testing.T) {
+	cfg := &config.Config{
+		Rules: []config.Rule{
+			{
+				Name:    "test-rule",
+				Enabled: true,
+				Files: config.FilePattern{
+					Include: []string{"**/*.go"},
+				},
+				Specs: []config.Spec{
+					{Path: "./specs/api.md"}, // Non-normalized path in config
+					{Path: "specs/other.md"}, // Already normalized path in config
+				},
+			},
+		},
+	}
+
+	matcher := &Matcher{
+		config: cfg,
+		implFiles: RuleFileMap{
+			"test-rule": []NormalizedPath{"internal/api.go", "internal/other.go"},
+		},
+	}
+
+	// Test getting spec files for rule (should be normalized)
+	specFiles := matcher.GetRuleSpecFiles("test-rule")
+	expected := []NormalizedPath{"specs/api.md", "specs/other.md"} // Both should be normalized
+
+	if len(specFiles) != len(expected) {
+		t.Errorf("Expected %d spec files, got %d", len(expected), len(specFiles))
+	}
+
+	for i, expectedPath := range expected {
+		if i >= len(specFiles) {
+			break
+		}
+		if specFiles[i] != expectedPath {
+			t.Errorf("Expected spec file %s, got %s", expectedPath, specFiles[i])
+		}
+	}
+
+	// Verify no ./ prefixes in results
+	for _, path := range specFiles {
+		if len(string(path)) >= 2 && string(path)[:2] == "./" {
+			t.Errorf("Found non-normalized path in spec files: %s", path)
 		}
 	}
 }

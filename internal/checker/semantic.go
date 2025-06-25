@@ -21,6 +21,11 @@ type CheckResult struct {
 	HasFailures bool
 }
 
+type RuleComparisonFiles struct {
+	SpecFiles []string
+	ImplFiles []string
+}
+
 type SemanticChecker struct {
 	config     *config.Config
 	client     providers.Client
@@ -35,84 +40,126 @@ func NewSemanticChecker(cfg *config.Config, client providers.Client, workingDir 
 	}
 }
 
-func compareKey(ruleName string, path string) string {
-	return fmt.Sprintf("%s:%s", ruleName, path)
-}
-
-func (c *SemanticChecker) CheckFiles(ctx context.Context, matches []processor.MatcherResult) (*CheckResult, error) {
+func (c *SemanticChecker) CheckFiles(ctx context.Context, matches []processor.MatcherResult, matcher *processor.Matcher) (*CheckResult, error) {
 	result := &CheckResult{
 		Issues: make(map[string][]providers.SemanticIssue),
 	}
 
-	compared := make(map[string]bool)
+	// Group files by rule for comparison
+	ruleComparisons := c.buildRuleComparisons(matches, matcher)
 
+	for ruleName, comparison := range ruleComparisons {
+		rule := c.findRule(ruleName)
+		if rule == nil {
+			continue
+		}
+
+		// Make a single comparison for all files in this rule
+		issues, err := c.compareSpecToImpl(ctx, rule, comparison.SpecFiles, comparison.ImplFiles)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compare rule %s: %w", ruleName, err)
+		}
+
+		result.Issues[ruleName] = issues
+		result.Processed++
+
+		if len(issues) == 0 {
+			result.Passed++
+		} else {
+			// Check if any issues meet the rule's severity threshold for failure
+			shouldFailForRule := false
+			ruleSeverityLevel := severityLevel(strings.ToUpper(rule.Severity))
+
+			for _, issue := range issues {
+				issueSeverityLevel := severityLevel(issue.Level)
+				if issueSeverityLevel >= ruleSeverityLevel {
+					shouldFailForRule = true
+					result.HasFailures = true
+					break
+				}
+			}
+
+			if shouldFailForRule {
+				result.Failed++
+			} else {
+				result.Passed++
+			}
+		}
+	}
+
+	return result, nil
+}
+
+// buildRuleComparisons groups files by rule for efficient comparison
+func (c *SemanticChecker) buildRuleComparisons(matches []processor.MatcherResult, matcher *processor.Matcher) map[string]*RuleComparisonFiles {
+	ruleFiles := make(map[string]*RuleComparisonFiles)
+
+	// Process each matched file - now each match has a single rule and type
 	for _, match := range matches {
 		if match.Type == processor.FileTypeIgnored {
 			continue
 		}
 
-		for _, ruleName := range match.MatchedRules {
-			rule := c.findRule(ruleName)
-			if rule == nil {
-				continue
+		ruleName := match.RuleName
+
+		// Initialize rule comparison if it does not exist
+		if ruleFiles[ruleName] == nil {
+			ruleFiles[ruleName] = &RuleComparisonFiles{
+				SpecFiles: []string{},
+				ImplFiles: []string{},
 			}
+		}
 
-			// Check if we've already compared this file
-			// Assuming that if either specification or implementation file was used in a previous comparison
-			// it's been sufficiently analyzed already
-			// FIXME: this might not be entirely optimal
-			if compared[compareKey(ruleName, match.Path)] {
-				continue
-			}
+		comp := ruleFiles[ruleName]
 
-			var issues []providers.SemanticIssue
-			var err error
-			if match.Type == processor.FileTypeSpec {
-				issues, err = c.compareSpecToImpl(ctx, rule, []string{match.Path}, match.Counterparts)
-			} else {
-				issues, err = c.compareSpecToImpl(ctx, rule, match.Counterparts, []string{match.Path})
-			}
-
-			// Register files as compared
-			compared[compareKey(ruleName, match.Path)] = true
-			for _, counterpart := range match.Counterparts {
-				compared[compareKey(ruleName, counterpart)] = true
-			}
-
-			if err != nil {
-				return nil, fmt.Errorf("failed to compare %s to %s: %w", match.Path, match.Counterparts, err)
-			}
-
-			result.Issues[ruleName] = append(result.Issues[ruleName], issues...)
-			result.Processed++
-
-			if len(issues) == 0 {
-				result.Passed++
-			} else {
-				// Check if any issues meet the rule's severity threshold for failure
-				shouldFailForRule := false
-				ruleSeverityLevel := severityLevel(strings.ToUpper(rule.Severity))
-
-				for _, issue := range issues {
-					issueSeverityLevel := severityLevel(issue.Level)
-					if issueSeverityLevel >= ruleSeverityLevel {
-						shouldFailForRule = true
-						result.HasFailures = true
-						break
-					}
-				}
-
-				if shouldFailForRule {
-					result.Failed++
-				} else {
-					result.Passed++
-				}
-			}
-
+		// Add file to appropriate list based on type
+		if match.Type == processor.FileTypeSpec {
+			comp.SpecFiles = append(comp.SpecFiles, string(match.Path))
+		} else if match.Type == processor.FileTypeImpl {
+			comp.ImplFiles = append(comp.ImplFiles, string(match.Path))
 		}
 	}
 
-	return result, nil
+	// For each rule, ensure we have all relevant files
+	for ruleName, comp := range ruleFiles {
+		// Get all counterpart files for specs in this rule
+		if len(comp.SpecFiles) > 0 {
+			counterparts := processor.NormalizedPathsToStrings(matcher.GetRuleImplFiles(ruleName))
+			comp.ImplFiles = c.mergeUnique(comp.ImplFiles, counterparts)
+		}
+
+		// Get all counterpart files for impls in this rule
+		if len(comp.ImplFiles) > 0 {
+			counterparts := processor.NormalizedPathsToStrings(matcher.GetRuleSpecFiles(ruleName))
+			comp.SpecFiles = c.mergeUnique(comp.SpecFiles, counterparts)
+		}
+	}
+
+	return ruleFiles
+}
+
+// mergeUnique merges two string slices, removing duplicates
+func (c *SemanticChecker) mergeUnique(slice1, slice2 []string) []string {
+	seen := make(map[string]bool)
+	result := make([]string, 0)
+
+	// Add all from slice1
+	for _, item := range slice1 {
+		if !seen[item] {
+			seen[item] = true
+			result = append(result, item)
+		}
+	}
+
+	// Add unique items from slice2
+	for _, item := range slice2 {
+		if !seen[item] {
+			seen[item] = true
+			result = append(result, item)
+		}
+	}
+
+	return result
 }
 
 func (c *SemanticChecker) findRule(name string) *config.Rule {
@@ -125,7 +172,7 @@ func (c *SemanticChecker) findRule(name string) *config.Rule {
 }
 
 func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Rule, specFiles []string, implFiles []string) ([]providers.SemanticIssue, error) {
-	fmt.Printf("Comparing spec file %s to implementation files %v\n", specFiles, implFiles)
+	fmt.Printf("For rule '%s', comparing spec files %s to implementation files %v\n", rule.Name, specFiles, implFiles)
 	// Read specification files
 	specContents := make([]string, len(specFiles))
 	for i, specFile := range specFiles {

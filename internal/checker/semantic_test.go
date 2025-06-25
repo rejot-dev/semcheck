@@ -72,6 +72,13 @@ func Add(a, b int) int {
 			{
 				Name:                "test-rule",
 				ConfidenceThreshold: 0.7,
+				Files: config.FilePattern{
+					Include: []string{"**/*.go"},
+				},
+				Specs: []config.Spec{
+					{Path: "spec.md"},
+					{Path: "spec2.md"},
+				},
 			},
 		},
 	}
@@ -83,39 +90,42 @@ func Add(a, b int) int {
 
 	checker := NewSemanticChecker(cfg, client, tmpDir)
 
+	// Create a matcher for the test
+	matcher, err := processor.NewMatcher(cfg, tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to create matcher: %v", err)
+	}
+
 	matchedFiles := []processor.MatcherResult{
 		{
-			Path:         "spec.md",
-			Type:         processor.FileTypeSpec,
-			MatchedRules: []string{"test-rule"},
-			Counterparts: []string{"impl.go"},
+			Path:     "spec.md",
+			Type:     processor.FileTypeSpec,
+			RuleName: "test-rule",
 		},
 		{
-			Path:         "spec2.md",
-			Type:         processor.FileTypeSpec,
-			MatchedRules: []string{"test-rule"},
-			Counterparts: []string{"impl.go"},
+			Path:     "spec2.md",
+			Type:     processor.FileTypeSpec,
+			RuleName: "test-rule",
 		},
 		{
-			Path:         "impl.go",
-			Type:         processor.FileTypeImpl,
-			MatchedRules: []string{"test-rule"},
-			Counterparts: []string{"spec.md", "spec2.md"},
+			Path:     "impl.go",
+			Type:     processor.FileTypeImpl,
+			RuleName: "test-rule",
 		},
 	}
 
 	ctx := context.Background()
-	result, err := checker.CheckFiles(ctx, matchedFiles)
+	result, err := checker.CheckFiles(ctx, matchedFiles, matcher)
 	if err != nil {
 		t.Fatalf("CheckFiles failed: %v", err)
 	}
 
-	if result.Processed != 2 {
-		t.Errorf("Expected 2 processed, got %d", result.Processed)
+	if result.Processed != 1 {
+		t.Errorf("Expected 1 processed, got %d", result.Processed)
 	}
 
-	if result.Passed != 2 {
-		t.Errorf("Expected 2 passed, got %d", result.Passed)
+	if result.Passed != 1 {
+		t.Errorf("Expected 1 passed, got %d", result.Passed)
 	}
 
 	if result.Failed != 0 {

@@ -41,15 +41,31 @@ func (r IgnoreReason) String() string {
 }
 
 type MatcherResult struct {
-	Path         string
+	Path         NormalizedPath
 	Type         FileType
-	MatchedRules []string
-	Counterparts []string
+	RuleName     string
 	IgnoreReason IgnoreReason
 }
 
+type NormalizedPath string
+
+func NormalizedPathsToStrings(paths []NormalizedPath) []string {
+	result := make([]string, len(paths))
+	for i, path := range paths {
+		result[i] = string(path)
+	}
+	return result
+}
+
+func NormalizePath(path string) NormalizedPath {
+	if strings.HasPrefix(path, "./") {
+		return NormalizedPath(path[2:])
+	}
+	return NormalizedPath(path)
+}
+
 // mapping rule names to a list of files
-type RuleFileMap map[string][]string
+type RuleFileMap map[string][]NormalizedPath
 
 type Matcher struct {
 	config         *config.Config
@@ -82,7 +98,7 @@ func (m *Matcher) resolveImplFiles() error {
 		if !rule.Enabled {
 			continue
 		}
-		var files []string
+		var files []NormalizedPath
 
 		err := filepath.WalkDir(m.workingDir, func(path string, d os.DirEntry, err error) error {
 			if err != nil {
@@ -104,7 +120,7 @@ func (m *Matcher) resolveImplFiles() error {
 			}
 
 			if m.matchesPatterns(relPath, rule.Files.Include) {
-				files = append(files, relPath)
+				files = append(files, NormalizePath(relPath))
 			}
 
 			return nil
@@ -144,31 +160,68 @@ func (m *Matcher) loadGitignore() error {
 	return scanner.Err()
 }
 
+// Should this really be a method on the matcher?
+func (m *Matcher) GetRuleImplFiles(ruleName string) []NormalizedPath {
+	return m.implFiles[ruleName]
+}
+
+// Should this really be a method on the matcher?
+func (m *Matcher) GetRuleSpecFiles(ruleName string) []NormalizedPath {
+	rule := m.findRule(ruleName)
+	if rule == nil {
+		return nil
+	}
+	specFiles := make([]NormalizedPath, len(rule.Specs))
+	for i, spec := range rule.Specs {
+		specFiles[i] = NormalizePath(spec.Path)
+	}
+	return specFiles
+}
+
+// findRule finds a rule by name
+func (m *Matcher) findRule(name string) *config.Rule {
+
+	for i := range m.config.Rules {
+		if m.config.Rules[i].Name == name {
+			return &m.config.Rules[i]
+		}
+	}
+	return nil
+}
+
 func (m *Matcher) MatchFiles(inputFiles []string) ([]MatcherResult, error) {
 	var results []MatcherResult
+	seen := make(map[NormalizedPath]bool)
 
 	for _, file := range inputFiles {
-		matched := m.matchFile(file)
-		results = append(results, matched)
+		fileResults := m.matchFile(file)
+		for _, result := range fileResults {
+			if !seen[result.Path] {
+				seen[result.Path] = true
+				results = append(results, result)
+			}
+		}
 	}
 
 	return results, nil
 }
 
-func (m *Matcher) matchFile(filePath string) MatcherResult {
-	matched := MatcherResult{
-		Path: filePath,
-		Type: FileTypeIgnored,
-	}
+func (m *Matcher) matchFile(filePath string) []MatcherResult {
+	normalizedPath := NormalizePath(filePath)
 
 	// Check if file should be ignored by gitignore
-	if m.isIgnoredByGitignore(filePath) {
-		matched.IgnoreReason = IgnoreReasonGitignore
-		return matched
+	if m.matchesPatterns(filePath, m.gitignoreRules) {
+		return []MatcherResult{{
+			Path:         normalizedPath,
+			Type:         FileTypeIgnored,
+			IgnoreReason: IgnoreReasonGitignore,
+		}}
 	}
 
-	// Check against rules
+	var results []MatcherResult
 	var ruleExcluded bool
+
+	// Check against rules
 	for _, rule := range m.config.Rules {
 		if !rule.Enabled {
 			continue
@@ -180,48 +233,44 @@ func (m *Matcher) matchFile(filePath string) MatcherResult {
 			continue
 		}
 
-		// Check if file matches rule's include patterns
+		// Check if file matches rule's include patterns (impl file)
 		if m.matchesPatterns(filePath, rule.Files.Include) {
-			matched.Type = FileTypeImpl
-			matched.MatchedRules = append(matched.MatchedRules, rule.Name)
-			matched.Counterparts = make([]string, len(rule.Specs))
-			// TODO: check this is the best way to do this
-			for i, spec := range rule.Specs {
-				matched.Counterparts[i] = spec.Path
-			}
-			matched.IgnoreReason = IgnoreReasonNone // Clear ignore reason since it matched
+			results = append(results, MatcherResult{
+				Path:         normalizedPath,
+				Type:         FileTypeImpl,
+				RuleName:     rule.Name,
+				IgnoreReason: IgnoreReasonNone,
+			})
 		}
 
 		// Check if file matches any spec patterns
 		for _, spec := range rule.Specs {
 			if m.matchesPattern(filePath, spec.Path) {
-				matched.Type = FileTypeSpec
-				matched.MatchedRules = append(matched.MatchedRules, rule.Name)
-				matched.Counterparts = m.implFiles[rule.Name]
-				matched.IgnoreReason = IgnoreReasonNone // Clear ignore reason since it matched
+				results = append(results, MatcherResult{
+					Path:         normalizedPath,
+					Type:         FileTypeSpec,
+					RuleName:     rule.Name,
+					IgnoreReason: IgnoreReasonNone,
+				})
+				break // Only one spec match per rule is needed
 			}
 		}
 	}
 
-	// Set ignore reason if file was ignored
-	if matched.Type == FileTypeIgnored {
+	// If no matches found, return ignored result
+	if len(results) == 0 {
+		ignoreReason := IgnoreReasonNoRuleMatch
 		if ruleExcluded {
-			matched.IgnoreReason = IgnoreReasonExcludedByRule
-		} else {
-			matched.IgnoreReason = IgnoreReasonNoRuleMatch
+			ignoreReason = IgnoreReasonExcludedByRule
 		}
+		return []MatcherResult{{
+			Path:         normalizedPath,
+			Type:         FileTypeIgnored,
+			IgnoreReason: ignoreReason,
+		}}
 	}
 
-	return matched
-}
-
-func (m *Matcher) isIgnoredByGitignore(filePath string) bool {
-	for _, pattern := range m.gitignoreRules {
-		if m.matchesPattern(filePath, pattern) {
-			return true
-		}
-	}
-	return false
+	return results
 }
 
 func (m *Matcher) matchesPatterns(filePath string, patterns []string) bool {
@@ -233,6 +282,7 @@ func (m *Matcher) matchesPatterns(filePath string, patterns []string) bool {
 	return false
 }
 
+// TODO: this pattern matching for files probably doesn't need to be hand rolled like here.
 func (m *Matcher) matchesPattern(filePath, pattern string) bool {
 	// Normalize both file path and pattern by removing ./ prefix
 	const relativePrefixLen = len("./")
@@ -355,13 +405,10 @@ func DisplayMatchResults(matchedResults []MatcherResult) {
 		fmt.Printf("\n📋 Specification Files (%d):\n", len(specFiles))
 		for _, file := range specFiles {
 			fmt.Printf("  • %s", file.Path)
-			if len(file.MatchedRules) > 0 {
-				fmt.Printf(" [rules: %v]", file.MatchedRules)
+			if file.RuleName != "" {
+				fmt.Printf(" [rule: %s]", file.RuleName)
 			}
 			fmt.Println()
-			if len(file.Counterparts) > 0 {
-				fmt.Printf("    → Related implementations: %v\n", file.Counterparts)
-			}
 		}
 	}
 
@@ -369,13 +416,10 @@ func DisplayMatchResults(matchedResults []MatcherResult) {
 		fmt.Printf("\n⚙️  Implementation Files (%d):\n", len(implFiles))
 		for _, file := range implFiles {
 			fmt.Printf("  • %s", file.Path)
-			if len(file.MatchedRules) > 0 {
-				fmt.Printf(" [rules: %v]", file.MatchedRules)
+			if file.RuleName != "" {
+				fmt.Printf(" [rule: %s]", file.RuleName)
 			}
 			fmt.Println()
-			if len(file.Counterparts) > 0 {
-				fmt.Printf("    → Related specifications: %v\n", file.Counterparts)
-			}
 		}
 	}
 
