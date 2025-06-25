@@ -6,6 +6,12 @@ A Go-based tool for semantic checking of code implementations against specificat
 
 Semcheck validates that your code implementations match their specifications by leveraging large language models. It integrates seamlessly with pre-commit hooks to validate staged files and ensures your code adheres to documented requirements.
 
+## Goals
+
+- Non-intrusive: don't have to change existing code or specification files
+- BYOM: Bring Your Own Model
+- 
+
 ## Installation
 
 ### Prerequisites
