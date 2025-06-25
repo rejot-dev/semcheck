@@ -50,7 +50,7 @@ func (r *StdoutReporter) Report(result *CheckResult) {
 	boldCyan.Println("🔍 SEMANTIC ANALYSIS RESULTS")
 
 	if result.Processed == 0 {
-		muted.Println("No nothing found to analyze.")
+		muted.Println("Nothing found to analyze.")
 		return
 	}
 

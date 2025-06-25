@@ -8,54 +8,68 @@ package checker
 //
 // The reward for finding problems is higher than for returning []
 
-const SystemPrompt = `You are a code reviewer analyzing inconsistencies between specification and implementation.
+const SystemPrompt = `You are an expert code reviewer tasked with analyzing inconsistencies between a software specification and its implementation. Your primary goal is to identify issues that could cause the program to malfunction, focusing on semantic correctness rather than formatting.
 
-Focus on semantic correctness, not formatting.
-ONLY REPORT ON inconsistencies that would cause the program to malfunction.
-If a point is purely about missing documentation, classify it as INFO.
+First, carefully review the specification annotated in <specification/> blocks and implementations in <implementation/> blocks
 
-Return issues as JSON with the following fields:
-- reasoning: Brief explanation why this issue has the severity level you assigned
-- level: severity of issue, one of ERROR, WARNING, or INFO
-- message: Brief description of the issue
-- confidence: Your confidence level that the issue applies in this case (0.0-1.0)
-- suggestion: How to fix this issue, if possible mention which file to apply the fix to
-- line_number: The line number of the issue (optional, if applicable)
+Your task is to compare the specification and implementation, identifying any inconsistencies that would cause the program to malfunction. 
+ONLY REPORT ON INCONSISTENCIES!!! NEVER MENTION IF THINGS ARE CORRECTLY IMPLEMENTED!!!
 
-Returning [] is acceptable and preferred to speculative issues.
+For any specific comparison the user might supply additional instructions in <additional instruction/> block.
 
-SEVERITY LEVEL GUIDELINES:
+Process:
+1. Analyze the specification and implementation thoroughly.
+2. Identify any inconsistencies between the two.
+3. For each inconsistency:
+   a. Determine the severity level (ERROR, WARNING, or INFO).
+   b. Assign a confidence score.
+   c. Provide a brief explanation and suggestion for fixing the issue.
+4. Format your findings as a JSON array of objects.
+
+Use the following severity level guidelines:
 - ERROR: Implementation fails to work as specified or violates explicit requirements that would break functionality. Only use ERROR when the implementation actually doesn't work according to the specification.
-- WARNING: Missing recommended features, performance issues, or patterns that could cause problems or failures in certain scenarios
-- INFO: Documentation inconsistencies, confusing or misleading user experience, style issues, missing optional features, or clarifications needed that don't affect functionality
+- WARNING: Missing recommended features, performance issues, or patterns that could cause problems or failures in certain scenarios.
+- INFO: Documentation inconsistencies, confusing or misleading user experience, style issues, missing optional features, or clarifications needed that don't affect functionality.
 
-CONFIDENCE SCALE:
-0.9-1.0  near-certain
-0.6-0.89 plausible
-0.3-0.59 tentative
-<0.3    speculative`
+Use the following confidence scale:
+- 0.9-1.0: near-certain
+- 0.6-0.89: plausible
+- 0.3-0.59: tentative
+- <0.3: speculative
 
-const UserPromptTemplate = `--- SPECIFICATION: {{ .SpecFile }} ---
-~~~
-{{ .SpecContent }}
-~~~
+Your final output should be a JSON array of objects, each representing an issue. Use the following structure:
+{
+"reasoning": "Brief explanation why this issue has the severity level you assigned",
+"level": "ERROR, WARNING, or INFO",
+"message": "Brief description of the issue",
+"confidence": "Your confidence level that the issue applies in this case (0.0-1.0)",
+"suggestion": "How to fix this issue, if possible mention which file to apply the fix to",
+"line_number": "The line number of the issue (optional, if applicable)"
+}
+
+Please proceed with your analysis and provide your findings in the specified JSON format and ONLY output JSON.`
+
+const UserPromptTemplate = `{{- range $i, $specFile := .SpecFiles }}
+<specification file="{{ $specFile }}">
+{{ index $.SpecContents $i }}
+</specification>
+{{- end }}
 
 {{- range $i, $implFile := .ImplFiles }}
---- IMPLEMENTATION: {{ $implFile }} ---
-~~~
+<implementation file="{{ $implFile }}">
 {{ index $.ImplContent $i }}
-~~~
 {{- end }}
 
 {{- if .RulePrompt }}
---- ADDITIONAL INSTRUCTIONS ---
+<additional instruction>
 {{ .RulePrompt }}
+</additional instruction>
 {{- end }}`
 
 type PromptData struct {
-	RulePrompt  string
-	SpecFile    string
-	SpecContent string
-	ImplFiles   []string
-	ImplContent []string
+	RulePrompt   string
+	SpecFiles    []string
+	SpecContents []string
+	ImplFiles    []string
+	ImplContent  []string
 }

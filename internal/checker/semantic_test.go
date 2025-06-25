@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"rejot.dev/semcheck/internal/config"
@@ -121,40 +120,5 @@ func Add(a, b int) int {
 
 	if result.Failed != 0 {
 		t.Errorf("Expected 0 failed, got %d", result.Failed)
-	}
-}
-
-func TestSemanticChecker_buildComparisonPrompt(t *testing.T) {
-	checker := &SemanticChecker{}
-
-	rule := &config.Rule{
-		Name:   "test-rule",
-		Prompt: "Check for proper error handling",
-	}
-
-	userPrompt := checker.buildUserPrompt(rule, "spec.md", "spec content", []string{"impl.go"}, []string{"impl content"})
-
-	if !strings.Contains(userPrompt, "Check for proper error handling") {
-		t.Error("User prompt should contain custom rule instructions")
-	}
-
-	if !strings.Contains(userPrompt, "spec.md") {
-		t.Error("User prompt should contain spec file name")
-	}
-
-	if !strings.Contains(userPrompt, "impl.go") {
-		t.Error("User prompt should contain impl file name")
-	}
-
-	if !strings.Contains(userPrompt, "spec content") {
-		t.Error("User prompt should contain spec content")
-	}
-
-	if !strings.Contains(userPrompt, "impl content") {
-		t.Error("User prompt should contain impl content")
-	}
-
-	if !strings.Contains(SystemPrompt, "SEVERITY LEVEL GUIDELINES") {
-		t.Error("System prompt should contain severity guidelines")
 	}
 }

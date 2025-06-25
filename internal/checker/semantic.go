@@ -65,7 +65,13 @@ func (c *SemanticChecker) CheckFiles(ctx context.Context, matches []processor.Ma
 				continue
 			}
 
-			issues, err := c.compareSpecToImpl(ctx, rule, match.Path, match.Counterparts)
+			var issues []providers.SemanticIssue
+			var err error
+			if match.Type == processor.FileTypeSpec {
+				issues, err = c.compareSpecToImpl(ctx, rule, []string{match.Path}, match.Counterparts)
+			} else {
+				issues, err = c.compareSpecToImpl(ctx, rule, match.Counterparts, []string{match.Path})
+			}
 
 			// Register files as compared
 			compared[compareKey(ruleName, match.Path)] = true
@@ -118,15 +124,19 @@ func (c *SemanticChecker) findRule(name string) *config.Rule {
 	return nil
 }
 
-func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Rule, specFile string, implFiles []string) ([]providers.SemanticIssue, error) {
-	fmt.Printf("Comparing spec file %s to implementation files %v\n", specFile, implFiles)
-	// Read specification file
-	specContent, err := c.readFile(specFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read spec file %s: %w", specFile, err)
+func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Rule, specFiles []string, implFiles []string) ([]providers.SemanticIssue, error) {
+	fmt.Printf("Comparing spec file %s to implementation files %v\n", specFiles, implFiles)
+	// Read specification files
+	specContents := make([]string, len(specFiles))
+	for i, specFile := range specFiles {
+		specContent, err := c.readFile(specFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read spec file %s: %w", specFile, err)
+		}
+		specContents[i] = specContent
 	}
 
-	// Read implementation file
+	// Read implementation files
 	var implContents []string
 	for _, implFile := range implFiles {
 		implContent, err := c.readFile(implFile)
@@ -137,7 +147,7 @@ func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Ru
 	}
 
 	// Create AI user prompt for comparison
-	userPrompt := c.buildUserPrompt(rule, specFile, specContent, implFiles, implContents)
+	userPrompt := c.buildUserPrompt(rule, specFiles, specContents, implFiles, implContents)
 
 	// Get AI analysis
 	req := &providers.Request{
@@ -172,13 +182,13 @@ func (c *SemanticChecker) readFile(filePath string) (string, error) {
 	return string(content), nil
 }
 
-func (c *SemanticChecker) buildUserPrompt(rule *config.Rule, specFile, specContent string, implFiles []string, implContent []string) string {
+func (c *SemanticChecker) buildUserPrompt(rule *config.Rule, specFiles []string, specContents []string, implFiles []string, implContents []string) string {
 	data := PromptData{
-		RulePrompt:  rule.Prompt,
-		SpecFile:    specFile,
-		SpecContent: specContent,
-		ImplFiles:   implFiles,
-		ImplContent: implContent,
+		RulePrompt:   rule.Prompt,
+		SpecFiles:    specFiles,
+		SpecContents: specContents,
+		ImplFiles:    implFiles,
+		ImplContent:  implContents,
 	}
 
 	// Build user prompt

@@ -118,7 +118,7 @@ func (c *AnthropicClient) Complete(ctx context.Context, req *Request) (*Response
 	// Parse JSON response into our structured format
 	var structuredResp StructuredResponse
 	if err := json.Unmarshal([]byte(responseText), &structuredResp); err != nil {
-		return nil, fmt.Errorf("failed to parse structured response: %w, value: %s", err, responseText)
+		return nil, fmt.Errorf("failed to parse AI response: %w, value: %s", err, responseText)
 	}
 
 	// Convert to our response format
