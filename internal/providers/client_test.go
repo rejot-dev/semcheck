@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 	"time"
+
+	"rejot.dev/semcheck/internal/config"
 )
 
 // mockClient implements the Client interface for testing
@@ -59,9 +61,10 @@ func TestClientInterface(t *testing.T) {
 				valid: true,
 			},
 			request: &Request{
-				UserPrompt:  "test prompt",
-				MaxTokens:   100,
-				Temperature: 0.1,
+				SystemPrompt: "You are a helpful assistant",
+				UserPrompt:   "test prompt",
+				MaxTokens:    100,
+				Temperature:  0.1,
 			},
 			wantError:  false,
 			wantResult: "test response",
@@ -164,5 +167,65 @@ func TestResponse(t *testing.T) {
 	}
 	if resp.Issues[0].Level != "ERROR" {
 		t.Errorf("expected issue level 'ERROR', got %s", resp.Issues[0].Level)
+	}
+}
+
+func TestAnthropicClient(t *testing.T) {
+	// Test that AnthropicClient implements the Client interface
+	config := &Config{
+		Provider: "anthropic",
+		Model:    "claude-3-sonnet-20240229",
+		APIKey:   "test-key",
+	}
+
+	client, err := NewAnthropicClient(config)
+	if err != nil {
+		t.Fatalf("Failed to create Anthropic client: %v", err)
+	}
+
+	// Test client methods
+	if client.Name() != "anthropic" {
+		t.Errorf("Expected name 'anthropic', got %s", client.Name())
+	}
+
+	// Test validation
+	if err := client.Validate(); err != nil {
+		t.Errorf("Validation failed: %v", err)
+	}
+
+	// Test invalid config
+	invalidClient := &AnthropicClient{model: ""}
+	if err := invalidClient.Validate(); err == nil {
+		t.Error("Expected validation to fail for empty model")
+	}
+}
+
+func TestCreateAIClientAnthropic(t *testing.T) {
+	// Test CreateAIClient with Anthropic provider
+	cfg := &config.Config{
+		Provider: "anthropic",
+		Model:    "claude-3-sonnet-20240229",
+		APIKey:   "test-key",
+	}
+
+	client, err := CreateAIClient(cfg)
+	if err != nil {
+		t.Fatalf("Failed to create Anthropic client via factory: %v", err)
+	}
+
+	if client.Name() != "anthropic" {
+		t.Errorf("Expected client name 'anthropic', got %s", client.Name())
+	}
+
+	// Test invalid provider
+	invalidCfg := &config.Config{
+		Provider: "unsupported",
+		Model:    "test",
+		APIKey:   "test-key",
+	}
+
+	_, err = CreateAIClient(invalidCfg)
+	if err == nil {
+		t.Error("Expected error for unsupported provider")
 	}
 }

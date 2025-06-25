@@ -76,7 +76,7 @@ Sign off on phases once completed.
 
 ### Phase 5: Expansion
 
-- [ ] Implement Anthropic client
+- [x] Implement Anthropic client
 - [ ] Implement Local LLM client
 
 ## Code Conventions

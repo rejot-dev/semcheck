@@ -3,6 +3,8 @@ module rejot.dev/semcheck
 go 1.24.2
 
 require (
+	github.com/anthropics/anthropic-sdk-go v1.4.0
+	github.com/fatih/color v1.18.0
 	github.com/invopop/jsonschema v0.13.0
 	github.com/openai/openai-go v1.5.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -11,7 +13,6 @@ require (
 require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
-	github.com/fatih/color v1.18.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect

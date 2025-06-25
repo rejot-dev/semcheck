@@ -79,6 +79,8 @@ func CreateAIClient(cfg *config.Config) (Client, error) {
 	switch cfg.Provider {
 	case "openai":
 		client, err = NewOpenAIClient(providerConfig)
+	case "anthropic":
+		client, err = NewAnthropicClient(providerConfig)
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", cfg.Provider)
 	}
