@@ -136,12 +136,6 @@ func (r *StdoutReporter) displayIssue(issue providers.SemanticIssue, issueNumber
 	bold.Printf("%s\n", issue.Message)
 	fmt.Print("      ")
 	muted.Printf("Confidence: %.1f", issue.Confidence)
-
-	if issue.LineNumber > 0 {
-		fmt.Print("  ")
-		muted.Print("•  ")
-		muted.Printf("Line: %d", issue.LineNumber)
-	}
 	fmt.Println()
 
 	// Reasoning section with better formatting
