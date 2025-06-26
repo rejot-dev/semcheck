@@ -8,6 +8,7 @@ api_key: "${OPENAI_API_KEY}"
 timeout: 300
 max_retries: 3
 fail_on_issues: true
+temperature: 0.0
 
 rules:
   - name: "config-file-definition"

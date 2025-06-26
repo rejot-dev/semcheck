@@ -17,10 +17,11 @@ version: "1.0"
 
 # AI Provider Configuration (REQUIRED)
 # Specifies which AI service to use for semantic analysis
+# Checked upon client initialization
 # Supported values:
 #   - "openai": Use OpenAI's GPT models (requires API key)
 #   - "anthropic": Use Anthropic's Claude models (requires API key)
-#   - "local": Use a local LLM endpoint (e.g., Ollama, vLLM)
+#   - "gemini": Use Gemini's models (requires API key)
 provider: "openai"
 
 # Model name to use for analysis (REQUIRED)
@@ -52,6 +53,15 @@ base_url: "https://api.openai.com/v1"
 # Default: 30 seconds
 # Range: 10-300 seconds recommended
 timeout: 30
+
+# Temperature parameter for AI model responses (OPTIONAL)
+# Controls the randomness/creativity of AI responses
+# Lower values (0.0-0.3): More deterministic, consistent responses
+# Medium values (0.3-0.7): Balanced creativity and consistency
+# Higher values (0.7-1.0): More creative but potentially inconsistent
+# Default: 0.1 (low temperature for consistent analysis)
+# Range: 0.0-1.0
+temperature: 0.1
 
 # Maximum retry attempts for failed requests (OPTIONAL)
 # Number of times to retry failed API calls due to:
@@ -204,9 +214,9 @@ When you provide a list of files to semcheck, semcheck will automatically match 
 ### Required Fields
 
 - `version`: Must be "1.0" (case-sensitive)
-- `provider`: Must be "openai", "anthropic", or "local"
+- `provider`: Must be "openai", "anthropic", or "gemini"
 - `model`: Must be a valid model name for the selected provider
-- `api_key`: Required for "openai" and "anthropic" providers
+- `api_key`: Required for all providers
 - `rules`: Must contain at least one rule object
 - `rules[].name`: Must be unique within the configuration
 - `rules[].files.include`: Must contain at least one pattern

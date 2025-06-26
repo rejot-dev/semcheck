@@ -11,8 +11,9 @@ import (
 
 // AnthropicClient implements the Client interface for Anthropic API
 type AnthropicClient struct {
-	client *anthropic.Client
-	model  string
+	client      *anthropic.Client
+	model       string
+	temperature float64
 }
 
 // NewAnthropicClient creates a new Anthropic client
@@ -32,8 +33,9 @@ func NewAnthropicClient(config *Config) (*AnthropicClient, error) {
 	client := anthropic.NewClient(opts...)
 
 	return &AnthropicClient{
-		client: &client,
-		model:  config.Model,
+		client:      &client,
+		model:       config.Model,
+		temperature: config.Temperature,
 	}, nil
 }
 
@@ -65,10 +67,7 @@ func (c *AnthropicClient) Complete(ctx context.Context, req *Request) (*Response
 		maxTokens = 3000
 	}
 
-	temperature := req.Temperature
-	if temperature == 0 {
-		temperature = 0.1
-	}
+	temperature := c.temperature
 
 	// Apply timeout if specified
 	if req.Timeout > 0 {

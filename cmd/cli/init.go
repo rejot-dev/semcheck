@@ -20,6 +20,7 @@ version: "1.0"
 provider: "{{ .Provider }}"
 model: "{{ .Model }}"
 api_key: "${{ "{" }}{{ .APIKeyVar }}{{ "}" }}"
+temperature: 0.1
 
 # Rules define which files to check and their specifications
 rules:

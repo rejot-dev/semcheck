@@ -205,32 +205,6 @@ func TestConfig_validate(t *testing.T) {
 			wantError: true,
 		},
 		{
-			name: "missing api key for non-local provider",
-			config: Config{
-				Version:  "1.0",
-				Provider: "openai",
-				Model:    "gpt-4",
-			},
-			wantError: true,
-		},
-		{
-			name: "local provider without api key",
-			config: Config{
-				Version:  "1.0",
-				Provider: "local",
-				Model:    "local-model",
-				Rules: []Rule{
-					{
-						Name:        "test",
-						Description: "test rule",
-						Files:       FilePattern{Include: []string{"*.go"}},
-						Specs:       []Spec{{Path: specPath}},
-					},
-				},
-			},
-			wantError: false,
-		},
-		{
 			name: "no rules",
 			config: Config{
 				Version:  "1.0",
@@ -238,24 +212,6 @@ func TestConfig_validate(t *testing.T) {
 				Model:    "gpt-4",
 				APIKey:   "test-key",
 				Rules:    []Rule{},
-			},
-			wantError: true,
-		},
-		{
-			name: "Config with confidence threshold",
-			config: Config{
-				Version:  "1.0",
-				Provider: "local",
-				Model:    "local-model",
-				Rules: []Rule{
-					{
-						Name:                "test",
-						Description:         "test rule",
-						Files:               FilePattern{Include: []string{"*.go"}},
-						Specs:               []Spec{{Path: specPath}},
-						ConfidenceThreshold: 1.5, // too big
-					},
-				},
 			},
 			wantError: true,
 		},

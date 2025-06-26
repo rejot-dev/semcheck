@@ -11,8 +11,9 @@ import (
 
 // GeminiClient implements the Client interface for Google Gemini API
 type GeminiClient struct {
-	client *genai.Client
-	model  string
+	client      *genai.Client
+	model       string
+	temperature float64
 }
 
 func generateSchemaForGemini[T any]() interface{} {
@@ -44,8 +45,9 @@ func NewGeminiClient(config *Config) (*GeminiClient, error) {
 	}
 
 	return &GeminiClient{
-		client: client,
-		model:  config.Model,
+		client:      client,
+		model:       config.Model,
+		temperature: config.Temperature,
 	}, nil
 }
 
@@ -77,10 +79,7 @@ func (c *GeminiClient) Complete(ctx context.Context, req *Request) (*Response, e
 		maxTokens = 3000
 	}
 
-	temperature := float32(req.Temperature)
-	if temperature == 0 {
-		temperature = 0.1
-	}
+	temperature := float32(c.temperature)
 
 	// Apply timeout if specified
 	if req.Timeout > 0 {

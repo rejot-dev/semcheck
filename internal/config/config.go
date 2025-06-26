@@ -8,15 +8,16 @@ import (
 )
 
 type Config struct {
-	Version      string `yaml:"version"`
-	Provider     string `yaml:"provider"`
-	Model        string `yaml:"model"`
-	APIKey       string `yaml:"api_key"`
-	BaseURL      string `yaml:"base_url,omitempty"`
-	Timeout      int    `yaml:"timeout"`
-	MaxRetries   int    `yaml:"max_retries"`
-	FailOnIssues *bool  `yaml:"fail_on_issues,omitempty"`
-	Rules        []Rule `yaml:"rules"`
+	Version      string   `yaml:"version"`
+	Provider     string   `yaml:"provider"`
+	Model        string   `yaml:"model"`
+	APIKey       string   `yaml:"api_key"`
+	BaseURL      string   `yaml:"base_url,omitempty"`
+	Timeout      int      `yaml:"timeout"`
+	Temperature  *float64 `yaml:"temperature,omitempty"`
+	MaxRetries   int      `yaml:"max_retries"`
+	FailOnIssues *bool    `yaml:"fail_on_issues,omitempty"`
+	Rules        []Rule   `yaml:"rules"`
 }
 
 type Rule struct {
@@ -86,8 +87,8 @@ func (c *Config) validate() error {
 		return fmt.Errorf("model is required")
 	}
 
-	if c.Provider != "local" && c.APIKey == "" {
-		return fmt.Errorf("api_key is required for provider: %s", c.Provider)
+	if c.APIKey == "" {
+		return fmt.Errorf("api_key is required")
 	}
 
 	if len(c.Rules) == 0 {
@@ -150,12 +151,21 @@ func (c *Config) validate() error {
 	if c.Timeout == 0 {
 		c.Timeout = 30
 	}
+	if c.Temperature == nil {
+		defaultTemperature := 0.1
+		c.Temperature = &defaultTemperature
+	}
 	if c.MaxRetries == 0 {
 		c.MaxRetries = 3
 	}
 	if c.FailOnIssues == nil {
 		defaultFailOnIssues := true
 		c.FailOnIssues = &defaultFailOnIssues
+	}
+
+	// Validate temperature range (0.0 is allowed for deterministic output)
+	if *c.Temperature < 0 || *c.Temperature > 1 {
+		return fmt.Errorf("temperature must be between 0.0 and 1.0, got: %f", *c.Temperature)
 	}
 
 	return nil

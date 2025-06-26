@@ -64,7 +64,6 @@ func TestClientInterface(t *testing.T) {
 				SystemPrompt: "You are a helpful assistant",
 				UserPrompt:   "test prompt",
 				MaxTokens:    100,
-				Temperature:  0.1,
 			},
 			wantError:  false,
 			wantResult: "test response",
@@ -121,10 +120,9 @@ func TestClientInterface(t *testing.T) {
 
 func TestRequest(t *testing.T) {
 	req := &Request{
-		UserPrompt:  "test prompt",
-		MaxTokens:   500,
-		Temperature: 0.7,
-		Timeout:     30 * time.Second,
+		UserPrompt: "test prompt",
+		MaxTokens:  500,
+		Timeout:    30 * time.Second,
 	}
 
 	if req.UserPrompt != "test prompt" {
@@ -132,9 +130,6 @@ func TestRequest(t *testing.T) {
 	}
 	if req.MaxTokens != 500 {
 		t.Errorf("expected MaxTokens 500, got %d", req.MaxTokens)
-	}
-	if req.Temperature != 0.7 {
-		t.Errorf("expected Temperature 0.7, got %f", req.Temperature)
 	}
 	if req.Timeout != 30*time.Second {
 		t.Errorf("expected Timeout 30s, got %v", req.Timeout)
@@ -202,10 +197,12 @@ func TestAnthropicClient(t *testing.T) {
 
 func TestCreateAIClientAnthropic(t *testing.T) {
 	// Test CreateAIClient with Anthropic provider
+	temperature := 0.1
 	cfg := &config.Config{
-		Provider: "anthropic",
-		Model:    "claude-3-sonnet-20240229",
-		APIKey:   "test-key",
+		Provider:    "anthropic",
+		Model:       "claude-3-sonnet-20240229",
+		APIKey:      "test-key",
+		Temperature: &temperature,
 	}
 
 	client, err := CreateAIClient(cfg)
@@ -218,10 +215,12 @@ func TestCreateAIClientAnthropic(t *testing.T) {
 	}
 
 	// Test invalid provider
+	invalidTemp := 0.1
 	invalidCfg := &config.Config{
-		Provider: "unsupported",
-		Model:    "test",
-		APIKey:   "test-key",
+		Provider:    "unsupported",
+		Model:       "test",
+		APIKey:      "test-key",
+		Temperature: &invalidTemp,
 	}
 
 	_, err = CreateAIClient(invalidCfg)

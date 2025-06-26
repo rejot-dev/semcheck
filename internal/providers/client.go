@@ -81,7 +81,6 @@ type Request struct {
 	SystemPrompt string
 	UserPrompt   string
 	MaxTokens    int
-	Temperature  float64
 	Timeout      time.Duration
 }
 
@@ -108,12 +107,13 @@ type SemanticIssue struct {
 
 // Config holds common configuration for AI providers
 type Config struct {
-	Provider   Provider
-	Model      string
-	APIKey     string
-	BaseURL    string
-	Timeout    time.Duration
-	MaxRetries int
+	Provider    Provider
+	Model       string
+	APIKey      string
+	BaseURL     string
+	Timeout     time.Duration
+	Temperature float64
+	MaxRetries  int
 }
 
 func CreateAIClient(cfg *config.Config) (Client, error) {
@@ -125,12 +125,13 @@ func CreateAIClient(cfg *config.Config) (Client, error) {
 	}
 
 	providerConfig := &Config{
-		Provider:   provider,
-		Model:      cfg.Model,
-		APIKey:     cfg.APIKey,
-		BaseURL:    cfg.BaseURL,
-		Timeout:    time.Duration(cfg.Timeout) * time.Second,
-		MaxRetries: cfg.MaxRetries,
+		Provider:    provider,
+		Model:       cfg.Model,
+		APIKey:      cfg.APIKey,
+		BaseURL:     cfg.BaseURL,
+		Timeout:     time.Duration(cfg.Timeout) * time.Second,
+		Temperature: *cfg.Temperature,
+		MaxRetries:  cfg.MaxRetries,
 	}
 
 	var client Client

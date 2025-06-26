@@ -12,8 +12,9 @@ import (
 
 // OpenAIClient implements the Client interface for OpenAI API
 type OpenAIClient struct {
-	client *openai.Client
-	model  string
+	client      *openai.Client
+	model       string
+	temperature float64
 }
 
 // NewOpenAIClient creates a new OpenAI client
@@ -33,8 +34,9 @@ func NewOpenAIClient(config *Config) (*OpenAIClient, error) {
 	client := openai.NewClient(opts...)
 
 	return &OpenAIClient{
-		client: &client,
-		model:  config.Model,
+		client:      &client,
+		model:       config.Model,
+		temperature: config.Temperature,
 	}, nil
 }
 
@@ -84,10 +86,7 @@ func (c *OpenAIClient) Complete(ctx context.Context, req *Request) (*Response, e
 		maxTokens = 3000
 	}
 
-	temperature := req.Temperature
-	if temperature == 0 {
-		temperature = 0.1
-	}
+	temperature := c.temperature
 
 	// Generate schema for structured output
 	schema := generateSchema[StructuredResponse]()
@@ -108,7 +107,7 @@ func (c *OpenAIClient) Complete(ctx context.Context, req *Request) (*Response, e
 		},
 		Model:               openai.ChatModel(c.model),
 		MaxCompletionTokens: openai.Int(int64(req.MaxTokens)),
-		Temperature:         openai.Float(req.Temperature),
+		Temperature:         openai.Float(temperature),
 		ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
 			OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{
 				JSONSchema: schemaParam,

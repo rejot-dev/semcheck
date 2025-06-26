@@ -201,7 +201,6 @@ func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Ru
 		SystemPrompt: SystemPrompt,
 		UserPrompt:   userPrompt,
 		MaxTokens:    3000,
-		Temperature:  0.1,
 	}
 
 	resp, err := c.client.Complete(ctx, req)
