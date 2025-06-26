@@ -20,7 +20,7 @@ type EvalCase struct {
 	Name             string
 	ExpectedErrors   int
 	ExpectedWarnings int
-	ExpectedInfo     int
+	ExpectedNotice   int
 	SpecFile         string
 	ImplFile         string
 }
@@ -28,7 +28,7 @@ type EvalCase struct {
 type SeverityCount struct {
 	Errors   int
 	Warnings int
-	Info     int
+	Notice   int
 }
 
 type EvalScore struct {
@@ -36,7 +36,7 @@ type EvalScore struct {
 	PassedTests     int
 	ErrorAccuracy   float64
 	WarningAccuracy float64
-	InfoAccuracy    float64
+	NoticeAccuracy  float64
 	OverallScore    float64
 }
 
@@ -131,15 +131,15 @@ func loadExpectations(filePath string) (map[string]SeverityCount, error) {
 			return nil, fmt.Errorf("invalid expected_warnings for rule %s: %v", ruleName, err)
 		}
 
-		expectedInfo, err := strconv.Atoi(record[3])
+		expectedNotice, err := strconv.Atoi(record[3])
 		if err != nil {
-			return nil, fmt.Errorf("invalid expected_info for rule %s: %v", ruleName, err)
+			return nil, fmt.Errorf("invalid expected_notice for rule %s: %v", ruleName, err)
 		}
 
 		expectations[ruleName] = SeverityCount{
 			Errors:   expectedErrors,
 			Warnings: expectedWarnings,
-			Info:     expectedInfo,
+			Notice:   expectedNotice,
 		}
 	}
 
@@ -149,7 +149,7 @@ func loadExpectations(filePath string) (map[string]SeverityCount, error) {
 func compareAndDisplayResults(cfg *config.Config, checkResult *checker.CheckResult, expectations map[string]SeverityCount) error {
 	fmt.Println("\n--- Evaluation Results ---")
 
-	var totalErrorAccuracy, totalWarningAccuracy, totalInfoAccuracy float64
+	var totalErrorAccuracy, totalWarningAccuracy, totalNoticeAccuracy float64
 	totalTests := len(expectations)
 	passedTests := 0
 
@@ -162,12 +162,12 @@ func compareAndDisplayResults(cfg *config.Config, checkResult *checker.CheckResu
 		// Calculate accuracy for each severity level
 		errorAccuracy := calculateAccuracy(expected.Errors, actual.Errors)
 		warningAccuracy := calculateAccuracy(expected.Warnings, actual.Warnings)
-		infoAccuracy := calculateAccuracy(expected.Info, actual.Info)
+		noticeAccuracy := calculateAccuracy(expected.Notice, actual.Notice)
 
 		// Test passes if all severity levels are exactly correct
 		passed := (actual.Errors == expected.Errors &&
 			actual.Warnings == expected.Warnings &&
-			actual.Info == expected.Info)
+			actual.Notice == expected.Notice)
 
 		if passed {
 			passedTests++
@@ -183,8 +183,8 @@ func compareAndDisplayResults(cfg *config.Config, checkResult *checker.CheckResu
 			expected.Errors, actual.Errors, errorAccuracy*100)
 		fmt.Printf("    Warnings: expected %d, got %d (%.1f%% accuracy)\n",
 			expected.Warnings, actual.Warnings, warningAccuracy*100)
-		fmt.Printf("    Info:     expected %d, got %d (%.1f%% accuracy)\n",
-			expected.Info, actual.Info, infoAccuracy*100)
+		fmt.Printf("    Notice:   expected %d, got %d (%.1f%% accuracy)\n",
+			expected.Notice, actual.Notice, noticeAccuracy*100)
 
 		if len(issues) > 0 {
 			fmt.Printf("    Issues found:\n")
@@ -198,7 +198,7 @@ func compareAndDisplayResults(cfg *config.Config, checkResult *checker.CheckResu
 		// Accumulate accuracy scores
 		totalErrorAccuracy += errorAccuracy
 		totalWarningAccuracy += warningAccuracy
-		totalInfoAccuracy += infoAccuracy
+		totalNoticeAccuracy += noticeAccuracy
 	}
 
 	// Calculate overall scores
@@ -207,9 +207,9 @@ func compareAndDisplayResults(cfg *config.Config, checkResult *checker.CheckResu
 		PassedTests:     passedTests,
 		ErrorAccuracy:   totalErrorAccuracy / float64(totalTests),
 		WarningAccuracy: totalWarningAccuracy / float64(totalTests),
-		InfoAccuracy:    totalInfoAccuracy / float64(totalTests),
+		NoticeAccuracy:  totalNoticeAccuracy / float64(totalTests),
 	}
-	score.OverallScore = (score.ErrorAccuracy + score.WarningAccuracy + score.InfoAccuracy) / 3
+	score.OverallScore = (score.ErrorAccuracy + score.WarningAccuracy + score.NoticeAccuracy) / 3
 
 	// Display final scores
 	fmt.Printf("=== EVALUATION SUMMARY ===\n")
@@ -218,7 +218,7 @@ func compareAndDisplayResults(cfg *config.Config, checkResult *checker.CheckResu
 	fmt.Printf("Tests Passed: %d/%d (%.1f%%)\n", passedTests, score.TotalTests, float64(score.PassedTests)/float64(score.TotalTests)*100)
 	fmt.Printf("Error Accuracy: %.1f%%\n", score.ErrorAccuracy*100)
 	fmt.Printf("Warning Accuracy: %.1f%%\n", score.WarningAccuracy*100)
-	fmt.Printf("Info Accuracy: %.1f%%\n", score.InfoAccuracy*100)
+	fmt.Printf("Notice Accuracy: %.1f%%\n", score.NoticeAccuracy*100)
 	fmt.Printf("Overall Score: %.1f%%\n", score.OverallScore*100)
 
 	return nil
@@ -232,8 +232,8 @@ func countIssuesBySeverity(issues []providers.SemanticIssue) SeverityCount {
 			count.Errors++
 		case "WARNING":
 			count.Warnings++
-		case "INFO":
-			count.Info++
+		case "NOTICE":
+			count.Notice++
 		}
 	}
 	return count

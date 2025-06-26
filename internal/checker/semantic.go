@@ -252,7 +252,7 @@ func (c *SemanticChecker) buildUserPrompt(rule *config.Rule, specFiles []string,
 // severityLevel returns the numeric value for severity comparison
 func severityLevel(level string) int {
 	switch level {
-	case "INFO":
+	case "NOTICE":
 		return 1
 	case "WARNING":
 		return 2

@@ -21,15 +21,15 @@ Process:
 1. Analyze the specification and implementation thoroughly.
 2. Identify any inconsistencies between the two.
 3. For each inconsistency:
-   a. Determine the severity level (ERROR, WARNING, or INFO).
+   a. Determine the severity level (ERROR, WARNING, or NOTICE).
    b. Assign a confidence score.
-   c. Provide a brief explanation and suggestion for fixing the issue.
-4. Format your findings as a JSON array of objects.
+   c. Provide a brief explanation and suggestion (optional) for fixing the issue.
+4. Format your findings as a JSON object.
 
 Use the following severity level guidelines:
-- ERROR: Implementation fails to work as specified or violates explicit requirements that would break functionality. Only use ERROR when the implementation actually doesn't work according to the specification.
-- WARNING: Missing recommended features, performance issues, or patterns that could cause problems or failures in certain scenarios.
-- INFO: Documentation inconsistencies, confusing or misleading user experience, style issues, missing optional features, or clarifications needed that don't affect functionality.
+- ERROR: Implementation fails to work as specified or violates explicit requirements that would break functionality. Use ERROR sparingly when the implementation is blatantly different from the specification.
+- WARNING: Missing recommended features, performance issues, or issues that are not critical to the functionality of the program.
+- NOTICE: Documentation inconsistencies, confusing or misleading user experience, style issues, missing optional features, or clarifications needed that don't affect functionality.
 
 Use the following confidence scale:
 - 0.9-1.0: near-certain
@@ -40,7 +40,7 @@ Use the following confidence scale:
 Your final output should be a JSON array of objects, each representing an issue. Use the following structure:
 {
 "reasoning": "Brief explanation why this issue has the severity level you assigned",
-"level": "ERROR, WARNING, or INFO",
+"level": "ERROR, WARNING, or NOTICE",
 "message": "Brief description of the issue",
 "confidence": "Your confidence level that the issue applies in this case (0.0-1.0)",
 "suggestion": "How to fix this issue, if possible mention which file to apply the fix to",

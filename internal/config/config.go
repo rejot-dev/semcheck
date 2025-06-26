@@ -131,19 +131,19 @@ func (c *Config) validate() error {
 		}
 
 		// Validate severity values
-		if c.Rules[i].Severity != "error" && c.Rules[i].Severity != "warning" && c.Rules[i].Severity != "info" {
-			return fmt.Errorf("severity must be 'error', 'warning', or 'info' for rule: %s", rule.Name)
+		if c.Rules[i].Severity != "error" && c.Rules[i].Severity != "warning" && c.Rules[i].Severity != "notice" {
+			return fmt.Errorf("severity must be 'error', 'warning', or 'notice' for rule: %s", rule.Name)
 		}
 		for _, spec := range rule.Specs {
 			if spec.Path == "" {
-				return fmt.Errorf("spec path is required for rule: %s", rule.Name)
+				return fmt.Errorf("specification path is required for rule: %s", rule.Name)
 			}
 			// Validate that spec file exists and is readable
 			if _, err := os.Stat(spec.Path); err != nil {
 				if os.IsNotExist(err) {
-					return fmt.Errorf("spec file does not exist: %s for rule: %s", spec.Path, rule.Name)
+					return fmt.Errorf("specification file does not exist: %s for rule: %s", spec.Path, rule.Name)
 				}
-				return fmt.Errorf("spec file is not readable: %s for rule: %s (%v)", spec.Path, rule.Name, err)
+				return fmt.Errorf("specification file is not readable: %s for rule: %s (%v)", spec.Path, rule.Name, err)
 			}
 		}
 	}

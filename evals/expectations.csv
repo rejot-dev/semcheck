@@ -1,4 +1,4 @@
-rule_name,expected_errors,expected_warnings,expected_info
+rule_name,expected_errors,expected_warnings,expected_notice
 case1,0,0,0
 case2,1,0,0
 case3,2,0,0

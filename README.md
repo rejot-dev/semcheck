@@ -26,7 +26,7 @@ go install github.com/rejot-dev/semcheck@latest
 
 ## Configuration
 
-Semcheck needs a configuration file to functions, one can be generated using the `-init` flag.
+Semcheck needs a configuration file to function, one can be generated using the `-init` flag.
 
 ```bash
 semcheck -init

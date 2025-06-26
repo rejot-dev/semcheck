@@ -68,7 +68,7 @@ func (r *StdoutReporter) Report(result *CheckResult) {
 	// Group issues by level
 	errorIssues := make([]providers.SemanticIssue, 0)
 	warningIssues := make([]providers.SemanticIssue, 0)
-	infoIssues := make([]providers.SemanticIssue, 0)
+	noticeIssues := make([]providers.SemanticIssue, 0)
 
 	for _, issues := range result.Issues {
 		for _, issue := range issues {
@@ -77,8 +77,8 @@ func (r *StdoutReporter) Report(result *CheckResult) {
 				errorIssues = append(errorIssues, issue)
 			case "WARNING":
 				warningIssues = append(warningIssues, issue)
-			case "INFO":
-				infoIssues = append(infoIssues, issue)
+			case "NOTICE":
+				noticeIssues = append(noticeIssues, issue)
 			}
 		}
 	}
@@ -107,13 +107,13 @@ func (r *StdoutReporter) Report(result *CheckResult) {
 		}
 	}
 
-	// Display info
-	if len(infoIssues) > 0 {
+	// Display notices
+	if len(noticeIssues) > 0 {
 		fmt.Print("\n")
-		boldBlue.Printf("💡 INFO (%d)\n", len(infoIssues))
-		for i, issue := range infoIssues {
+		boldBlue.Printf("💡 NOTICE (%d)\n", len(noticeIssues))
+		for i, issue := range noticeIssues {
 			r.displayIssue(issue, i+1, blue)
-			if i < len(infoIssues)-1 {
+			if i < len(noticeIssues)-1 {
 				fmt.Println()
 			}
 		}
@@ -125,8 +125,8 @@ func (r *StdoutReporter) Report(result *CheckResult) {
 	fmt.Print(" errors, ")
 	yellow.Printf("%d", len(warningIssues))
 	fmt.Print(" warnings, ")
-	blue.Printf("%d", len(infoIssues))
-	fmt.Println(" info")
+	blue.Printf("%d", len(noticeIssues))
+	fmt.Println(" notices")
 }
 
 func (r *StdoutReporter) displayIssue(issue providers.SemanticIssue, issueNumber int, issueColor *color.Color) {

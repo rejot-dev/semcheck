@@ -144,11 +144,11 @@ rules:
 
     # Severity level for issues found by this rule (OPTIONAL)
     # Controls failure behavior for this rule's violations
-    # Values: "error", "warning", "info"
+    # Values: "error", "warning", "notice"
     # Behavior:
     #   - "error": Build fails if any ERROR-level issues are found
     #   - "warning": Build fails if any WARNING or ERROR-level issues are found
-    #   - "info": Build fails if any INFO, WARNING, or ERROR-level issues are found
+    #   - "notice": Build fails if any NOTICE, WARNING, or ERROR-level issues are found
     # Default: "error"
     severity: "error"
 
