@@ -22,18 +22,20 @@ version: "1.0"
 #   - "openai": Use OpenAI's GPT models (requires API key)
 #   - "anthropic": Use Anthropic's Claude models (requires API key)
 #   - "gemini": Use Gemini's models (requires API key)
+#   - "ollama": Use local Ollama server (no API key required)
 provider: "openai"
 
 # Model name to use for analysis (REQUIRED)
 # The specific model varies by provider, cannot be statically checked.
 model: "gpt-4o"
 
-# API authentication key (REQUIRED for cloud providers)
+# API authentication key (REQUIRED for cloud providers, OPTIONAL for Ollama)
 # Best practice: Use environment variables for security
 # Examples:
 #   - "${OPENAI_API_KEY}" (environment variable substitution)
 #   - "${ANTHROPIC_API_KEY}" (for Anthropic)
 #   - Direct string (NOT recommended for production)
+#   - Not required for Ollama (local provider)
 api_key: "${OPENAI_API_KEY}"
 
 # Custom base URL for API requests (OPTIONAL)
@@ -208,9 +210,9 @@ When you provide a list of files to semcheck, semcheck will automatically match 
 ### Required Fields
 
 - `version`: Must be "1.0" (case-sensitive)
-- `provider`: Must be "openai", "anthropic", or "gemini"
+- `provider`: Must be "openai", "anthropic", "gemini", or "ollama"
 - `model`: Must be a valid model name for the selected provider
-- `api_key`: Required for all providers
+- `api_key`: Required for cloud providers (openai, anthropic, gemini), optional for local providers (ollama)
 - `rules`: Must contain at least one rule object
 - `rules[].name`: Must be unique within the configuration
 - `rules[].files.include`: Must contain at least one pattern

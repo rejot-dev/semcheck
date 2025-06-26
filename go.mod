@@ -7,6 +7,7 @@ require (
 	github.com/fatih/color v1.18.0
 	github.com/invopop/jsonschema v0.13.0
 	github.com/openai/openai-go v1.5.0
+	github.com/prathyushnallamothu/ollamago v1.0.0
 	google.golang.org/genai v1.13.0
 	gopkg.in/yaml.v3 v3.0.1
 )

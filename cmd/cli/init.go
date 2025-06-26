@@ -19,8 +19,13 @@ version: "1.0"
 # AI Provider configuration
 provider: "{{ .Provider }}"
 model: "{{ .Model }}"
+{{- if ne .APIKeyVar "" }}
 api_key: "${{ "{" }}{{ .APIKeyVar }}{{ "}" }}"
+{{- end }}
 temperature: 0.1
+{{- if eq .Provider "ollama" }}
+base_url: "http://localhost:11434"
+{{- end }}
 
 # Rules define which files to check and their specifications
 rules:
@@ -97,11 +102,22 @@ func runInit() error {
 	}
 
 	fmt.Printf("\n✅ Configuration file '%s' created successfully!\n", configFile)
-	fmt.Printf("📝 Don't forget to set your %s environment variable.\n", providerDefaults.ApiKeyVar)
-	fmt.Println("\n🎯 Next steps:")
-	fmt.Printf("   1. Set your API key: export %s='your-api-key-here'\n", providerDefaults.ApiKeyVar)
-	fmt.Printf("   2. Edit the rules in '%s' to match your project\n", configFile)
-	fmt.Printf("   3. Run: semcheck <files>\n")
+
+	if providerDefaults.ApiKeyVar != "" {
+		fmt.Printf("📝 Don't forget to set your %s environment variable.\n", providerDefaults.ApiKeyVar)
+		fmt.Println("\n🎯 Next steps:")
+		fmt.Printf("   1. Set your API key: export %s='your-api-key-here'\n", providerDefaults.ApiKeyVar)
+		fmt.Printf("   2. Edit the rules in '%s' to match your project\n", configFile)
+		fmt.Printf("   3. Run: semcheck <files>\n")
+	} else {
+		fmt.Println("\n🎯 Next steps:")
+		if string(provider) == "ollama" {
+			fmt.Println("   1. Make sure Ollama is running: ollama serve")
+			fmt.Println("   2. Pull a model: ollama pull llama3.2")
+		}
+		fmt.Printf("   3. Edit the rules in '%s' to match your project\n", configFile)
+		fmt.Printf("   4. Run: semcheck <files>\n")
+	}
 
 	return nil
 }

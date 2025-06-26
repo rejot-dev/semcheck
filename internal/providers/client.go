@@ -14,6 +14,7 @@ const (
 	ProviderOpenAI    Provider = "openai"
 	ProviderAnthropic Provider = "anthropic"
 	ProviderGemini    Provider = "gemini"
+	ProviderOllama    Provider = "ollama"
 )
 
 func ToProvider(provider string) (Provider, error) {
@@ -24,13 +25,15 @@ func ToProvider(provider string) (Provider, error) {
 		return ProviderAnthropic, nil
 	case "gemini":
 		return ProviderGemini, nil
+	case "ollama":
+		return ProviderOllama, nil
 	default:
 		return "", fmt.Errorf("invalid provider: %s", provider)
 	}
 }
 
 func GetAllProviders() []Provider {
-	return []Provider{ProviderOpenAI, ProviderAnthropic, ProviderGemini}
+	return []Provider{ProviderOpenAI, ProviderAnthropic, ProviderGemini, ProviderOllama}
 }
 
 type ProviderDefaults struct {
@@ -54,6 +57,11 @@ func GetProviderDefaults(provider Provider) ProviderDefaults {
 		return ProviderDefaults{
 			Model:     "gemini-2.5-flash",
 			ApiKeyVar: "GOOGLE_API_KEY",
+		}
+	case ProviderOllama:
+		return ProviderDefaults{
+			Model:     "llama3.2",
+			ApiKeyVar: "", // Ollama doesn't require an API key
 		}
 	default:
 		return ProviderDefaults{
@@ -142,6 +150,8 @@ func CreateAIClient(cfg *config.Config) (Client, error) {
 		client, err = NewAnthropicClient(providerConfig)
 	case ProviderGemini:
 		client, err = NewGeminiClient(providerConfig)
+	case ProviderOllama:
+		client, err = NewOllamaClient(providerConfig)
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", provider)
 	}

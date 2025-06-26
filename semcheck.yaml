@@ -30,10 +30,10 @@ rules:
       include:
         - "./README.md"
     prompt: |
-      Make sure the examples given in the README.md file are correct as defined by the code, 
+      Make sure the examples given in the README.md file are correct as defined by the code,
       it is not required that everything is documented but what is documented must be correct.
     specs:
       - path: "./internal/config/config.go" # Configuration example
-      - path: "./Justfile"  # Justfile instructions
+      - path: "./Justfile" # Justfile instructions
       - path: "./cmd/cli/cli.go" # Command line interface
     fail-on: "error"

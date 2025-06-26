@@ -10,7 +10,7 @@ Semcheck validates that your code implementations match their specifications by 
 ## Features
 
 - Non-intrusive: don't have to change existing code or specification files
-- BYOM: Bring Your Own Model, support for OpenAI, Anthropic and Gemini
+- BYOM: Bring Your Own Model, support for OpenAI, Anthropic, Gemini and Ollama (local)
 - Remote specification definitions (for example: `https://www.rfc-editor.org/rfc/rfc7946.txt`)
 - Simple onboarding using `semcheck -init`
 
@@ -39,9 +39,10 @@ This creates (by default) a `semcheck.yaml` configuration file, edit this file f
 
 ```yaml
 version: "1.0"
-provider: openai
-model: gpt-4
+provider: openai  # Options: openai, anthropic, gemini, ollama
+model: gpt-4.1
 api_key: ${OPENAI_API_KEY}
+base_url: http://localhost:11434  # Optional: for ollama or custom endpoints
 timeout: 30
 fail_on_issues: true
 
