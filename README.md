@@ -53,6 +53,8 @@ rules:
         - "*_test.go"
     specs:
       - path: "docs/api.md"
+      # URL specifications are also supported
+      - path: "https://example.com/spec.md"
     fail-on: "error"
     confidence_threshold: 0.8
 ```

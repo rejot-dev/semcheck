@@ -2,7 +2,9 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -136,12 +138,26 @@ func (c *Config) validate() error {
 			if spec.Path == "" {
 				return fmt.Errorf("specification path is required for rule: %s", rule.Name)
 			}
-			// Validate that spec file exists and is readable
-			if _, err := os.Stat(spec.Path); err != nil {
-				if os.IsNotExist(err) {
-					return fmt.Errorf("specification file does not exist: %s for rule: %s", spec.Path, rule.Name)
+
+			// Check if path looks like a URL
+			if strings.Contains(spec.Path, "://") {
+				// Try to parse as URL
+				parsedURL, err := url.Parse(spec.Path)
+				if err != nil {
+					return fmt.Errorf("invalid URL format in specification path: %s for rule: %s (%v)", spec.Path, rule.Name, err)
 				}
-				return fmt.Errorf("specification file is not readable: %s for rule: %s (%v)", spec.Path, rule.Name, err)
+				// Only allow HTTP/HTTPS URLs
+				if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+					return fmt.Errorf("only HTTP/HTTPS URLs are supported for specification path: %s for rule: %s", spec.Path, rule.Name)
+				}
+			} else {
+				// Validate that local spec file exists and is readable
+				if _, err := os.Stat(spec.Path); err != nil {
+					if os.IsNotExist(err) {
+						return fmt.Errorf("specification file does not exist: %s for rule: %s", spec.Path, rule.Name)
+					}
+					return fmt.Errorf("specification file is not readable: %s for rule: %s (%v)", spec.Path, rule.Name, err)
+				}
 			}
 		}
 	}

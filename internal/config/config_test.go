@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -298,5 +299,75 @@ func TestConfig_validate_ExplicitFailOnIssuesFalse(t *testing.T) {
 	// Check that explicit false is preserved
 	if config.FailOnIssues == nil || *config.FailOnIssues {
 		t.Error("expected fail_on_issues to remain false when explicitly set")
+	}
+}
+
+func TestConfig_validate_URLSpecs(t *testing.T) {
+	tests := []struct {
+		name      string
+		specPath  string
+		wantError bool
+		errorMsg  string
+	}{
+		{
+			name:      "valid HTTPS URL",
+			specPath:  "https://example.com/spec.md",
+			wantError: false,
+		},
+		{
+			name:      "valid HTTP URL",
+			specPath:  "http://example.com/spec.md",
+			wantError: false,
+		},
+		{
+			name:      "invalid URL format",
+			specPath:  "ht!p://invalid-url",
+			wantError: true,
+			errorMsg:  "invalid URL format",
+		},
+		{
+			name:      "unsupported URL scheme",
+			specPath:  "ftp://example.com/spec.md",
+			wantError: true,
+			errorMsg:  "only HTTP/HTTPS URLs are supported",
+		},
+		{
+			name:      "file URL not supported",
+			specPath:  "file:///path/to/file.md",
+			wantError: true,
+			errorMsg:  "only HTTP/HTTPS URLs are supported",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := Config{
+				Version:  "1.0",
+				Provider: "openai",
+				Model:    "gpt-4",
+				APIKey:   "test-key",
+				Rules: []Rule{
+					{
+						Name:        "test",
+						Description: "test rule",
+						Files:       FilePattern{Include: []string{"*.go"}},
+						Specs:       []Spec{{Path: tt.specPath}},
+					},
+				},
+			}
+
+			err := config.validate()
+			if tt.wantError {
+				if err == nil {
+					t.Error("expected error but got none")
+				} else if !strings.Contains(err.Error(), tt.errorMsg) {
+					t.Errorf("expected error message to contain '%s', got: %s", tt.errorMsg, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+			}
+		})
 	}
 }

@@ -120,9 +120,13 @@ rules:
     # At least one specification must be provided
     specs:
       - # Path to specification file (REQUIRED)
-        # Can be relative to config file or absolute
-        # Supports various documentation formats
+        # Can be:
+        #   - Local file path (relative to config file or absolute)
+        #   - HTTP/HTTPS URL (e.g., https://example.com/spec.md)
         path: "specs/api.md"
+
+      # Example of URL specification
+      - path: "https://www.rfc-editor.org/rfc/rfc7946.txt"
 
     # Additional context for AI analysis (OPTIONAL)
     # Custom instructions to guide the semantic checking process

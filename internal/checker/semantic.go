@@ -3,10 +3,13 @@ package checker
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/rejot-dev/semcheck/internal/config"
 	"github.com/rejot-dev/semcheck/internal/processor"
@@ -220,11 +223,46 @@ func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Ru
 }
 
 func (c *SemanticChecker) readFile(filePath string) (string, error) {
+	// Check if the path is a URL
+	if isURL(filePath) {
+		return c.readURL(filePath)
+	}
+
+	// Handle local file
 	fullPath := filepath.Join(c.workingDir, filePath)
 	content, err := os.ReadFile(fullPath)
 	if err != nil {
 		return "", err
 	}
+	return string(content), nil
+}
+
+// isURL checks if a string is a URL
+func isURL(str string) bool {
+	return strings.Contains(str, "://") && (strings.HasPrefix(str, "http://") || strings.HasPrefix(str, "https://"))
+}
+
+// readURL fetches content from a URL
+func (c *SemanticChecker) readURL(url string) (string, error) {
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	resp, err := client.Get(url)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch URL %s: %w", url, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("failed to fetch URL %s: HTTP %d %s", url, resp.StatusCode, resp.Status)
+	}
+
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read content from URL %s: %w", url, err)
+	}
+
 	return string(content), nil
 }
 
