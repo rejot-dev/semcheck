@@ -60,6 +60,7 @@ eval: build-eval
 
 # Run all checks (format, test, lint)
 check: fmt test
+    go mod tidy
 
 # Help for available recipes
 help:
