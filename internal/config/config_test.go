@@ -23,7 +23,6 @@ provider: openai
 model: gpt-4
 api_key: test-key
 timeout: 30
-max_retries: 3
 fail_on_issues: true
 rules:
   - name: test-rule
@@ -64,9 +63,6 @@ rules:
 	}
 	if config.Timeout != 30 {
 		t.Errorf("expected timeout 30, got %d", config.Timeout)
-	}
-	if config.MaxRetries != 3 {
-		t.Errorf("expected max_retries 3, got %d", config.MaxRetries)
 	}
 	if config.FailOnIssues == nil || !*config.FailOnIssues {
 		t.Error("expected fail_on_issues to be true")
@@ -262,9 +258,6 @@ func TestConfig_validate_Defaults(t *testing.T) {
 	// Check that defaults were set
 	if config.Timeout != 30 {
 		t.Errorf("expected default timeout 30, got %d", config.Timeout)
-	}
-	if config.MaxRetries != 3 {
-		t.Errorf("expected default max_retries 3, got %d", config.MaxRetries)
 	}
 	if config.FailOnIssues == nil || !*config.FailOnIssues {
 		t.Error("expected default fail_on_issues to be true")

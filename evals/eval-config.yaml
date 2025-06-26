@@ -3,7 +3,6 @@ provider: "openai"
 model: "gpt-4o"
 api_key: "${OPENAI_API_KEY}"
 timeout: 60
-max_retries: 2
 fail_on_issues: false
 
 rules:

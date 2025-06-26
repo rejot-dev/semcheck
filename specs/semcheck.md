@@ -51,7 +51,6 @@ base_url: "https://api.openai.com/v1"
 #   - Complex specifications may require more processing time
 #   - Network latency affects response time
 # Default: 30 seconds
-# Range: 10-300 seconds recommended
 timeout: 30
 
 # Temperature parameter for AI model responses (OPTIONAL)
@@ -62,15 +61,6 @@ timeout: 30
 # Default: 0.1 (low temperature for consistent analysis)
 # Range: 0.0-1.0
 temperature: 0.1
-
-# Maximum retry attempts for failed requests (OPTIONAL)
-# Number of times to retry failed API calls due to:
-#   - Network issues
-#   - Temporary API unavailability
-#   - Rate limiting (with exponential backoff)
-# Default: 3
-# Range: 0-10 recommended
-max_retries: 3
 
 # Exit behavior on detected issues (OPTIONAL)
 # Controls whether semcheck exits with non-zero code when issues are found

@@ -113,7 +113,6 @@ type Config struct {
 	BaseURL     string
 	Timeout     time.Duration
 	Temperature float64
-	MaxRetries  int
 }
 
 func CreateAIClient(cfg *config.Config) (Client, error) {
@@ -131,7 +130,6 @@ func CreateAIClient(cfg *config.Config) (Client, error) {
 		BaseURL:     cfg.BaseURL,
 		Timeout:     time.Duration(cfg.Timeout) * time.Second,
 		Temperature: *cfg.Temperature,
-		MaxRetries:  cfg.MaxRetries,
 	}
 
 	var client Client

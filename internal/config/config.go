@@ -15,7 +15,6 @@ type Config struct {
 	BaseURL      string   `yaml:"base_url,omitempty"`
 	Timeout      int      `yaml:"timeout"`
 	Temperature  *float64 `yaml:"temperature,omitempty"`
-	MaxRetries   int      `yaml:"max_retries"`
 	FailOnIssues *bool    `yaml:"fail_on_issues,omitempty"`
 	Rules        []Rule   `yaml:"rules"`
 }
@@ -155,12 +154,14 @@ func (c *Config) validate() error {
 		defaultTemperature := 0.1
 		c.Temperature = &defaultTemperature
 	}
-	if c.MaxRetries == 0 {
-		c.MaxRetries = 3
-	}
 	if c.FailOnIssues == nil {
 		defaultFailOnIssues := true
 		c.FailOnIssues = &defaultFailOnIssues
+	}
+
+	// Validate timeout range
+	if c.Timeout < 0 {
+		return fmt.Errorf("timeout must be positive number, got: %d", c.Timeout)
 	}
 
 	// Validate temperature range (0.0 is allowed for deterministic output)
