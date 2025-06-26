@@ -36,7 +36,7 @@ rules:
         - "**/vendor/**"     # Exclude vendor directory
     specs:
       - path: "SPEC.md"    # Specification file(s)
-    severity: "error"        # error, warning, or notice
+    fail-on: "error"         # error, warning, or notice
 `
 
 type ConfigData struct {

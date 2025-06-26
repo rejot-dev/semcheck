@@ -34,7 +34,7 @@ rules:
         - "*.go"
     specs:
       - path: "` + specPath + `"
-    severity: "error"
+    fail-on: "error"
     confidence_threshold: 0.8
 `
 
@@ -94,8 +94,8 @@ rules:
 	if rule.Specs[0].Path != specPath {
 		t.Errorf("expected spec path '%s', got %s", specPath, rule.Specs[0].Path)
 	}
-	if rule.Severity != "error" {
-		t.Errorf("expected severity 'error', got %s", rule.Severity)
+	if rule.FailOn != "error" {
+		t.Errorf("expected fail-on 'error', got %s", rule.FailOn)
 	}
 	if rule.ConfidenceThreshold != 0.8 {
 		t.Errorf("expected confidence_threshold 0.8, got %f", rule.ConfidenceThreshold)

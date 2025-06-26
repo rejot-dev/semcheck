@@ -54,7 +54,7 @@ rules:
         - "*_test.go"
     specs:
       - path: "docs/api.md"
-    severity: "error"
+    fail-on: "error"
     confidence_threshold: 0.8
 ```
 

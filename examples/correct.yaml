@@ -22,5 +22,5 @@ rules:
       - path: "./specs/*.md"
         type: "markdown"
         description: "Project specifications"
-    severity: "error"
+    fail-on: "error"
     confidence_threshold: 0.7

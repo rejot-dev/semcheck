@@ -15,7 +15,7 @@ rules:
         - "./evals/cases/case1/impl.go"
     specs:
       - path: "./evals/cases/case1/spec.md"
-    severity: "error"
+    fail-on: "error"
 
 
   - name: "case2"
@@ -27,7 +27,7 @@ rules:
         - "./evals/cases/case2/impl.go"
     specs:
       - path: "./evals/cases/case2/spec.md"
-    severity: "error"
+    fail-on: "error"
 
 
   - name: "case3"
@@ -40,7 +40,7 @@ rules:
         - "./evals/cases/case3/impl.go"
     specs:
       - path: "./evals/cases/case3/spec.md"
-    severity: "error"
+    fail-on: "error"
 
 
   - name: "case4"
@@ -53,7 +53,7 @@ rules:
         - "./evals/cases/case4/impl.go"
     specs:
       - path: "./evals/cases/case4/spec.md"
-    severity: "error"
+    fail-on: "error"
 
   - name: "case5"
     description: |
@@ -64,7 +64,7 @@ rules:
         - "./evals/cases/case5/impl.go"
     specs:
       - path: "./evals/cases/case5/spec.md"
-    severity: "error"
+    fail-on: "error"
 
   - name: "case6"
     description: |
@@ -93,4 +93,4 @@ rules:
         - "./evals/cases/case6/impl.go"
     specs:
       - path: "./evals/cases/case6/spec.md"
-    severity: "error"
+    fail-on: "error"

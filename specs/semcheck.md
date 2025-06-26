@@ -142,15 +142,14 @@ rules:
       Consider both what is implemented and what might be missing
       compared to the specifications.
 
-    # Severity level for issues found by this rule (OPTIONAL)
-    # Controls failure behavior for this rule's violations
+    # Fail on this severity level for issues this rule finds (OPTIONAL)
     # Values: "error", "warning", "notice"
     # Behavior:
-    #   - "error": Build fails if any ERROR-level issues are found
-    #   - "warning": Build fails if any WARNING or ERROR-level issues are found
-    #   - "notice": Build fails if any NOTICE, WARNING, or ERROR-level issues are found
+    #   - "error": Check fails if any ERROR-level issues are found
+    #   - "warning": Check fails if any WARNING or ERROR-level issues are found
+    #   - "notice": Check fails if any NOTICE, WARNING, or ERROR-level issues are found
     # Default: "error"
-    severity: "error"
+    fail-on: "error"
 
     # Custom confidence threshold (OPTIONAL)
     # AI confidence level required to report an issue (0.0-1.0)
@@ -179,7 +178,7 @@ rules:
       - Authentication and authorization
       - Input sanitization
       - Secure data handling
-    severity: "error"
+    fail-on: "error"
     confidence_threshold: 0.9
 ```
 

@@ -66,9 +66,9 @@ func (c *SemanticChecker) CheckFiles(ctx context.Context, matches []processor.Ma
 		if len(issues) == 0 {
 			result.Passed++
 		} else {
-			// Check if any issues meet the rule's severity threshold for failure
+			// Check if any issues meet the rule's fail-on threshold for failure
 			shouldFailForRule := false
-			ruleSeverityLevel := severityLevel(strings.ToUpper(rule.Severity))
+			ruleSeverityLevel := severityLevel(strings.ToUpper(rule.FailOn))
 
 			for _, issue := range issues {
 				issueSeverityLevel := severityLevel(issue.Level)
