@@ -229,3 +229,33 @@ func TestCreateAIClientAnthropic(t *testing.T) {
 		t.Error("Expected error for unsupported provider")
 	}
 }
+
+func TestGeminiClient(t *testing.T) {
+	// Test that GeminiClient implements the Client interface
+	config := &Config{
+		Provider: ProviderGemini,
+		Model:    "gemini-2.5-pro",
+		APIKey:   "test-key",
+	}
+
+	client, err := NewGeminiClient(config)
+	if err != nil {
+		t.Fatalf("Failed to create Gemini client: %v", err)
+	}
+
+	// Test client methods
+	if client.Name() != "gemini" {
+		t.Errorf("Expected name 'gemini', got %s", client.Name())
+	}
+
+	// Test validation
+	if err := client.Validate(); err != nil {
+		t.Errorf("Validation failed: %v", err)
+	}
+
+	// Test invalid config
+	invalidClient := &GeminiClient{model: ""}
+	if err := invalidClient.Validate(); err == nil {
+		t.Error("Expected validation to fail for empty model")
+	}
+}

@@ -77,11 +77,9 @@ func (c *Config) validate() error {
 		return fmt.Errorf("unsupported version: %s", c.Version)
 	}
 
+	// If correct provider is passed is checked on client instantiation
 	if c.Provider == "" {
 		return fmt.Errorf("provider is required")
-	}
-	if c.Provider != "openai" && c.Provider != "anthropic" && c.Provider != "local" {
-		return fmt.Errorf("unsupported provider: %s", c.Provider)
 	}
 
 	if c.Model == "" {

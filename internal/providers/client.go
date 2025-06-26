@@ -13,6 +13,7 @@ type Provider string
 const (
 	ProviderOpenAI    Provider = "openai"
 	ProviderAnthropic Provider = "anthropic"
+	ProviderGemini    Provider = "gemini"
 )
 
 func ToProvider(provider string) (Provider, error) {
@@ -21,13 +22,15 @@ func ToProvider(provider string) (Provider, error) {
 		return ProviderOpenAI, nil
 	case "anthropic":
 		return ProviderAnthropic, nil
+	case "gemini":
+		return ProviderGemini, nil
 	default:
 		return "", fmt.Errorf("invalid provider: %s", provider)
 	}
 }
 
 func GetAllProviders() []Provider {
-	return []Provider{ProviderOpenAI, ProviderAnthropic}
+	return []Provider{ProviderOpenAI, ProviderAnthropic, ProviderGemini}
 }
 
 type ProviderDefaults struct {
@@ -46,6 +49,11 @@ func GetProviderDefaults(provider Provider) ProviderDefaults {
 		return ProviderDefaults{
 			Model:     "claude-sonnet-4-0",
 			ApiKeyVar: "ANTHROPIC_API_KEY",
+		}
+	case ProviderGemini:
+		return ProviderDefaults{
+			Model:     "gemini-2.5-flash",
+			ApiKeyVar: "GOOGLE_API_KEY",
 		}
 	default:
 		return ProviderDefaults{
@@ -91,12 +99,12 @@ type Client interface {
 
 // SemanticIssue represents a single issue found during semantic analysis
 type SemanticIssue struct {
-	Reasoning  string
-	Level      string
-	Message    string
-	Confidence float64
-	Suggestion string
-	LineNumber int
+	Reasoning  string  `json:"reasoning" jsonschema_description:"Reasoning why the found issue has it's severity level"`
+	Level      string  `json:"level" jsonschema_description:"Severity level of the issue"`
+	Message    string  `json:"message" jsonschema_description:"Description of the issue"`
+	Confidence float64 `json:"confidence" jsonschema_description:"Confidence level of the issue (0.0-1.0)"`
+	Suggestion string  `json:"suggestion" jsonschema_description:"Suggestion for fixing the issue (optional)"`
+	LineNumber int     `json:"line_number,omitempty" jsonschema_description:"Line number of the issue (optional)"`
 }
 
 // Config holds common configuration for AI providers
@@ -134,6 +142,8 @@ func CreateAIClient(cfg *config.Config) (Client, error) {
 		client, err = NewOpenAIClient(providerConfig)
 	case ProviderAnthropic:
 		client, err = NewAnthropicClient(providerConfig)
+	case ProviderGemini:
+		client, err = NewGeminiClient(providerConfig)
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", provider)
 	}
