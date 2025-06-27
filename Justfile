@@ -5,9 +5,8 @@ default:
     @just --list
 
 # Run semcheck against itself on all files
-# uses find because glob patterns are handled differently per shell used
 dogfood: build
-    ./semcheck $(find . -type f -name "*" | grep -v ".git")
+    ./semcheck 
 
 pre-commit: check build build-eval
     ./semcheck $(git diff --name-only --cached)

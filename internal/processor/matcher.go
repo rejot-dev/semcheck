@@ -189,6 +189,41 @@ func (m *Matcher) findRule(name string) *config.Rule {
 	return nil
 }
 
+// Returns all implementation and specification files from all rules
+func (m *Matcher) GetAllMatcherResults() []MatcherResult {
+	var results []MatcherResult
+	seen := make(map[NormalizedPath]bool)
+
+	for ruleName, implFiles := range m.implFiles {
+		rule := m.findRule(ruleName)
+		if rule == nil {
+			continue
+		}
+		for _, spec := range rule.Specs {
+			results = append(results, MatcherResult{
+				Path:         NormalizedPath(spec.Path),
+				Type:         FileTypeSpec,
+				RuleName:     rule.Name,
+				IgnoreReason: IgnoreReasonNone,
+			})
+		}
+
+		for _, implFile := range implFiles {
+			if !seen[implFile] {
+				seen[implFile] = true
+				results = append(results, MatcherResult{
+					Path:         implFile,
+					Type:         FileTypeImpl,
+					RuleName:     ruleName,
+					IgnoreReason: IgnoreReasonNone,
+				})
+			}
+		}
+	}
+
+	return results
+}
+
 func (m *Matcher) MatchFiles(inputFiles []string) ([]MatcherResult, error) {
 	var results []MatcherResult
 	seen := make(map[NormalizedPath]bool)
@@ -386,8 +421,6 @@ func (m *Matcher) matchesPathPattern(filePath, pattern string) bool {
 }
 
 func DisplayMatchResults(matchedResults []MatcherResult) {
-	fmt.Println("\n--- File Matching Results ---")
-
 	var specFiles, implFiles, ignoredFiles []MatcherResult
 
 	for _, file := range matchedResults {
@@ -440,7 +473,4 @@ func DisplayMatchResults(matchedResults []MatcherResult) {
 			}
 		}
 	}
-
-	fmt.Printf("\nSummary: %d specs, %d implementations, %d ignored\n",
-		len(specFiles), len(implFiles), len(ignoredFiles))
 }

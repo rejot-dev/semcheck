@@ -18,7 +18,7 @@ var (
 	showHelp        = flag.Bool("help", false, "show help message")
 	showVer         = flag.Bool("version", false, "show version")
 	showConfig      = flag.Bool("show-config", false, "print full configuration")
-	includeAnalysis = flag.Bool("include-analysis", false, "Include additional analysis in results")
+	includeAnalysis = flag.Bool("include-analysis", false, "include additional analysis in results")
 	initConfig      = flag.Bool("init", false, "create a semcheck.yaml file interactively")
 )
 
@@ -51,16 +51,7 @@ func Execute() error {
 		cfg.PrintAsYAML()
 		return nil
 	}
-
-	files := flag.Args()
-	if len(files) == 0 {
-		fmt.Fprintf(os.Stderr, "Error: no files specified\n")
-		showUsage()
-		return fmt.Errorf("no files specified")
-	}
-
-	fmt.Printf("Processing %d files with config: %s\n", len(files), *configPath)
-	fmt.Printf("Provider: %s\n", cfg.Provider)
+	fmt.Printf("Provider: %s, Model: %s\n", cfg.Provider, cfg.Model)
 
 	// Initialize file matcher
 	workingDir, err := os.Getwd()
@@ -75,11 +66,17 @@ func Execute() error {
 		return err
 	}
 
-	// Match files and show results
-	matchedResults, err := matcher.MatchFiles(files)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error matching files: %v\n", err)
-		return err
+	files := flag.Args()
+	var matchedResults []processor.MatcherResult
+	if len(files) > 0 {
+		matchedResults, err = matcher.MatchFiles(files)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error matching files: %v\n", err)
+			return err
+		}
+	} else {
+		fmt.Println("No file arguments passed, checking all implementation files against all specifications.")
+		matchedResults = matcher.GetAllMatcherResults()
 	}
 
 	processor.DisplayMatchResults(matchedResults)
