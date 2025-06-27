@@ -74,8 +74,8 @@ semcheck -init
 # Pass either implementation or specification files, semcheck will figure out which rules to check based on the files you pass here
 semcheck spec.md spec2.md impl.go
 
-# Run semcheck on your change set
-semcheck $(git diff --name-only --cached)
+# Run semcheck on your staged files
+semcheck -pre-commit
 
 # Use custom config file
 semcheck -config my-config.yaml file1.go

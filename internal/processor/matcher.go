@@ -1,7 +1,6 @@
 package processor
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -81,7 +80,7 @@ func NewMatcher(cfg *config.Config, workingDir string) (*Matcher, error) {
 		workingDir: workingDir,
 	}
 
-	if err := m.loadGitignore(); err != nil {
+	if err := m.LoadGitignore(); err != nil {
 		return nil, fmt.Errorf("failed to load gitignore: %w", err)
 	}
 
@@ -134,30 +133,6 @@ func (m *Matcher) resolveImplFiles() error {
 	}
 
 	return nil
-}
-
-func (m *Matcher) loadGitignore() error {
-	gitignorePath := filepath.Join(m.workingDir, ".gitignore")
-
-	file, err := os.Open(gitignorePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return fmt.Errorf("failed to open .gitignore: %w", err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-		m.gitignoreRules = append(m.gitignoreRules, line)
-	}
-
-	return scanner.Err()
 }
 
 // Should this really be a method on the matcher?

@@ -6,10 +6,10 @@ default:
 
 # Run semcheck against itself on all files
 dogfood: build
-    ./semcheck 
+    ./semcheck
 
 pre-commit: check build build-eval
-    ./semcheck -pre-commit $(git diff --name-only --cached)
+    ./semcheck -pre-commit
 
 # Install pre-commit hook
 install-pre-commit:

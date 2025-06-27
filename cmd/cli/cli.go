@@ -19,6 +19,7 @@ var (
 	showVer      = flag.Bool("version", false, "show version")
 	showConfig   = flag.Bool("show-config", false, "print full configuration")
 	hideAnalysis = flag.Bool("hide-analysis", false, "hide additional analysis in results")
+	preCommit    = flag.Bool("pre-commit", false, "Runs semcheck on staged files")
 	initConfig   = flag.Bool("init", false, "create a semcheck.yaml file interactively")
 )
 
@@ -68,10 +69,18 @@ func Execute() error {
 
 	files := flag.Args()
 	var matchedResults []processor.MatcherResult
-	if len(files) > 0 {
+	if len(files) > 0 && !*preCommit {
 		matchedResults, err = matcher.MatchFiles(files)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error matching files: %v\n", err)
+			return err
+		}
+	} else if *preCommit {
+		fmt.Println("Running semcheck on staged files...")
+		stagedFiles := matcher.GetStagedFiles()
+		matchedResults, err = matcher.MatchFiles(stagedFiles)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error matching staged files: %v\n", err)
 			return err
 		}
 	} else {
