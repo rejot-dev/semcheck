@@ -15,6 +15,7 @@ const (
 	ProviderAnthropic Provider = "anthropic"
 	ProviderGemini    Provider = "gemini"
 	ProviderOllama    Provider = "ollama"
+	ProviderCerebras  Provider = "cerebras"
 )
 
 func ToProvider(provider string) (Provider, error) {
@@ -27,13 +28,15 @@ func ToProvider(provider string) (Provider, error) {
 		return ProviderGemini, nil
 	case "ollama":
 		return ProviderOllama, nil
+	case "cerebras":
+		return ProviderCerebras, nil
 	default:
 		return "", fmt.Errorf("invalid provider: %s", provider)
 	}
 }
 
 func GetAllProviders() []Provider {
-	return []Provider{ProviderOpenAI, ProviderAnthropic, ProviderGemini, ProviderOllama}
+	return []Provider{ProviderOpenAI, ProviderAnthropic, ProviderGemini, ProviderOllama, ProviderCerebras}
 }
 
 type ProviderDefaults struct {
@@ -62,6 +65,11 @@ func GetProviderDefaults(provider Provider) ProviderDefaults {
 		return ProviderDefaults{
 			Model:     "llama3.2",
 			ApiKeyVar: "", // Ollama doesn't require an API key
+		}
+	case ProviderCerebras:
+		return ProviderDefaults{
+			Model:     "llama-4-scout-17b-16e-instruct",
+			ApiKeyVar: "CEREBRAS_API_KEY",
 		}
 	default:
 		return ProviderDefaults{
@@ -152,6 +160,8 @@ func CreateAIClient(cfg *config.Config) (Client, error) {
 		client, err = NewGeminiClient(providerConfig)
 	case ProviderOllama:
 		client, err = NewOllamaClient(providerConfig)
+	case ProviderCerebras:
+		client, err = NewCerebrasClient(providerConfig)
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", provider)
 	}

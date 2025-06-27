@@ -72,8 +72,6 @@ type StructuredResponse struct {
 	Issues []SemanticIssue `json:"issues" jsonschema_description:"List of issues found"`
 }
 
-var StructuredResponseSchema = generateSchema[StructuredResponse]()
-
 // Complete sends a completion request to OpenAI API
 func (c *OpenAIClient) Complete(ctx context.Context, req *Request) (*Response, error) {
 	if err := c.Validate(); err != nil {
