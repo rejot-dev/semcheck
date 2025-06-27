@@ -1,7 +1,8 @@
 version: "1.0"
-provider: "openai"
-model: "gpt-4o"
-api_key: "${OPENAI_API_KEY}"
+provider: "anthropic"
+model: "claude-sonnet-4-0"
+api_key: "${ANTHROPIC_API_KEY}"
+
 timeout: 60
 fail_on_issues: false
 
@@ -16,7 +17,6 @@ rules:
       - path: "./evals/cases/case1/spec.md"
     fail-on: "error"
 
-
   - name: "case2"
     description: |
       Subtract function is not implemented
@@ -28,11 +28,10 @@ rules:
       - path: "./evals/cases/case2/spec.md"
     fail-on: "error"
 
-
   - name: "case3"
     description: |
-     ProcessString has wrong signature - should return (string, error) but returns only string
-     FormatMessage has wrong parameter types - should accept ...interface{} but accepts only one string
+      ProcessString has wrong signature - should return (string, error) but returns only string
+      FormatMessage has wrong parameter types - should accept ...interface{} but accepts only one string
     enabled: true
     files:
       include:
@@ -40,7 +39,6 @@ rules:
     specs:
       - path: "./evals/cases/case3/spec.md"
     fail-on: "error"
-
 
   - name: "case4"
     description: |
@@ -68,19 +66,19 @@ rules:
   - name: "case6"
     description: |
       Complex file processing API implementation with multiple severity-level issues:
-      
+
       ERROR level issues (3):
       - ProcessFile missing required 'options ProcessOptions' parameter per specification
-      - Missing path traversal security validation (spec: "MUST validate file path to prevent directory traversal attacks")  
+      - Missing path traversal security validation (spec: "MUST validate file path to prevent directory traversal attacks")
       - ProcessBatch returns []*ProcessResult instead of []ProcessResult as specified
-      
+
       WARNING level issues (5):
       - Missing corruption detection (spec: "MUST detect and reject corrupted files")
       - Missing recommended audit logging for ValidateFileSize
       - Inefficient O(n²) algorithm in ProcessBatch (nested loops)
       - Non-standard error message format (spec requires: "failed to process file [filename]: [reason]")
       - Missing optional caching implementation
-      
+
       INFO level issues (4):
       - Undocumented default timeout value (30 seconds)
       - Undocumented MaxRetries default value

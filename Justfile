@@ -9,7 +9,7 @@ dogfood: build
     ./semcheck 
 
 pre-commit: check build build-eval
-    ./semcheck $(git diff --name-only --cached)
+    ./semcheck -pre-commit $(git diff --name-only --cached)
 
 # Install pre-commit hook
 install-pre-commit:

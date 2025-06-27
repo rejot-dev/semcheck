@@ -2,11 +2,11 @@
 # It maps the relation between code and specification, use it to find which code to update when changing specs.
 version: "1.0"
 
-provider: "openai"
-model: "gpt-4.1"
-api_key: "${OPENAI_API_KEY}"
+provider: "anthropic"
+model: "claude-sonnet-4-0"
+api_key: "${ANTHROPIC_API_KEY}"
+
 timeout: 300
-max_retries: 3
 fail_on_issues: true
 temperature: 0.0
 
@@ -22,7 +22,7 @@ rules:
     specs:
       - path: "./specs/semcheck.md"
     fail-on: "error"
-  
+
   - name: "readme-file"
     description: "Make sure examples in the readme make sense"
     enabled: true
