@@ -1,25 +1,20 @@
 # Semcheck
 
-A Go-based tool for semantic checking of code implementations against specifications using large language models.
-
-## Overview
-
-Semcheck validates that your code implementations match their specifications by leveraging large language models. It integrates seamlessly with pre-commit hooks to validate staged files and ensures your code adheres to documented requirements.
-
+Semcheck is a tool that uses large language models to verify that your implementation matches your specification. Define semantic rules to describe how your code should align with your specification, then let Semcheck handle the comparison. Use it as a final check before committing or merging code.
 
 ## Features
 
-- Non-intrusive: don't have to change existing code or specification files
-- BYOM: Bring Your Own Model, support for OpenAI, Anthropic, Gemini and Ollama (local)
-- Remote specification definitions (for example: `https://www.rfc-editor.org/rfc/rfc7946.txt`)
-- Simple onboarding using `semcheck -init`
+* Non-intrusive: no changes required to existing code or specification files
+* Bring Your Own Model: supports OpenAI, Anthropic, Gemini, and Ollama (local)
+* Supports remote specification files (e.g., `https://www.rfc-editor.org/rfc/rfc7946.txt`)
+* Easy setup with `semcheck -init`
 
 ## Installation
 
 ### Prerequisites
 
-- Go 1.24 or later
-- [Just](https://github.com/casey/just) (optional, for development)
+* [Go](https://go.dev/doc/install) 1.24 or newer
+* [Just](https://github.com/casey/just) (optional, for development tasks)
 
 ### Install
 
@@ -29,20 +24,21 @@ go install github.com/rejot-dev/semcheck@latest
 
 ## Configuration
 
-Semcheck needs a configuration file to function, one can be generated using the `-init` flag.
+Semcheck requires a configuration file. Generate one interactively using the `-init` flag:
 
 ```bash
 semcheck -init
 ```
 
-This creates (by default) a `semcheck.yaml` configuration file, edit this file further to fit your needs.
+This command creates a `semcheck.yaml` file. Edit this file to suit your project.
+
+Example configuration:
 
 ```yaml
 version: "1.0"
 provider: openai  # Options: openai, anthropic, gemini, ollama
 model: gpt-4.1
 api_key: ${OPENAI_API_KEY}
-base_url: http://localhost:11434  # Optional: for ollama or custom endpoints
 timeout: 30
 fail_on_issues: true
 
@@ -57,10 +53,9 @@ rules:
         - "*_test.go"
     specs:
       - path: "docs/api.md"
-      # URL specifications are also supported
+      # Remote specs are supported
       - path: "https://example.com/spec.md"
     fail_on: "error"
-    confidence_threshold: 0.8
 ```
 
 ## Usage
@@ -68,31 +63,63 @@ rules:
 ### Basic Usage
 
 ```bash
-# Init config file
+# Create a config file
 semcheck -init
 
-# Pass either implementation or specification files, semcheck will figure out which rules to check based on the files you pass here
+# Pass specification and implementation files; semcheck determines the relevant rules
 semcheck spec.md spec2.md impl.go
 
-# Run semcheck on your staged files
+# Run on staged files (pre-commit)
 semcheck -pre-commit
 
-# Use custom config file
+# Use a custom config file
 semcheck -config my-config.yaml file1.go
 
-# Double dash syntax for flags is also accepted
+# You can also use double dash syntax for flags
 semcheck --config my-config.yaml
 
 # Show help
 semcheck -help
 ```
 
+### Defining Rules
+
+Define rules that link specification files to implementation files. Semcheck runs the LLM once per rule, and in pre-commit mode, only for rules with modified files. For best results, try to keep the number of files per rule small, LLMs perform best with focused context.
+
+Example rules:
+
+```yaml
+rules:
+  - name: "config-spec"
+    enabled: true
+    files:
+      include:
+        - "./internal/config/*.go"
+      exclude:
+        - "*_test.go"
+    specs:
+      - path: "config-spec.md"
+
+  - name: "geojson"
+    description: "Ensure GeoJSON implementation matches RFC 7946"
+    enabled: true
+    files:
+      include:
+        - "packages/geojson/src/*.ts"
+      exclude:
+        - "*.test.ts"
+    specs:
+      - path: "https://www.rfc-editor.org/rfc/rfc7946.txt"
+    prompt: |
+      Our GeoJSON implementation is incomplete; only check implemented features.
+```
+
 ### Development
 
-This project includes a [Justfile](./Justfile) for starting common development tasks.
+A [Justfile](./Justfile) is included for common development tasks.
 
 ```bash
-# Show available commands
+# List available commands
 just
 ```
 
@@ -103,14 +130,14 @@ just test
 just test-coverage
 ```
 
-### Check self
+### Checking Semcheck with Semcheck
 
-Semcheck has its own semcheck configuration, use the `dogfood` task in the Justfile
+Semcheck uses its own config for self-checks. Use the `dogfood` task in the Justfile:
 
 ```bash
 just dogfood
 ```
 
-## Ideal Situation
+## Ideal Outcome
 
 ![The Office meme: 'Corporate needs you to find the difference between these pictures' showing 'specification' and 'implementation', with semcheck saying 'they are the same picture'](./assets/office-meme.webp)

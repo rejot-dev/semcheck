@@ -1,3 +1,10 @@
 # TODOs
 
-- Allow URL spec definitions (i.e. https://www.rfc-editor.org/rfc/rfc7946.txt)
+Before going live
+- Add rule names to issues
+- Remove confidence
+
+Cool
+- Have a "thinking" preview in the terminal saying things like "considering function arguments in config validation..."
+- Github Action
+- Parallel Execution
