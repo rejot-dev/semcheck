@@ -28,7 +28,7 @@ type Rule struct {
 	Files               FilePattern `yaml:"files"`
 	Specs               []Spec      `yaml:"specs"`
 	Prompt              string      `yaml:"prompt,omitempty"`
-	FailOn              string      `yaml:"fail-on"`
+	FailOn              string      `yaml:"fail_on"`
 	ConfidenceThreshold float64     `yaml:"confidence_threshold"`
 }
 
@@ -122,7 +122,7 @@ func (c *Config) validate() error {
 			c.Rules[i].ConfidenceThreshold = 0.8
 		}
 
-		// Set default fail-on if not provided
+		// Set default fail_on if not provided
 		if rule.FailOn == "" {
 			c.Rules[i].FailOn = "error"
 		}
@@ -131,9 +131,9 @@ func (c *Config) validate() error {
 			return fmt.Errorf("confidence_threshold must be between 0 and 1 for rule: %s", rule.Name)
 		}
 
-		// Validate fail-on values
+		// Validate fail_on values
 		if c.Rules[i].FailOn != "error" && c.Rules[i].FailOn != "warning" && c.Rules[i].FailOn != "notice" {
-			return fmt.Errorf("fail-on must be 'error', 'warning', or 'notice' for rule: %s", rule.Name)
+			return fmt.Errorf("fail_on must be 'error', 'warning', or 'notice' for rule: %s", rule.Name)
 		}
 		for _, spec := range rule.Specs {
 			if spec.Path == "" {

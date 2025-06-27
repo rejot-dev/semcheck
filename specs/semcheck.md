@@ -155,7 +155,7 @@ rules:
     #   - "warning": Check fails if any WARNING or ERROR-level issues are found
     #   - "notice": Check fails if any NOTICE, WARNING, or ERROR-level issues are found
     # Default: "error"
-    fail-on: "error"
+    fail_on: "error"
 
     # Custom confidence threshold (OPTIONAL)
     # AI confidence level required to report an issue (0.0-1.0)
@@ -184,7 +184,7 @@ rules:
       - Authentication and authorization
       - Input sanitization
       - Secure data handling
-    fail-on: "error"
+    fail_on: "error"
     confidence_threshold: 0.9
 ```
 

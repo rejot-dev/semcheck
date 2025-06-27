@@ -21,7 +21,7 @@ rules:
         - "./internal/config/*_test.go"
     specs:
       - path: "./specs/semcheck.md"
-    fail-on: "error"
+    fail_on: "error"
 
   - name: "readme-file"
     description: "Make sure examples in the readme make sense"
@@ -36,4 +36,4 @@ rules:
       - path: "./internal/config/config.go" # Configuration example
       - path: "./Justfile" # Justfile instructions
       - path: "./cmd/cli/cli.go" # Command line interface
-    fail-on: "error"
+    fail_on: "error"
