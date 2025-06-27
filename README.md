@@ -9,6 +9,10 @@ Semcheck is a tool that uses large language models to verify that your implement
 * Supports remote specification files (e.g., `https://www.rfc-editor.org/rfc/rfc7946.txt`)
 * Easy setup with `semcheck -init`
 
+## Example Output
+
+![Semcheck example output showing two found issues](./assets/semantic-output.webp)
+
 ## Installation
 
 ### Prerequisites
@@ -140,10 +144,10 @@ just test-coverage
 
 ### Checking Semcheck with Semcheck
 
-Semcheck uses its own config for self-checks. Use the `dogfood` task in the Justfile:
+Semcheck uses itself to check that it has correctly implemented it's [own specification](./specs/semcheck.md). Run Semcheck without arguments to check that is has been correctly implemented.
 
 ```bash
-just dogfood
+semcheck
 ```
 
 ## Ideal Outcome
