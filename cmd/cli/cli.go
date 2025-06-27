@@ -14,12 +14,12 @@ import (
 )
 
 var (
-	configPath      = flag.String("config", "semcheck.yaml", "path to configuration file")
-	showHelp        = flag.Bool("help", false, "show help message")
-	showVer         = flag.Bool("version", false, "show version")
-	showConfig      = flag.Bool("show-config", false, "print full configuration")
-	includeAnalysis = flag.Bool("include-analysis", false, "include additional analysis in results")
-	initConfig      = flag.Bool("init", false, "create a semcheck.yaml file interactively")
+	configPath   = flag.String("config", "semcheck.yaml", "path to configuration file")
+	showHelp     = flag.Bool("help", false, "show help message")
+	showVer      = flag.Bool("version", false, "show version")
+	showConfig   = flag.Bool("show-config", false, "print full configuration")
+	hideAnalysis = flag.Bool("hide-analysis", false, "hide additional analysis in results")
+	initConfig   = flag.Bool("init", false, "create a semcheck.yaml file interactively")
 )
 
 const version = "0.1.0"
@@ -101,7 +101,7 @@ func Execute() error {
 
 	// Display results
 	reporter := checker.NewStdoutReporter(&checker.StdoutReporterOptions{
-		ShowAnalysis: *includeAnalysis,
+		ShowAnalysis: !*hideAnalysis,
 	})
 	reporter.Report(checkResult)
 
