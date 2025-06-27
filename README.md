@@ -80,6 +80,9 @@ semcheck $(git diff --name-only --cached)
 # Use custom config file
 semcheck -config my-config.yaml file1.go
 
+# Double dash syntax for flags is also accepted
+semcheck --config my-config.yaml
+
 # Show help
 semcheck -help
 ```
