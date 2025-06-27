@@ -37,9 +37,9 @@ rules:
         - "**/*.go"          # Include all Go files
         - "**/*.py"          # Include all Python files
     # Files from .gitignore are excluded automatically
-    exclude:
-        - "**/*_test.go"     # Exclude test files
-        - "**/vendor/**"     # Exclude vendor directory
+      exclude:
+          - "**/*_test.go"     # Exclude test files
+          - "**/vendor/**"     # Exclude vendor directory
     specs:
       - path: "SPEC.md"    # Specification file(s)
     fail_on: "error"         # error, warning, or notice

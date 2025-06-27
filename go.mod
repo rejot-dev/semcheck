@@ -5,11 +5,11 @@ go 1.24.2
 require (
 	github.com/anthropics/anthropic-sdk-go v1.4.0
 	github.com/fatih/color v1.18.0
+	github.com/goccy/go-yaml v1.18.0
 	github.com/invopop/jsonschema v0.13.0
 	github.com/openai/openai-go v1.5.0
 	github.com/prathyushnallamothu/ollamago v1.0.0
 	google.golang.org/genai v1.13.0
-	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -39,4 +39,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1 // indirect
 	google.golang.org/grpc v1.66.2 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

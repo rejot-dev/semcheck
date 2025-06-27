@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
 )
 
 type Config struct {
@@ -64,7 +64,7 @@ func Load(path string) (*Config, error) {
 func ParseFromBytes(data []byte) (*Config, error) {
 
 	var config Config
-	if err := yaml.Unmarshal(data, &config); err != nil {
+	if err := yaml.UnmarshalWithOptions(data, &config, yaml.Strict()); err != nil {
 		return nil, fmt.Errorf("failed to parse config file: %w", err)
 	}
 
