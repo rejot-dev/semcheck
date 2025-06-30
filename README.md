@@ -5,7 +5,7 @@ Semcheck is a tool that uses large language models to verify that your implement
 ## Features
 
 * Non-intrusive: no changes required to existing code or specification files
-* Bring Your Own Model: supports OpenAI, Anthropic, Gemini, and Ollama (local)
+* Bring Your Own Model: supports OpenAI, Anthropic, Gemini, Cerebras and Ollama (local)
 * Supports remote specification files (e.g., `https://www.rfc-editor.org/rfc/rfc7946.txt`)
 * Easy setup with `semcheck -init`
 
@@ -36,7 +36,7 @@ Example configuration:
 
 ```yaml
 version: "1.0"
-provider: openai  # Options: openai, anthropic, gemini, ollama
+provider: openai  # Options: openai, anthropic, gemini, ollama, cerebras
 model: gpt-4.1
 api_key: ${OPENAI_API_KEY}
 timeout: 30

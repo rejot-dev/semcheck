@@ -36,4 +36,5 @@ rules:
       - path: "./internal/config/config.go" # Configuration example
       - path: "./Justfile" # Justfile instructions
       - path: "./cmd/cli/cli.go" # Command line interface
+      - path: "./internal/providers/client.go" # Available providers
     fail_on: "error"
