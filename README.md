@@ -66,8 +66,15 @@ rules:
 # Create a config file
 semcheck -init
 
-# Pass specification and implementation files; semcheck determines the relevant rules
-semcheck spec.md spec2.md impl.go
+# Check all spec/implementation rules
+semcheck
+
+# Pass specific files that need checking,
+# semcheck uses the rules to determine which comparisons need to be made
+semcheck spec.md
+
+# Both implementation and specification files can be passed
+semcheck impl.go
 
 # Run on staged files (pre-commit)
 semcheck -pre-commit
