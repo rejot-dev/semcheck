@@ -107,7 +107,7 @@ func (c *AnthropicClient) Complete(ctx context.Context, req *Request) (*Response
 	}
 
 	// Extract text content from response
-	var responseText string = prefill
+	var responseText = prefill
 	for _, content := range resp.Content {
 		if content.Type == "text" {
 			responseText += content.Text

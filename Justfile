@@ -9,6 +9,7 @@ dogfood: build
     ./semcheck
 
 pre-commit: check build build-eval
+    golangci-lint run internal/... cmd/...
     ./semcheck -pre-commit
 
 # Install pre-commit hook

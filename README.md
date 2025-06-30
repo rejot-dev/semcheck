@@ -14,7 +14,8 @@ Semcheck is a tool that uses large language models to verify that your implement
 ### Prerequisites
 
 * [Go](https://go.dev/doc/install) 1.24 or newer
-* [Just](https://github.com/casey/just) (optional, for development tasks)
+* [golangci-lint](https://golangci-lint.run): (optional, for development)
+* [Just](https://github.com/casey/just) (optional, for development)
 
 ### Install
 

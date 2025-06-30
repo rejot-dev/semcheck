@@ -172,9 +172,9 @@ func (c *CerebrasClient) Complete(ctx context.Context, req *Request) (*Response,
 	// Send request
 	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {
-		return nil, fmt.Errorf("Cerebras API request failed: %w", err)
+		return nil, fmt.Errorf("cerebras API request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Read response body
 	body, err := io.ReadAll(resp.Body)
@@ -184,7 +184,7 @@ func (c *CerebrasClient) Complete(ctx context.Context, req *Request) (*Response,
 
 	// Check for HTTP errors
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Cerebras API returned status %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("cerebras API returned status %d: %s", resp.StatusCode, string(body))
 	}
 
 	// Parse response

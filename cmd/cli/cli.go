@@ -49,7 +49,9 @@ func Execute() error {
 	}
 
 	if *showConfig {
-		cfg.PrintAsYAML()
+		if err := cfg.PrintAsYAML(); err != nil {
+			return fmt.Errorf("failed to print config: %w", err)
+		}
 		return nil
 	}
 	fmt.Printf("Provider: %s, Model: %s\n", cfg.Provider, cfg.Model)

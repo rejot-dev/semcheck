@@ -40,7 +40,11 @@ func (m *Matcher) LoadGitignore() error {
 		}
 		return fmt.Errorf("failed to open .gitignore: %w", err)
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to close file: %v\n", err)
+		}
+	}()
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {

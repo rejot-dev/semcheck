@@ -74,7 +74,7 @@ func (c *OllamaClient) Complete(ctx context.Context, req *Request) (*Response, e
 	// Send request
 	resp, err := c.client.Generate(ctx, *generateReq)
 	if err != nil {
-		return nil, fmt.Errorf("Ollama API request failed: %w", err)
+		return nil, fmt.Errorf("ollama API request failed: %w", err)
 	}
 
 	// Parse the JSON response to extract semantic issues

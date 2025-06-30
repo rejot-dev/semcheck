@@ -78,12 +78,6 @@ func (c *OpenAIClient) Complete(ctx context.Context, req *Request) (*Response, e
 		return nil, fmt.Errorf("client validation failed: %w", err)
 	}
 
-	// Set defaults
-	maxTokens := req.MaxTokens
-	if maxTokens == 0 {
-		maxTokens = 3000
-	}
-
 	temperature := c.temperature
 
 	// Generate schema for structured output

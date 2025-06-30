@@ -116,9 +116,10 @@ func (c *SemanticChecker) buildRuleComparisons(matches []processor.MatcherResult
 		comp := ruleFiles[ruleName]
 
 		// Add file to appropriate list based on type
-		if match.Type == processor.FileTypeSpec {
+		switch match.Type {
+		case processor.FileTypeSpec:
 			comp.SpecFiles = append(comp.SpecFiles, string(match.Path))
-		} else if match.Type == processor.FileTypeImpl {
+		case processor.FileTypeImpl:
 			comp.ImplFiles = append(comp.ImplFiles, string(match.Path))
 		}
 	}
@@ -252,7 +253,12 @@ func (c *SemanticChecker) readURL(url string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch URL %s: %w", url, err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			// Log error but don't fail the operation
+			fmt.Fprintf(os.Stderr, "Warning: failed to close response body: %v\n", err)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("failed to fetch URL %s: HTTP %d %s", url, resp.StatusCode, resp.Status)
