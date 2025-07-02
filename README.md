@@ -153,3 +153,36 @@ semcheck
 ## Ideal Outcome
 
 ![The Office meme: 'Corporate needs you to find the difference between these pictures' showing 'specification' and 'implementation', with semcheck saying 'they are the same picture'](./assets/office-meme.webp)
+
+## GitHub Actions
+
+Semcheck can be used in a GitHub Actions workflow to check for semantic issues in your code.
+
+Available configuration options:
+
+* `config-file`: Path to the semcheck configuration file
+* `fail-on-issues`: Whether to fail the action if issues are found
+* `semcheck-version`: Version of Semcheck to use
+* `go-version`: Version of Go to use
+
+```yaml
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  semcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run semcheck
+        uses: rejot-dev/semcheck@main
+        with:
+          config-file: semcheck.yaml
+          fail-on-issues: false
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }} # or other provider API key, configurable in semcheck.yaml
+```
