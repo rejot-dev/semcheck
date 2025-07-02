@@ -17,6 +17,6 @@ jobs:
       with:
         config-file: 'semcheck.yaml'
         fail-on-issues: 'false'
-        semcheck-version: 'ci'
+        semcheck-version: ${{ github.sha }}
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

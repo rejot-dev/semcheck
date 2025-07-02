@@ -64,7 +64,7 @@ func (r *GitHubReporter) outputAnnotation(ruleName string, issue providers.Seman
 
 	// Build the annotation message
 	message := fmt.Sprintf("[%s] %s", ruleName, issue.Message)
-	
+
 	// Add confidence if available
 	if issue.Confidence > 0 {
 		message += fmt.Sprintf(" (confidence: %.1f%%)", issue.Confidence*100)
@@ -84,16 +84,14 @@ func (r *GitHubReporter) outputAnnotation(ruleName string, issue providers.Seman
 	escapedMessage := r.escapeForGitHubActions(message)
 
 	// Output the annotation
-	// Format: ::level file=file,line=line,col=col::message
-	// Since we don't have specific line/column information, we'll use the rule name as the file
-	annotation := fmt.Sprintf("::%s file=%s::%s", level, ruleName, escapedMessage)
+	annotation := fmt.Sprintf("::%s file=%s,line=1,col=1::%s", level, issue.File, escapedMessage)
 	fmt.Println(annotation)
 }
 
 // outputNotice outputs a GitHub Actions notice message
 func (r *GitHubReporter) outputNotice(message string) {
 	escapedMessage := r.escapeForGitHubActions(message)
-	fmt.Printf("::notice::%s\n", escapedMessage)
+	fmt.Printf("::notice ::%s\n", escapedMessage)
 }
 
 // escapeForGitHubActions escapes special characters for GitHub Actions annotations
@@ -103,4 +101,4 @@ func (r *GitHubReporter) escapeForGitHubActions(message string) string {
 	// Replace carriage returns with %0D
 	message = strings.ReplaceAll(message, "\r", "%0D")
 	return message
-} 
+}
