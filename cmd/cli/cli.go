@@ -21,6 +21,7 @@ var (
 	hideAnalysis = flag.Bool("hide-analysis", false, "hide additional analysis in results")
 	preCommit    = flag.Bool("pre-commit", false, "Runs semcheck on staged files")
 	initConfig   = flag.Bool("init", false, "create a semcheck.yaml file interactively")
+	githubOutput = flag.Bool("github-output", false, "output GitHub Actions annotations")
 )
 
 const version = "0.1.0"
@@ -111,9 +112,17 @@ func Execute() error {
 	}
 
 	// Display results
-	reporter := checker.NewStdoutReporter(&checker.StdoutReporterOptions{
-		ShowAnalysis: !*hideAnalysis,
-	})
+	var reporter checker.Reporter
+	if *githubOutput {
+		reporter = checker.NewGitHubReporter(&checker.GitHubReporterOptions{
+			ShowAnalysis: !*hideAnalysis,
+			WorkingDir:   workingDir,
+		})
+	} else {
+		reporter = checker.NewStdoutReporter(&checker.StdoutReporterOptions{
+			ShowAnalysis: !*hideAnalysis,
+		})
+	}
 	reporter.Report(checkResult)
 
 	// Determine exit code based on results

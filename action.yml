@@ -10,6 +10,10 @@ inputs:
     description: 'Go version to use'
     required: false
     default: '1.24'
+  semcheck-version:
+    description: 'Semcheck version to use'
+    required: false
+    default: 'latest'
   fail-on-issues:
     description: 'Whether to fail the action if issues are found'
     required: false
@@ -25,13 +29,13 @@ runs:
 
     - name: Install semcheck
       shell: bash
-      run: go install github.com/rejot-dev/semcheck@latest
+      run: go install github.com/rejot-dev/semcheck@${{ inputs.semcheck-version }}
 
     - name: Run semcheck
       shell: bash
       run: |
         if [ "${{ inputs.fail-on-issues }}" = "true" ]; then
-          semcheck -config ${{ inputs.config-file }}
+          semcheck -config ${{ inputs.config-file }} -github-output
         else
-          semcheck -config ${{ inputs.config-file }} || true
+          semcheck -config ${{ inputs.config-file }} -github-output || true
         fi 
