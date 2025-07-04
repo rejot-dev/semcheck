@@ -1,5 +1,8 @@
 name: 'Semcheck'
 description: 'Run semcheck to verify code implementation matches specification'
+branding:
+  icon: check-square
+  color: blue
 
 inputs:
   config-file:
