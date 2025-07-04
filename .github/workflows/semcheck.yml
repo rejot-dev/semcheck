@@ -1,0 +1,22 @@
+name: Semcheck
+
+on:
+  push:
+    branches: [ "*" ]
+jobs:
+  semcheck:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run semcheck
+      uses: ./
+      id: semcheck
+      with:
+        config-file: 'semcheck.yaml'
+        fail-on-issues: 'false'
+        semcheck-version: ${{ github.sha }}
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

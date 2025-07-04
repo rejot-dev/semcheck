@@ -37,7 +37,8 @@ Your final output should be a JSON array of objects, each representing an issue.
 "level": "ERROR, WARNING, or NOTICE",
 "message": "Brief description of the issue",
 "confidence": "Your confidence level that the issue applies in this case (0.0-1.0)",
-"suggestion": "How to fix this issue, if possible mention which file to apply the fix to"
+"suggestion": "How to fix this issue, if possible mention which file to apply the fix to",
+"file": "The file that the issue is in"
 }
 
 Please proceed with your analysis and provide your findings in the specified JSON format and ONLY output JSON.`

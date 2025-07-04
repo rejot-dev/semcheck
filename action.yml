@@ -1,0 +1,41 @@
+name: 'Semcheck'
+description: 'Run semcheck to verify code implementation matches specification'
+
+inputs:
+  config-file:
+    description: 'Path to the semcheck configuration file'
+    required: true
+    default: 'semcheck.yaml'
+  go-version:
+    description: 'Go version to use'
+    required: false
+    default: '1.24'
+  semcheck-version:
+    description: 'Semcheck version to use'
+    required: false
+    default: 'latest'
+  fail-on-issues:
+    description: 'Whether to fail the action if issues are found'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ inputs.go-version }}
+
+    - name: Install semcheck
+      shell: bash
+      run: go install github.com/rejot-dev/semcheck@${{ inputs.semcheck-version }}
+
+    - name: Run semcheck
+      shell: bash
+      run: |
+        if [ "${{ inputs.fail-on-issues }}" = "true" ]; then
+          semcheck -config ${{ inputs.config-file }} -github-output
+        else
+          semcheck -config ${{ inputs.config-file }} -github-output || true
+        fi 
