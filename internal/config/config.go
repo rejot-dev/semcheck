@@ -18,7 +18,14 @@ type Config struct {
 	Timeout      int      `yaml:"timeout"`
 	Temperature  *float64 `yaml:"temperature,omitempty"`
 	FailOnIssues *bool    `yaml:"fail_on_issues,omitempty"`
+	MCP          *MCPConfig `yaml:"mcp,omitempty"`
 	Rules        []Rule   `yaml:"rules"`
+}
+
+type MCPConfig struct {
+	Enabled bool   `yaml:"enabled"`
+	Address string `yaml:"address"`
+	Port    int    `yaml:"port"`
 }
 
 type Rule struct {
@@ -175,6 +182,16 @@ func (c *Config) validate() error {
 		defaultFailOnIssues := true
 		c.FailOnIssues = &defaultFailOnIssues
 	}
+	
+	// Set MCP defaults
+	if c.MCP != nil {
+		if c.MCP.Address == "" {
+			c.MCP.Address = "localhost"
+		}
+		if c.MCP.Port == 0 {
+			c.MCP.Port = 8080
+		}
+	}
 
 	// Validate timeout range
 	if c.Timeout < 0 {
@@ -184,6 +201,13 @@ func (c *Config) validate() error {
 	// Validate temperature range (0.0 is allowed for deterministic output)
 	if *c.Temperature < 0 || *c.Temperature > 1 {
 		return fmt.Errorf("temperature must be between 0.0 and 1.0, got: %f", *c.Temperature)
+	}
+	
+	// Validate MCP configuration
+	if c.MCP != nil && c.MCP.Enabled {
+		if c.MCP.Port <= 0 || c.MCP.Port > 65535 {
+			return fmt.Errorf("MCP port must be between 1 and 65535, got: %d", c.MCP.Port)
+		}
 	}
 
 	return nil

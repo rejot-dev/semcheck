@@ -1,0 +1,24 @@
+version: "1.0"
+provider: ollama
+model: llama3.2
+timeout: 30
+fail_on_issues: true
+
+# MCP Configuration
+mcp:
+  enabled: true
+  address: localhost
+  port: 8080
+
+rules:
+  - name: example-rule
+    description: Example rule for testing MCP functionality
+    enabled: true
+    files:
+      include:
+        - "*.go"
+      exclude:
+        - "*_test.go"
+    specs:
+      - path: "specs/example.md"
+    fail_on: "error"
