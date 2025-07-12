@@ -16,7 +16,6 @@ const (
 	ProviderGemini    Provider = "gemini"
 	ProviderOllama    Provider = "ollama"
 	ProviderCerebras  Provider = "cerebras"
-	ProviderMCP       Provider = "mcp"
 )
 
 func ToProvider(provider string) (Provider, error) {
@@ -31,15 +30,13 @@ func ToProvider(provider string) (Provider, error) {
 		return ProviderOllama, nil
 	case "cerebras":
 		return ProviderCerebras, nil
-	case "mcp":
-		return ProviderMCP, nil
 	default:
 		return "", fmt.Errorf("invalid provider: %s", provider)
 	}
 }
 
 func GetAllProviders() []Provider {
-	return []Provider{ProviderOpenAI, ProviderAnthropic, ProviderGemini, ProviderOllama, ProviderCerebras, ProviderMCP}
+	return []Provider{ProviderOpenAI, ProviderAnthropic, ProviderGemini, ProviderOllama, ProviderCerebras}
 }
 
 type ProviderDefaults struct {
@@ -73,11 +70,6 @@ func GetProviderDefaults(provider Provider) ProviderDefaults {
 		return ProviderDefaults{
 			Model:     "llama-4-scout-17b-16e-instruct",
 			ApiKeyVar: "CEREBRAS_API_KEY",
-		}
-	case ProviderMCP:
-		return ProviderDefaults{
-			Model:     "mcp-server",
-			ApiKeyVar: "", // MCP doesn't require an API key
 		}
 	default:
 		return ProviderDefaults{
@@ -141,11 +133,6 @@ type Config struct {
 }
 
 func CreateAIClient(cfg *config.Config) (Client, error) {
-	// Check if MCP mode is enabled
-	if cfg.MCP != nil && cfg.MCP.Enabled {
-		return CreateMCPClient(cfg)
-	}
-
 	// Convert config to provider config
 	provider, providerErr := ToProvider(cfg.Provider)
 	if providerErr != nil {
@@ -175,8 +162,6 @@ func CreateAIClient(cfg *config.Config) (Client, error) {
 		client, err = NewOllamaClient(providerConfig)
 	case ProviderCerebras:
 		client, err = NewCerebrasClient(providerConfig)
-	case ProviderMCP:
-		return CreateMCPClient(cfg)
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", provider)
 	}
@@ -186,21 +171,4 @@ func CreateAIClient(cfg *config.Config) (Client, error) {
 	}
 
 	return client, nil
-}
-
-// CreateMCPClient creates an MCP client based on the configuration
-func CreateMCPClient(cfg *config.Config) (Client, error) {
-	if cfg.MCP == nil || !cfg.MCP.Enabled {
-		return nil, fmt.Errorf("MCP configuration is not enabled")
-	}
-
-	// Create MCP client
-	mcpClient := NewMCPClient(cfg.MCP.Address, cfg.MCP.Port)
-	
-	// Connect to the MCP server
-	if err := mcpClient.Connect(); err != nil {
-		return nil, fmt.Errorf("failed to connect to MCP server: %w", err)
-	}
-
-	return mcpClient, nil
 }

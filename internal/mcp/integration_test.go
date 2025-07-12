@@ -2,80 +2,161 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net"
 	"testing"
-	"time"
 
-	"github.com/rejot-dev/semcheck/internal/providers"
+	"github.com/rejot-dev/semcheck/internal/config"
 )
 
-// TestMCPServerClientIntegration tests MCP server and client integration
-func TestMCPServerClientIntegration(t *testing.T) {
-	// Create mock handler
-	handler := NewMockLLMRequestHandler()
-	
-	// Add mock response
-	mockResponse := &providers.Response{
-		Usage: providers.Usage{
-			PromptTokens:     10,
-			CompletionTokens: 20,
-			TotalTokens:      30,
+// TestMCPServerToolsResourcesIntegration tests MCP server Tools/Resources integration
+func TestMCPServerToolsResourcesIntegration(t *testing.T) {
+	// Create test configuration
+	cfg := &config.Config{
+		Version: "1.0",
+		MCP: &config.MCPConfig{
+			Enabled: true,
+			Address: "localhost",
+			Port:    0, // Use port 0 to get any available port
 		},
-		Issues: []providers.SemanticIssue{
+		Rules: []config.Rule{
 			{
-				Level:      "ERROR",
-				Message:    "Integration test issue",
-				Confidence: 0.9,
+				Name:        "integration-test-rule",
+				Description: "Integration test rule",
+				Enabled:     true,
+				FailOn:      "error",
 			},
 		},
 	}
-	handler.AddResponse("integration test", mockResponse)
-	
-	// Create and start server
-	server := NewServer("localhost", 0, handler) // Use port 0 to get any available port
-	
+
+	// Create handler and server
+	handler := NewToolsResourcesHandler(cfg, "/tmp")
+	server := NewServer("localhost", 0, handler)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	
+
 	err := server.Start(ctx)
 	if err != nil {
 		t.Fatalf("Failed to start server: %v", err)
 	}
 	defer server.Stop()
-	
+
 	// Get the actual port the server is listening on
 	serverPort := server.ln.Addr().(*net.TCPAddr).Port
-	
-	// Create and connect client
-	client := providers.NewMCPClient("localhost", serverPort)
-	err = client.Connect()
-	if err != nil {
-		t.Fatalf("Failed to connect to MCP server: %v", err)
-	}
-	defer client.Disconnect()
-	
-	// Test request
-	req := &providers.Request{
-		SystemPrompt: "integration test system",
-		UserPrompt:   "integration test",
-		MaxTokens:    100,
-		Timeout:      30 * time.Second,
-	}
-	
-	response, err := client.Complete(ctx, req)
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-	
-	if response == nil {
-		t.Error("Expected response, got nil")
-	}
-	
-	if len(response.Issues) != 1 {
-		t.Errorf("Expected 1 issue, got %d", len(response.Issues))
-	}
-	
-	if response.Issues[0].Message != "Integration test issue" {
-		t.Errorf("Expected message 'Integration test issue', got '%s'", response.Issues[0].Message)
-	}
+
+	// Test tools/list
+	t.Run("ToolsList", func(t *testing.T) {
+		conn, err := net.Dial("tcp", "localhost:"+fmt.Sprintf("%d", serverPort))
+		if err != nil {
+			t.Fatalf("Failed to connect to server: %v", err)
+		}
+		defer conn.Close()
+
+		encoder := json.NewEncoder(conn)
+		decoder := json.NewDecoder(conn)
+
+		request := MCPRequest{
+			ID:     "test-tools-list",
+			Method: "tools/list",
+			Params: map[string]interface{}{},
+		}
+
+		err = encoder.Encode(request)
+		if err != nil {
+			t.Fatalf("Failed to send request: %v", err)
+		}
+
+		var response MCPResponse
+		err = decoder.Decode(&response)
+		if err != nil {
+			t.Fatalf("Failed to decode response: %v", err)
+		}
+
+		if response.Error != nil {
+			t.Fatalf("Unexpected error in response: %v", response.Error)
+		}
+
+		if response.Result == nil {
+			t.Fatal("Expected result in response")
+		}
+	})
+
+	// Test resources/list
+	t.Run("ResourcesList", func(t *testing.T) {
+		conn, err := net.Dial("tcp", "localhost:"+fmt.Sprintf("%d", serverPort))
+		if err != nil {
+			t.Fatalf("Failed to connect to server: %v", err)
+		}
+		defer conn.Close()
+
+		encoder := json.NewEncoder(conn)
+		decoder := json.NewDecoder(conn)
+
+		request := MCPRequest{
+			ID:     "test-resources-list",
+			Method: "resources/list",
+			Params: map[string]interface{}{},
+		}
+
+		err = encoder.Encode(request)
+		if err != nil {
+			t.Fatalf("Failed to send request: %v", err)
+		}
+
+		var response MCPResponse
+		err = decoder.Decode(&response)
+		if err != nil {
+			t.Fatalf("Failed to decode response: %v", err)
+		}
+
+		if response.Error != nil {
+			t.Fatalf("Unexpected error in response: %v", response.Error)
+		}
+
+		if response.Result == nil {
+			t.Fatal("Expected result in response")
+		}
+	})
+
+	// Test tools/call
+	t.Run("ToolsCall", func(t *testing.T) {
+		conn, err := net.Dial("tcp", "localhost:"+fmt.Sprintf("%d", serverPort))
+		if err != nil {
+			t.Fatalf("Failed to connect to server: %v", err)
+		}
+		defer conn.Close()
+
+		encoder := json.NewEncoder(conn)
+		decoder := json.NewDecoder(conn)
+
+		request := MCPRequest{
+			ID:     "test-tools-call",
+			Method: "tools/call",
+			Params: map[string]interface{}{
+				"name":      "list_rules",
+				"arguments": map[string]interface{}{},
+			},
+		}
+
+		err = encoder.Encode(request)
+		if err != nil {
+			t.Fatalf("Failed to send request: %v", err)
+		}
+
+		var response MCPResponse
+		err = decoder.Decode(&response)
+		if err != nil {
+			t.Fatalf("Failed to decode response: %v", err)
+		}
+
+		if response.Error != nil {
+			t.Fatalf("Unexpected error in response: %v", response.Error)
+		}
+
+		if response.Result == nil {
+			t.Fatal("Expected result in response")
+		}
+	})
 }

@@ -6,35 +6,23 @@ import (
 	"fmt"
 	"net"
 	"sync"
-	"time"
-
-	"github.com/rejot-dev/semcheck/internal/providers"
 )
 
 // Server represents an MCP server that accepts TCP connections
 type Server struct {
 	address string
 	port    int
-	handler LLMRequestHandler
+	handler *ToolsResourcesHandler
 	mu      sync.RWMutex
 	running bool
 	ln      net.Listener
 }
 
-// LLMRequestHandler defines the callback interface for handling LLM requests
-type LLMRequestHandler interface {
-	HandleLLMRequest(ctx context.Context, req *providers.Request) (*providers.Response, error)
-}
-
 // MCPRequest represents a request received via MCP protocol
 type MCPRequest struct {
-	ID         string                 `json:"id"`
-	Method     string                 `json:"method"`
-	Params     map[string]interface{} `json:"params"`
-	SystemPrompt string               `json:"system_prompt,omitempty"`
-	UserPrompt   string               `json:"user_prompt,omitempty"`
-	MaxTokens    int                  `json:"max_tokens,omitempty"`
-	Timeout      int                  `json:"timeout,omitempty"`
+	ID     string                 `json:"id"`
+	Method string                 `json:"method"`
+	Params map[string]interface{} `json:"params"`
 }
 
 // MCPResponse represents a response sent via MCP protocol
@@ -51,7 +39,7 @@ type MCPError struct {
 }
 
 // NewServer creates a new MCP server
-func NewServer(address string, port int, handler LLMRequestHandler) *Server {
+func NewServer(address string, port int, handler *ToolsResourcesHandler) *Server {
 	return &Server{
 		address: address,
 		port:    port,
@@ -171,8 +159,41 @@ func (s *Server) processRequest(ctx context.Context, req *MCPRequest) *MCPRespon
 	}
 
 	switch req.Method {
-	case "llm_request":
-		result, err := s.handleLLMRequest(ctx, req)
+	case "tools/list":
+		tools := s.handler.ListTools()
+		response.Result = map[string]interface{}{
+			"tools": tools,
+		}
+	case "tools/call":
+		toolCallReq := &ToolCallRequest{}
+		if params, ok := req.Params["name"]; ok {
+			toolCallReq.Name = params.(string)
+		}
+		if params, ok := req.Params["arguments"]; ok {
+			toolCallReq.Arguments = params.(map[string]interface{})
+		}
+		
+		result, err := s.handler.CallTool(ctx, toolCallReq)
+		if err != nil {
+			response.Error = &MCPError{
+				Code:    500,
+				Message: err.Error(),
+			}
+		} else {
+			response.Result = result
+		}
+	case "resources/list":
+		resources := s.handler.ListResources()
+		response.Result = map[string]interface{}{
+			"resources": resources,
+		}
+	case "resources/read":
+		resourceReadReq := &ResourceReadRequest{}
+		if params, ok := req.Params["uri"]; ok {
+			resourceReadReq.URI = params.(string)
+		}
+		
+		result, err := s.handler.ReadResource(ctx, resourceReadReq)
 		if err != nil {
 			response.Error = &MCPError{
 				Code:    500,
@@ -189,31 +210,4 @@ func (s *Server) processRequest(ctx context.Context, req *MCPRequest) *MCPRespon
 	}
 
 	return response
-}
-
-// handleLLMRequest handles LLM requests via the callback handler
-func (s *Server) handleLLMRequest(ctx context.Context, req *MCPRequest) (interface{}, error) {
-	// Convert MCP request to providers.Request
-	providerReq := &providers.Request{
-		SystemPrompt: req.SystemPrompt,
-		UserPrompt:   req.UserPrompt,
-		MaxTokens:    req.MaxTokens,
-		Timeout:      time.Duration(req.Timeout) * time.Second,
-	}
-
-	// Set defaults if not provided
-	if providerReq.MaxTokens == 0 {
-		providerReq.MaxTokens = 3000
-	}
-	if providerReq.Timeout == 0 {
-		providerReq.Timeout = 30 * time.Second
-	}
-
-	// Call the handler
-	response, err := s.handler.HandleLLMRequest(ctx, providerReq)
-	if err != nil {
-		return nil, err
-	}
-
-	return response, nil
 }

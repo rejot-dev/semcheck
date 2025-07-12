@@ -1,10 +1,12 @@
 version: "1.0"
-provider: ollama
-model: llama3.2
+# Note: In MCP Tools/Resources mode, provider and model are not used
+# External MCP clients (VS Code, Claude Desktop) provide the LLM
+provider: ollama  # This is ignored in MCP mode
+model: llama3.2   # This is ignored in MCP mode
 timeout: 30
 fail_on_issues: true
 
-# MCP Configuration
+# MCP Configuration - Tools/Resources pattern
 mcp:
   enabled: true
   address: localhost

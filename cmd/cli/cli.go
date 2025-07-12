@@ -161,21 +161,14 @@ func runMCPServer() error {
 		return fmt.Errorf("MCP server mode requires MCP configuration in config file")
 	}
 
-	// Create underlying provider client for the handler
-	// Temporarily disable MCP to create the actual provider client
-	mcpConfig := cfg.MCP
-	cfg.MCP = nil
-	
-	providerClient, err := providers.CreateAIClient(cfg)
+	// Get working directory
+	workingDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("error creating AI client: %w", err)
+		return fmt.Errorf("error getting working directory: %w", err)
 	}
-	
-	// Restore MCP config
-	cfg.MCP = mcpConfig
 
-	// Create LLM request handler
-	handler := mcp.NewDirectLLMRequestHandler(providerClient)
+	// Create tools/resources handler
+	handler := mcp.NewToolsResourcesHandler(cfg, workingDir)
 
 	// Create and start MCP server
 	server := mcp.NewServer(cfg.MCP.Address, cfg.MCP.Port, handler)

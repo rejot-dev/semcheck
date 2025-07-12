@@ -1,58 +1,36 @@
-# MCP (Model Context Protocol) Server Documentation
+# MCP (Model Context Protocol) Tools/Resources Documentation
 
 ## Overview
 
-Semcheck supports MCP (Model Context Protocol) server functionality, which allows you to run semcheck as a TCP server that accepts LLM requests and processes them through callback handlers. This enables integration with external systems that can make semantic analysis requests via the MCP protocol.
+Semcheck supports MCP (Model Context Protocol) Tools/Resources pattern, which allows external MCP clients (like VS Code, Claude Desktop) to use semcheck as a tool for semantic code analysis. Instead of semcheck using its own LLM, the external client's LLM uses semcheck's analysis capabilities through the MCP protocol.
+
+## Architecture
+
+In this pattern:
+- **External MCP Client**: VS Code, Claude Desktop, or other MCP-compatible clients
+- **External LLM**: The client's LLM (e.g., Claude, GPT-4) processes the semantic analysis
+- **Semcheck MCP Server**: Provides tools and resources for code analysis
+- **No Direct LLM Usage**: Semcheck doesn't make direct LLM calls; it provides data and analysis capabilities
 
 ## Configuration
 
 ### MCP Server Configuration
 
-To enable MCP mode, add the following configuration to your `semcheck.yaml` file:
+Enable MCP mode by adding the following to your `semcheck.yaml` file:
 
 ```yaml
 version: "1.0"
-provider: ollama  # or any other provider (openai, anthropic, etc.)
-model: llama3.2   # model to use for LLM requests
+# Note: provider and model are not used in MCP mode
+# The external client's LLM will be used instead
+provider: ollama  # This is ignored in MCP mode
+model: llama3.2   # This is ignored in MCP mode
 timeout: 30
-fail_on_issues: true
 
 # MCP Configuration
 mcp:
   enabled: true
   address: localhost  # Address to bind the server to
   port: 8080         # Port to listen on
-
-rules:
-  - name: example-rule
-    description: Example rule for semantic analysis
-    enabled: true
-    files:
-      include:
-        - "*.go"
-      exclude:
-        - "*_test.go"
-    specs:
-      - path: "specs/example.md"
-    fail_on: "error"
-```
-
-### MCP Client Configuration
-
-To use semcheck as an MCP client (connecting to an external MCP server):
-
-```yaml
-version: "1.0"
-provider: mcp      # Use MCP provider
-model: mcp-client  # Model identifier for MCP client
-timeout: 30
-fail_on_issues: true
-
-# MCP Configuration - connects to external MCP server
-mcp:
-  enabled: true
-  address: localhost  # Address of the MCP server
-  port: 8080         # Port of the MCP server
 
 rules:
   - name: example-rule
@@ -80,78 +58,234 @@ semcheck -config semcheck-mcp.yaml -mcp-server
 
 This will:
 1. Load the configuration
-2. Create an underlying AI provider client (e.g., OpenAI, Anthropic, Ollama)
-3. Start a TCP server that accepts MCP protocol requests
-4. Handle incoming LLM requests by forwarding them to the underlying provider
-5. Return structured responses via the MCP protocol
+2. Start a TCP server that accepts MCP protocol requests
+3. Expose tools and resources for external MCP clients
+4. Allow external clients to use their LLM for semantic analysis
 
-### Running MCP Client
+### Using with External MCP Clients
 
-To use semcheck as an MCP client:
+External MCP clients can connect to semcheck and use the provided tools:
 
-```bash
-semcheck -config semcheck-mcp-client.yaml
-```
-
-This will:
-1. Connect to the configured MCP server
-2. Perform semantic analysis using the MCP protocol
-3. Send LLM requests to the MCP server instead of directly to AI providers
-
-## MCP Protocol
-
-### Request Format
-
-MCP requests are JSON objects sent over TCP connections:
-
+#### VS Code with MCP Extension
 ```json
 {
-  "id": "unique-request-id",
-  "method": "llm_request",
-  "system_prompt": "System prompt for the LLM",
-  "user_prompt": "User prompt containing the analysis request",
-  "max_tokens": 3000,
-  "timeout": 30
+  "mcp.servers": {
+    "semcheck": {
+      "command": "tcp",
+      "args": ["localhost", "8080"]
+    }
+  }
 }
 ```
 
-### Response Format
-
-MCP responses are JSON objects:
-
+#### Claude Desktop
 ```json
 {
-  "id": "unique-request-id",
+  "mcpServers": {
+    "semcheck": {
+      "command": "tcp",
+      "args": ["localhost", "8080"]
+    }
+  }
+}
+```
+
+## MCP Tools
+
+Semcheck provides the following MCP tools:
+
+### 1. analyze_code
+Analyzes code files against specifications for semantic issues.
+
+**Parameters:**
+- `files` (array): List of file paths to analyze
+- `specs` (array, optional): List of specification file paths
+- `rule_name` (string, optional): Specific rule name to apply
+
+**Example:**
+```json
+{
+  "name": "analyze_code",
+  "arguments": {
+    "files": ["main.go", "utils.go"],
+    "rule_name": "example-rule"
+  }
+}
+```
+
+### 2. list_rules
+Lists all available semantic checking rules.
+
+**Example:**
+```json
+{
+  "name": "list_rules",
+  "arguments": {}
+}
+```
+
+### 3. get_rule_details
+Gets detailed information about a specific rule.
+
+**Parameters:**
+- `rule_name` (string): Name of the rule to get details for
+
+**Example:**
+```json
+{
+  "name": "get_rule_details",
+  "arguments": {
+    "rule_name": "example-rule"
+  }
+}
+```
+
+### 4. match_files
+Matches files against configured rules and returns matching pairs.
+
+**Parameters:**
+- `files` (array): List of file paths to match
+
+**Example:**
+```json
+{
+  "name": "match_files",
+  "arguments": {
+    "files": ["main.go", "spec.md"]
+  }
+}
+```
+
+## MCP Resources
+
+Semcheck provides the following MCP resources:
+
+### 1. Configuration
+- **URI**: `config://semcheck.yaml`
+- **Description**: Current semcheck configuration
+- **Type**: JSON
+
+### 2. Specification Files
+- **URI**: `spec://<path>`
+- **Description**: Specification files for rules
+- **Type**: Markdown
+
+**Example:**
+```
+spec://specs/example.md
+```
+
+## MCP Protocol
+
+### Tools List Request
+```json
+{
+  "id": "1",
+  "method": "tools/list",
+  "params": {}
+}
+```
+
+### Tools List Response
+```json
+{
+  "id": "1",
   "result": {
-    "usage": {
-      "prompt_tokens": 100,
-      "completion_tokens": 200,
-      "total_tokens": 300
-    },
-    "issues": [
+    "tools": [
       {
-        "reasoning": "Explanation of the issue",
-        "level": "ERROR",
-        "message": "Description of the semantic issue",
-        "confidence": 0.9,
-        "suggestion": "How to fix the issue",
-        "file": "path/to/file.go"
+        "name": "analyze_code",
+        "description": "Analyze code files against specifications",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "files": {
+              "type": "array",
+              "items": {"type": "string"}
+            }
+          }
+        }
       }
     ]
   }
 }
 ```
 
-### Error Format
-
-MCP errors are returned in the response:
-
+### Tool Call Request
 ```json
 {
-  "id": "unique-request-id",
-  "error": {
-    "code": 500,
-    "message": "Error description"
+  "id": "2",
+  "method": "tools/call",
+  "params": {
+    "name": "analyze_code",
+    "arguments": {
+      "files": ["main.go"]
+    }
+  }
+}
+```
+
+### Tool Call Response
+```json
+{
+  "id": "2",
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Analysis results in JSON format..."
+      }
+    ]
+  }
+}
+```
+
+### Resources List Request
+```json
+{
+  "id": "3",
+  "method": "resources/list",
+  "params": {}
+}
+```
+
+### Resources List Response
+```json
+{
+  "id": "3",
+  "result": {
+    "resources": [
+      {
+        "uri": "config://semcheck.yaml",
+        "name": "Semcheck Configuration",
+        "description": "Current semcheck configuration"
+      }
+    ]
+  }
+}
+```
+
+### Resource Read Request
+```json
+{
+  "id": "4",
+  "method": "resources/read",
+  "params": {
+    "uri": "config://semcheck.yaml"
+  }
+}
+```
+
+### Resource Read Response
+```json
+{
+  "id": "4",
+  "result": {
+    "contents": [
+      {
+        "type": "text",
+        "text": "Configuration data..."
+      }
+    ]
   }
 }
 ```
@@ -164,34 +298,26 @@ MCP errors are returned in the response:
    - Accepts TCP connections
    - Handles MCP protocol requests
    - Manages concurrent connections
-   - Delegates LLM requests to callback handlers
+   - Supports tools/list, tools/call, resources/list, resources/read methods
 
-2. **MCP Client** (`internal/providers/mcp.go`):
-   - Implements the `providers.Client` interface
-   - Connects to MCP servers
-   - Sends MCP protocol requests
-   - Handles responses and errors
+2. **Tools/Resources Handler** (`internal/mcp/tools.go`):
+   - Implements MCP tools for semantic analysis
+   - Provides MCP resources (config, specifications)
+   - Handles tool calls and resource reads
+   - No direct LLM integration (external client provides LLM)
 
-3. **LLM Request Handler** (`internal/mcp/handler.go`):
-   - Callback interface for processing LLM requests
-   - `DirectLLMRequestHandler`: Forwards requests to provider clients
-   - Extensible for custom handler implementations
+3. **Configuration**: Extended config system with MCP settings
 
-### Callback System
+### Tools/Resources Pattern
 
-The MCP server uses a callback system to handle LLM requests:
+The MCP Tools/Resources pattern allows external clients to:
 
-```go
-type LLMRequestHandler interface {
-    HandleLLMRequest(ctx context.Context, req *providers.Request) (*providers.Response, error)
-}
-```
+1. **List Tools**: Discover available semantic analysis tools
+2. **Call Tools**: Execute semantic analysis functions
+3. **List Resources**: Discover available configuration and specification files
+4. **Read Resources**: Access configuration and specification content
 
-This allows for:
-- Custom processing logic
-- Request routing
-- Response transformation
-- Integration with external systems
+The external client's LLM uses these tools and resources to perform semantic analysis with its own reasoning capabilities.
 
 ## Configuration Options
 
@@ -203,9 +329,10 @@ This allows for:
 
 ### Provider Integration
 
-When MCP is enabled:
-- **Server mode**: Uses the configured provider (openai, anthropic, etc.) as the backend
-- **Client mode**: Uses `provider: mcp` to connect to an external MCP server
+In MCP mode:
+- **Tools/Resources mode**: Provider and model settings are ignored
+- **External LLM**: The connecting MCP client provides the LLM
+- **No Direct API Calls**: Semcheck doesn't make direct LLM API calls
 
 ## Testing
 
@@ -215,12 +342,11 @@ Run MCP unit tests:
 
 ```bash
 go test ./internal/mcp/...
-go test ./internal/providers/...
 ```
 
 ### Integration Tests
 
-The integration tests verify end-to-end MCP functionality:
+Test MCP server startup and tool/resource functionality:
 
 ```bash
 go test ./internal/mcp/... -v
@@ -233,68 +359,110 @@ go test ./internal/mcp/... -v
    semcheck -config semcheck-mcp.yaml -mcp-server
    ```
 
-2. In another terminal, test with MCP client:
+2. Test with an MCP client (e.g., using netcat):
    ```bash
-   semcheck -config semcheck-mcp-client.yaml main.go
+   echo '{"id":"1","method":"tools/list","params":{}}' | nc localhost 8080
+   ```
+
+3. Test tool call:
+   ```bash
+   echo '{"id":"2","method":"tools/call","params":{"name":"list_rules","arguments":{}}}' | nc localhost 8080
    ```
 
 ## Use Cases
 
-### 1. Distributed Semantic Analysis
+### 1. IDE Integration
 
-Run semcheck as a service that multiple clients can connect to:
+Connect VS Code or other IDEs to semcheck for real-time semantic analysis:
 
-```bash
-# Server (with expensive GPU/API access)
-semcheck -config server-config.yaml -mcp-server
-
-# Clients (lightweight, connect to server)
-semcheck -config client-config.yaml file1.go
-semcheck -config client-config.yaml file2.go
+```json
+{
+  "mcp.servers": {
+    "semcheck": {
+      "command": "tcp",
+      "args": ["localhost", "8080"]
+    }
+  }
+}
 ```
 
-### 2. Integration with External Systems
+### 2. Claude Desktop Integration
+
+Use Claude Desktop with semcheck tools:
+
+```json
+{
+  "mcpServers": {
+    "semcheck": {
+      "command": "tcp",
+      "args": ["localhost", "8080"]
+    }
+  }
+}
+```
+
+### 3. Custom MCP Clients
 
 Create custom MCP clients that integrate with:
 - CI/CD systems
 - Code review tools
-- IDE plugins
 - Automated testing frameworks
+- Custom development workflows
 
-### 3. Load Balancing
+### 4. Multi-Language Support
 
-Use MCP to distribute LLM requests across multiple providers or instances:
+External MCP clients can use their LLM to analyze code in multiple languages while leveraging semcheck's configuration and rule system.
 
-```go
-// Custom handler that implements load balancing
-type LoadBalancingHandler struct {
-    providers []providers.Client
-    current   int
-}
+## Example Usage
 
-func (h *LoadBalancingHandler) HandleLLMRequest(ctx context.Context, req *providers.Request) (*providers.Response, error) {
-    // Round-robin load balancing
-    provider := h.providers[h.current]
-    h.current = (h.current + 1) % len(h.providers)
-    return provider.Complete(ctx, req)
-}
+### External Client Workflow
+
+1. **Connect**: External client connects to semcheck MCP server
+2. **Discover Tools**: Client calls `tools/list` to see available analysis tools
+3. **Read Resources**: Client calls `resources/read` to get specifications
+4. **Analyze Code**: Client calls `analyze_code` tool with file paths
+5. **Process Results**: Client's LLM processes the analysis results using its own reasoning
+
+### Sample Tool Call Flow
+
+```javascript
+// External client code
+const client = new MCPClient('localhost', 8080);
+
+// List available tools
+const tools = await client.call('tools/list', {});
+
+// Get rule details
+const ruleDetails = await client.call('tools/call', {
+  name: 'get_rule_details',
+  arguments: { rule_name: 'example-rule' }
+});
+
+// Analyze code
+const results = await client.call('tools/call', {
+  name: 'analyze_code',
+  arguments: { files: ['main.go'] }
+});
+
+// The client's LLM then processes these results
 ```
 
 ## Error Handling
 
 The MCP implementation includes comprehensive error handling:
 
-- **Connection errors**: Automatic reconnection for clients
-- **Protocol errors**: Structured error responses
-- **Provider errors**: Proper error propagation
-- **Timeout handling**: Configurable timeouts for requests
+- **Connection errors**: Proper TCP connection management
+- **Protocol errors**: Structured error responses following MCP standard
+- **Tool errors**: Detailed error messages for tool call failures
+- **Resource errors**: Clear error messages for resource access issues
+- **Input validation**: All tool parameters are validated
 
 ## Security Considerations
 
 - **Network Security**: MCP servers bind to localhost by default
 - **Authentication**: No built-in authentication (add firewall rules or proxy)
-- **Rate Limiting**: No built-in rate limiting (implement in custom handlers)
-- **Input Validation**: All inputs are validated before processing
+- **Input Validation**: All tool inputs are validated before processing
+- **File Access**: Resource access is restricted to configured paths
 
 ## Troubleshooting
 
@@ -305,15 +473,17 @@ The MCP implementation includes comprehensive error handling:
    - Check address and port configuration
    - Verify firewall settings
 
-2. **Protocol Errors**:
-   - Verify JSON format of requests
-   - Check required fields in MCP requests
-   - Ensure compatible versions
+2. **Unknown Tool/Resource**:
+   - Verify tool/resource names using `tools/list` or `resources/list`
+   - Check spelling and case sensitivity
 
-3. **Provider Errors**:
-   - Check underlying provider configuration
-   - Verify API keys and endpoints
-   - Review provider-specific error messages
+3. **Invalid Parameters**:
+   - Verify parameter types and required fields
+   - Check tool input schema using `tools/list`
+
+4. **File Not Found**:
+   - Ensure file paths are correct and accessible
+   - Check working directory and relative paths
 
 ### Debug Mode
 
@@ -331,5 +501,6 @@ Potential future improvements:
 1. **Authentication**: Add token-based authentication
 2. **TLS Support**: Encrypt MCP connections
 3. **Metrics**: Add prometheus metrics for monitoring
-4. **Discovery**: Add service discovery for MCP servers
-5. **Streaming**: Support streaming responses for large analyses
+4. **Streaming**: Support streaming responses for large analyses
+5. **Batch Operations**: Add batch processing tools
+6. **Custom Tools**: Allow configuration of custom analysis tools
