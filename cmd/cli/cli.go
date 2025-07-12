@@ -161,15 +161,11 @@ func runMCPServer() error {
 		return fmt.Errorf("MCP server mode requires MCP configuration in config file")
 	}
 
-	fmt.Printf("MCP Configuration: enabled=%v, address=%s, port=%d\n", cfg.MCP.Enabled, cfg.MCP.Address, cfg.MCP.Port)
-	fmt.Printf("Provider: %s\n", cfg.Provider)
-
 	// Create underlying provider client for the handler
 	// Temporarily disable MCP to create the actual provider client
 	mcpConfig := cfg.MCP
 	cfg.MCP = nil
 	
-	fmt.Printf("Creating provider client with provider: %s\n", cfg.Provider)
 	providerClient, err := providers.CreateAIClient(cfg)
 	if err != nil {
 		return fmt.Errorf("error creating AI client: %w", err)
@@ -177,8 +173,6 @@ func runMCPServer() error {
 	
 	// Restore MCP config
 	cfg.MCP = mcpConfig
-
-	fmt.Printf("Created provider client: %s\n", providerClient.Name())
 
 	// Create LLM request handler
 	handler := mcp.NewDirectLLMRequestHandler(providerClient)
@@ -189,7 +183,6 @@ func runMCPServer() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	fmt.Printf("Starting MCP server on %s:%d\n", cfg.MCP.Address, cfg.MCP.Port)
 	if err := server.Start(ctx); err != nil {
 		return fmt.Errorf("failed to start MCP server: %w", err)
 	}

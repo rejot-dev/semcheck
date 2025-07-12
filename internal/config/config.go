@@ -95,8 +95,8 @@ func (c *Config) validate() error {
 		return fmt.Errorf("model is required")
 	}
 
-	// API key is optional for Ollama (local provider)
-	if c.Provider != "ollama" && c.APIKey == "" {
+	// API key is optional for Ollama (local provider) and MCP
+	if c.Provider != "ollama" && c.Provider != "mcp" && c.APIKey == "" {
 		return fmt.Errorf("api_key is required for provider %s", c.Provider)
 	}
 
