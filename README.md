@@ -7,6 +7,7 @@ Semcheck is a tool that uses large language models to verify that your implement
 * Non-intrusive: no changes required to existing code or specification files
 * Bring Your Own Model: supports OpenAI, Anthropic, Gemini, Cerebras and Ollama (local)
 * Supports remote specification files (e.g., `https://www.rfc-editor.org/rfc/rfc7946.txt`)
+* **MCP Server**: Run semcheck as a TCP server using the Model Context Protocol
 * Easy setup with `semcheck -init`
 
 ## Example Output
@@ -90,6 +91,9 @@ semcheck -config my-config.yaml file1.go
 # You can also use double dash syntax for flags
 semcheck --config my-config.yaml
 
+# Start MCP server mode
+semcheck -config semcheck.yaml -mcp-server
+
 # Show help
 semcheck -help
 ```
@@ -125,6 +129,45 @@ rules:
     prompt: |
       Our GeoJSON implementation is incomplete; only check implemented features.
 ```
+
+## MCP (Model Context Protocol) Server
+
+Semcheck can run as an MCP server, allowing external systems to make semantic analysis requests via TCP connections. This enables integration with CI/CD systems, code review tools, and other automation.
+
+### Quick Start
+
+1. Configure MCP in your `semcheck.yaml`:
+```yaml
+version: "1.0"
+provider: ollama  # or openai, anthropic, etc.
+model: llama3.2
+timeout: 30
+
+mcp:
+  enabled: true
+  address: localhost
+  port: 8080
+
+rules:
+  - name: example-rule
+    description: Example semantic analysis rule
+    enabled: true
+    files:
+      include: ["*.go"]
+      exclude: ["*_test.go"]
+    specs:
+      - path: "specs/api.md"
+    fail_on: "error"
+```
+
+2. Start the MCP server:
+```bash
+semcheck -config semcheck.yaml -mcp-server
+```
+
+3. Connect MCP clients to `localhost:8080` to make LLM requests.
+
+See [docs/MCP.md](docs/MCP.md) for detailed documentation on MCP configuration, protocol, and usage examples.
 
 ### Development
 

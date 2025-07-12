@@ -134,7 +134,6 @@ type Config struct {
 
 func CreateAIClient(cfg *config.Config) (Client, error) {
 	// Convert config to provider config
-
 	provider, providerErr := ToProvider(cfg.Provider)
 	if providerErr != nil {
 		return nil, fmt.Errorf("invalid provider: %s", cfg.Provider)

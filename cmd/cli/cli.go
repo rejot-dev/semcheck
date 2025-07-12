@@ -5,10 +5,13 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/rejot-dev/semcheck/internal/checker"
 	"github.com/rejot-dev/semcheck/internal/config"
+	"github.com/rejot-dev/semcheck/internal/mcp"
 	"github.com/rejot-dev/semcheck/internal/processor"
 	"github.com/rejot-dev/semcheck/internal/providers"
 )
@@ -22,6 +25,7 @@ var (
 	preCommit    = flag.Bool("pre-commit", false, "Runs semcheck on staged files")
 	initConfig   = flag.Bool("init", false, "create a semcheck.yaml file interactively")
 	githubOutput = flag.Bool("github-output", false, "output GitHub Actions annotations")
+	mcpServer    = flag.Bool("mcp-server", false, "start MCP server mode")
 )
 
 const version = "0.1.0"
@@ -41,6 +45,10 @@ func Execute() error {
 
 	if *initConfig {
 		return runInit()
+	}
+
+	if *mcpServer {
+		return runMCPServer()
 	}
 
 	cfg, err := config.Load(*configPath)
@@ -140,5 +148,45 @@ func showUsage() {
 	fmt.Println("  <files...> - Files to check, either specifications or implementation files. Semcheck will use rules to determine which it is.")
 	fmt.Println("Options:")
 	flag.PrintDefaults()
+}
 
+func runMCPServer() error {
+	cfg, err := config.Load(*configPath)
+	if err != nil {
+		return fmt.Errorf("error loading config: %w", err)
+	}
+
+	// Check if MCP is configured
+	if cfg.MCP == nil || !cfg.MCP.Enabled {
+		return fmt.Errorf("MCP server mode requires MCP configuration in config file")
+	}
+
+	// Get working directory
+	workingDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("error getting working directory: %w", err)
+	}
+
+	// Create tools/resources handler
+	handler := mcp.NewToolsResourcesHandler(cfg, workingDir)
+
+	// Create and start MCP server
+	server := mcp.NewServer(cfg.MCP.Address, cfg.MCP.Port, handler)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if err := server.Start(ctx); err != nil {
+		return fmt.Errorf("failed to start MCP server: %w", err)
+	}
+
+	// Wait for interrupt signal
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	fmt.Println("MCP server is running. Press Ctrl+C to stop.")
+	<-sigChan
+
+	fmt.Println("Shutting down MCP server...")
+	return server.Stop()
 }
