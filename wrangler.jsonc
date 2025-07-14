@@ -1,0 +1,19 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+  "$schema": "https://unpkg.com/wrangler@4.24.3/config-schema.json",
+  "name": "semcheck",
+  "compatibility_date": "2025-05-25",
+  "routes": [
+    {
+      "pattern": "semcheck.ai",
+      "custom_domain": true,
+    },
+  ],
+  "assets": {
+    "directory": "./public",
+    "not_found_handling": "single-page-application",
+  },
+}

@@ -1,0 +1,934 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>
+            Semcheck - AI-Powered Specification Compliance Tool for Developers
+        </title>
+        <meta
+            name="description"
+            content="Semcheck uses AI to verify that your code implementation matches your specification. Supports OpenAI, Anthropic, Gemini, and local models. Perfect for CI/CD pipelines and pre-commit hooks."
+        />
+        <meta
+            name="keywords"
+            content="AI code verification, specification compliance, semantic checking, code quality, CI/CD, pre-commit hooks, OpenAI, Anthropic, Gemini, developer tools"
+        />
+        <meta name="author" content="ReJot" />
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" href="https://semcheck.ai/" />
+
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website" />
+        <meta
+            property="og:url"
+            content="https://rejot-dev.github.io/semcheck/"
+        />
+        <meta
+            property="og:title"
+            content="Semcheck - AI-Powered Specification Compliance Tool"
+        />
+        <meta
+            property="og:description"
+            content="Use AI to verify that your implementation matches your specification. Define semantic rules and let Semcheck handle the comparison."
+        />
+        <meta property="og:image" content="https://semcheck.ai/socials.png" />
+
+        <!-- Twitter -->
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://semcheck.ai/" />
+        <meta
+            property="twitter:title"
+            content="Semcheck - AI-Powered Specification Compliance Tool"
+        />
+        <meta
+            property="twitter:description"
+            content="Use AI to verify that your implementation matches your specification. Define semantic rules and let Semcheck handle the comparison."
+        />
+        <meta
+            property="twitter:image"
+            content="https://semcheck.ai/socials.png"
+        />
+
+        <link
+            rel="icon"
+            href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>"
+        />
+
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            @keyframes float {
+                0%,
+                100% {
+                    transform: translateY(0px);
+                }
+                50% {
+                    transform: translateY(-20px);
+                }
+            }
+
+            @keyframes pulse {
+                0%,
+                100% {
+                    transform: scale(1);
+                }
+                50% {
+                    transform: scale(1.05);
+                }
+            }
+
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            @keyframes slideInLeft {
+                from {
+                    opacity: 0;
+                    transform: translateX(-50px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+
+            @keyframes slideInRight {
+                from {
+                    opacity: 0;
+                    transform: translateX(50px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+
+            @keyframes rotate {
+                from {
+                    transform: rotate(0deg);
+                }
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                    sans-serif;
+                line-height: 1.6;
+                color: #333;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                overflow-x: hidden;
+                position: relative;
+            }
+
+            body::before {
+                content: "";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background:
+                    radial-gradient(
+                        circle at 20% 50%,
+                        rgba(255, 255, 255, 0.1) 0%,
+                        transparent 50%
+                    ),
+                    radial-gradient(
+                        circle at 80% 20%,
+                        rgba(255, 255, 255, 0.1) 0%,
+                        transparent 50%
+                    ),
+                    radial-gradient(
+                        circle at 40% 80%,
+                        rgba(255, 255, 255, 0.1) 0%,
+                        transparent 50%
+                    );
+                pointer-events: none;
+                z-index: 1;
+            }
+
+            .floating-shapes {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: 2;
+            }
+
+            .shape {
+                position: absolute;
+                opacity: 0.1;
+                animation: float 6s ease-in-out infinite;
+            }
+
+            .shape:nth-child(1) {
+                top: 20%;
+                left: 10%;
+                width: 80px;
+                height: 80px;
+                background: #fff;
+                border-radius: 50%;
+                animation-delay: 0s;
+            }
+
+            .shape:nth-child(2) {
+                top: 60%;
+                right: 20%;
+                width: 120px;
+                height: 120px;
+                background: #fff;
+                border-radius: 20px;
+                animation-delay: 2s;
+            }
+
+            .shape:nth-child(3) {
+                bottom: 20%;
+                left: 30%;
+                width: 60px;
+                height: 60px;
+                background: #fff;
+                transform: rotate(45deg);
+                animation-delay: 4s;
+            }
+
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 0 20px;
+                position: relative;
+                z-index: 3;
+            }
+
+            header {
+                position: relative;
+                padding: 20px 0;
+                animation: slideInLeft 0.8s ease-out;
+            }
+
+            .github-link {
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                background: rgba(255, 255, 255, 0.15);
+                color: white;
+                padding: 12px 24px;
+                border-radius: 25px;
+                text-decoration: none;
+                font-size: 14px;
+                font-weight: 500;
+                transition: all 0.3s ease;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            }
+
+            .github-link:hover {
+                background: rgba(255, 255, 255, 0.25);
+                transform: translateY(-2px);
+                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+            }
+
+            .hero {
+                text-align: center;
+                padding: 100px 0;
+                color: white;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .hero::before {
+                content: "";
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 200px;
+                height: 200px;
+                background: radial-gradient(
+                    circle,
+                    rgba(255, 255, 255, 0.1) 0%,
+                    transparent 70%
+                );
+                border-radius: 50%;
+                transform: translate(-50%, -50%);
+                animation: pulse 4s ease-in-out infinite;
+            }
+
+            .hero h1 {
+                font-size: 4.5rem;
+                font-weight: 800;
+                margin-bottom: 20px;
+                animation: fadeInUp 1s ease-out;
+                background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                position: relative;
+                z-index: 2;
+            }
+
+            .hero p {
+                font-size: 1.4rem;
+                margin-bottom: 50px;
+                opacity: 0.95;
+                max-width: 700px;
+                margin-left: auto;
+                margin-right: auto;
+                animation: fadeInUp 1s ease-out 0.2s both;
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+                position: relative;
+                z-index: 2;
+            }
+
+            .cta-button {
+                display: inline-block;
+                background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+                color: #667eea;
+                padding: 18px 40px;
+                border-radius: 50px;
+                text-decoration: none;
+                font-weight: 700;
+                font-size: 1.2rem;
+                transition: all 0.4s ease;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+                animation: fadeInUp 1s ease-out 0.4s both;
+                position: relative;
+                overflow: hidden;
+                z-index: 2;
+            }
+
+            .cta-button::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(255, 255, 255, 0.3),
+                    transparent
+                );
+                transition: left 0.5s ease;
+            }
+
+            .cta-button:hover::before {
+                left: 100%;
+            }
+
+            .cta-button:hover {
+                transform: translateY(-3px) scale(1.05);
+                box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            }
+
+            .cta-button.secondary {
+                background: rgba(255, 255, 255, 0.1);
+                color: white;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+            }
+
+            .cta-button.secondary:hover {
+                background: rgba(255, 255, 255, 0.2);
+                border-color: rgba(255, 255, 255, 0.5);
+                color: white;
+            }
+
+            .features {
+                background: rgba(255, 255, 255, 0.95);
+                padding: 100px 0;
+                margin-top: -60px;
+                border-radius: 30px 30px 0 0;
+                backdrop-filter: blur(20px);
+                position: relative;
+                overflow: hidden;
+            }
+
+            .features::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 1px;
+                background: linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(102, 126, 234, 0.3),
+                    transparent
+                );
+            }
+
+            .features-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                gap: 40px;
+                margin-top: 60px;
+            }
+
+            .feature-card {
+                background: rgba(255, 255, 255, 0.7);
+                padding: 40px 30px;
+                border-radius: 20px;
+                text-align: center;
+                transition: all 0.4s ease;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                backdrop-filter: blur(10px);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                position: relative;
+                overflow: hidden;
+                animation: fadeInUp 0.6s ease-out;
+            }
+
+            .feature-card::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: linear-gradient(90deg, #667eea, #764ba2);
+                transform: scaleX(0);
+                transition: transform 0.3s ease;
+            }
+
+            .feature-card:hover::before {
+                transform: scaleX(1);
+            }
+
+            .feature-card:nth-child(1) {
+                animation-delay: 0.1s;
+            }
+            .feature-card:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+            .feature-card:nth-child(3) {
+                animation-delay: 0.3s;
+            }
+            .feature-card:nth-child(4) {
+                animation-delay: 0.4s;
+            }
+
+            .feature-card:hover {
+                transform: translateY(-10px) scale(1.02);
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+                background: rgba(255, 255, 255, 0.9);
+            }
+
+            .feature-icon {
+                font-size: 4rem;
+                margin-bottom: 25px;
+                display: inline-block;
+                animation: float 3s ease-in-out infinite;
+                transition: transform 0.3s ease;
+            }
+
+            .feature-card:hover .feature-icon {
+                transform: scale(1.1);
+                animation-play-state: paused;
+            }
+
+            .feature-card h3 {
+                color: #667eea;
+                margin-bottom: 20px;
+                font-size: 1.4rem;
+                font-weight: 700;
+                transition: color 0.3s ease;
+            }
+
+            .feature-card:hover h3 {
+                color: #764ba2;
+            }
+
+            .feature-card p {
+                color: #555;
+                line-height: 1.7;
+                font-size: 1.05rem;
+            }
+
+            .installation {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 100px 0;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .installation::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background:
+                    radial-gradient(
+                        circle at 30% 20%,
+                        rgba(255, 255, 255, 0.1) 0%,
+                        transparent 50%
+                    ),
+                    radial-gradient(
+                        circle at 70% 80%,
+                        rgba(255, 255, 255, 0.1) 0%,
+                        transparent 50%
+                    );
+                pointer-events: none;
+            }
+
+            .installation .section-title,
+            .installation .section-subtitle {
+                color: white;
+                position: relative;
+                z-index: 2;
+            }
+
+            .code-block {
+                background: rgba(45, 55, 72, 0.9);
+                color: #e2e8f0;
+                padding: 30px;
+                border-radius: 20px;
+                font-family: "Courier New", monospace;
+                margin: 40px 0;
+                overflow-x: auto;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(10px);
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                position: relative;
+                z-index: 2;
+                animation: fadeInUp 0.8s ease-out;
+            }
+
+            .code-block::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
+                border-radius: 20px 20px 0 0;
+            }
+
+            .providers {
+                padding: 100px 0;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(20px);
+                position: relative;
+            }
+
+            .provider-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 30px;
+                margin-top: 50px;
+            }
+
+            .provider-card {
+                background: rgba(255, 255, 255, 0.8);
+                padding: 25px 20px;
+                border-radius: 15px;
+                text-align: center;
+                font-weight: 700;
+                color: #667eea;
+                transition: all 0.3s ease;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                backdrop-filter: blur(10px);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+                position: relative;
+                overflow: hidden;
+                animation: slideInRight 0.6s ease-out;
+            }
+
+            .provider-card:nth-child(1) {
+                animation-delay: 0.1s;
+            }
+            .provider-card:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+            .provider-card:nth-child(3) {
+                animation-delay: 0.3s;
+            }
+            .provider-card:nth-child(4) {
+                animation-delay: 0.4s;
+            }
+            .provider-card:nth-child(5) {
+                animation-delay: 0.5s;
+            }
+
+            .provider-card::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(102, 126, 234, 0.1),
+                    transparent
+                );
+                transition: left 0.5s ease;
+            }
+
+            .provider-card:hover::before {
+                left: 100%;
+            }
+
+            .provider-card:hover {
+                transform: translateY(-5px) scale(1.05);
+                box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+                background: rgba(255, 255, 255, 0.95);
+                color: #764ba2;
+            }
+
+            .section-title {
+                text-align: center;
+                font-size: 3rem;
+                color: #333;
+                margin-bottom: 25px;
+                font-weight: 800;
+                animation: fadeInUp 0.6s ease-out;
+            }
+
+            .section-subtitle {
+                text-align: center;
+                font-size: 1.3rem;
+                color: #666;
+                max-width: 700px;
+                margin: 0 auto;
+                line-height: 1.6;
+                animation: fadeInUp 0.6s ease-out 0.1s both;
+            }
+
+            footer {
+                background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+                color: white;
+                text-align: center;
+                padding: 60px 0;
+                position: relative;
+                overflow: hidden;
+            }
+
+            footer::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 1px;
+                background: linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(255, 255, 255, 0.3),
+                    transparent
+                );
+            }
+
+            footer p {
+                margin-bottom: 15px;
+                font-size: 1.1rem;
+                animation: fadeInUp 0.6s ease-out;
+            }
+
+            footer a {
+                transition: all 0.3s ease;
+                position: relative;
+            }
+
+            footer a::after {
+                content: "";
+                position: absolute;
+                bottom: -2px;
+                left: 0;
+                width: 0;
+                height: 2px;
+                background: linear-gradient(90deg, #667eea, #764ba2);
+                transition: width 0.3s ease;
+            }
+
+            footer a:hover::after {
+                width: 100%;
+            }
+
+            .highlight {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                font-weight: 800;
+                position: relative;
+                display: inline-block;
+            }
+
+            .highlight::after {
+                content: "";
+                position: absolute;
+                bottom: -5px;
+                left: 0;
+                width: 100%;
+                height: 3px;
+                background: linear-gradient(90deg, #667eea, #764ba2);
+                border-radius: 2px;
+                opacity: 0.3;
+            }
+
+            .installation .highlight {
+                background: linear-gradient(135deg, #fff 0%, #f0f8ff 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+
+            .installation .highlight::after {
+                background: linear-gradient(90deg, #fff, #f0f8ff);
+                opacity: 0.5;
+            }
+
+            @media (max-width: 768px) {
+                .hero h1 {
+                    font-size: 3rem;
+                }
+
+                .hero p {
+                    font-size: 1.2rem;
+                }
+
+                .features-grid {
+                    grid-template-columns: 1fr;
+                    gap: 20px;
+                }
+
+                .section-title {
+                    font-size: 2.5rem;
+                }
+
+                .feature-card {
+                    padding: 30px 20px;
+                }
+
+                .provider-grid {
+                    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                    gap: 20px;
+                }
+
+                .shape {
+                    display: none;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="floating-shapes">
+            <div class="shape"></div>
+            <div class="shape"></div>
+            <div class="shape"></div>
+        </div>
+
+        <header>
+            <div class="container"></div>
+        </header>
+
+        <main>
+            <section class="hero">
+                <div class="container">
+                    <h1>Semcheck</h1>
+                    <p>
+                        Use AI to verify that your implementation matches your
+                        specification. Define semantic rules and let Semcheck
+                        handle the comparison.
+                    </p>
+                    <div
+                        style="
+                            display: flex;
+                            gap: 20px;
+                            justify-content: center;
+                            align-items: center;
+                            flex-wrap: wrap;
+                        "
+                    >
+                        <a href="#installation" class="cta-button"
+                            >Get Started</a
+                        >
+                        <a
+                            href="https://github.com/rejot-dev/semcheck"
+                            class="cta-button secondary"
+                            >View on GitHub</a
+                        >
+                    </div>
+                </div>
+            </section>
+
+            <section class="features">
+                <div class="container">
+                    <h2 class="section-title">
+                        Why <span class="highlight">Semcheck</span>?
+                    </h2>
+                    <p class="section-subtitle">
+                        Semcheck bridges the gap between specification and
+                        implementation, ensuring your code does what it's
+                        supposed to do.
+                    </p>
+
+                    <div class="features-grid">
+                        <article class="feature-card">
+                            <div
+                                class="feature-icon"
+                                role="img"
+                                aria-label="Rocket"
+                            >
+                                🚀
+                            </div>
+                            <h3>Non-Intrusive</h3>
+                            <p>
+                                No changes required to existing code or
+                                specification files. Drop it into any project
+                                and start checking immediately.
+                            </p>
+                        </article>
+
+                        <article class="feature-card">
+                            <div
+                                class="feature-icon"
+                                role="img"
+                                aria-label="Robot"
+                            >
+                                🤖
+                            </div>
+                            <h3>AI-Powered</h3>
+                            <p>
+                                Leverages large language models to understand
+                                both specifications and implementations, finding
+                                discrepancies humans might miss.
+                            </p>
+                        </article>
+
+                        <article class="feature-card">
+                            <div
+                                class="feature-icon"
+                                role="img"
+                                aria-label="Link"
+                            >
+                                🔗
+                            </div>
+                            <h3>Remote Specs</h3>
+                            <p>
+                                Supports remote specification files like RFCs,
+                                allowing you to check against official standards
+                                and documentation.
+                            </p>
+                        </article>
+
+                        <article class="feature-card">
+                            <div
+                                class="feature-icon"
+                                role="img"
+                                aria-label="Lightning"
+                            >
+                                ⚡
+                            </div>
+                            <h3>CI/CD Ready</h3>
+                            <p>
+                                Perfect for pre-commit hooks and CI pipelines.
+                                Catch semantic issues before they reach
+                                production.
+                            </p>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <section class="providers">
+                <div class="container">
+                    <h2 class="section-title">
+                        Bring Your Own <span class="highlight">Model</span>
+                    </h2>
+                    <p class="section-subtitle">
+                        Choose from multiple AI providers to power your semantic
+                        checking
+                    </p>
+
+                    <div class="provider-grid">
+                        <div class="provider-card">OpenAI</div>
+                        <div class="provider-card">Anthropic</div>
+                        <div class="provider-card">Google Gemini</div>
+                        <div class="provider-card">Cerebras</div>
+                        <div class="provider-card">Ollama (Local)</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="installation" id="installation">
+                <div class="container">
+                    <h2 class="section-title">
+                        Quick <span class="highlight">Start</span>
+                    </h2>
+                    <p class="section-subtitle">
+                        Get up and running in seconds
+                    </p>
+
+                    <pre class="code-block">
+<code># Install Semcheck
+go install github.com/rejot-dev/semcheck@latest
+
+# Create configuration
+semcheck -init
+
+# Run your first check
+semcheck</code>
+            </pre>
+
+                    <p
+                        style="
+                            text-align: center;
+                            margin-top: 30px;
+                            color: rgba(255, 255, 255, 0.8);
+                            position: relative;
+                            z-index: 2;
+                        "
+                    >
+                        Semcheck will guide you through the setup process and
+                        help you define your first semantic rules.
+                    </p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <div class="container">
+                <p>
+                    Semcheck. Built by
+                    <a
+                        style="color: #90cdf4; text-decoration: none"
+                        href="https://rejot.dev"
+                        >ReJot</a
+                    >.
+                </p>
+                <p style="margin-top: 10px; opacity: 0.8">
+                    <a
+                        href="https://github.com/rejot-dev/semcheck"
+                        style="color: #90cdf4; text-decoration: none"
+                        >GitHub</a
+                    >
+                </p>
+            </div>
+        </footer>
+    </body>
+</html>
