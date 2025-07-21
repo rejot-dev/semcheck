@@ -86,9 +86,8 @@ rules:
     # Convention: use kebab-case descriptive names
     name: "api-specification-compliance"
 
-    # Human-readable description (REQUIRED)
+    # Human-readable description (OPTIONAL)
     # Explains what this rule checks and why it matters
-    # Used in reports and error messages
     description: "Ensures API implementation matches OpenAPI specification"
 
     # Whether this rule is active (REQUIRED)

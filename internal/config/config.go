@@ -108,9 +108,6 @@ func (c *Config) validate() error {
 		}
 		ruleNames[rule.Name] = true
 
-		if rule.Description == "" {
-			return fmt.Errorf("rule description is required for rule: %s", rule.Name)
-		}
 		if len(rule.Files.Include) == 0 {
 			return fmt.Errorf("at least one include pattern is required for rule: %s", rule.Name)
 		}
