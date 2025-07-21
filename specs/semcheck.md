@@ -55,6 +55,11 @@ base_url: "https://api.openai.com/v1"
 # Default: 30 seconds
 timeout: 30
 
+# Max Tokens (OPTIONAL)
+# Maximum amount of tokens to return from provider, not applicable for ollama.
+# Default: 3000 tokens
+max_tokens: 3000
+
 # Temperature parameter for AI model responses (OPTIONAL)
 # Controls the randomness/creativity of AI responses
 # Lower values (0.0-0.3): More deterministic, consistent responses

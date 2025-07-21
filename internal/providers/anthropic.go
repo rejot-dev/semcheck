@@ -14,6 +14,7 @@ type AnthropicClient struct {
 	client      *anthropic.Client
 	model       string
 	temperature float64
+	maxTokens   int
 }
 
 // NewAnthropicClient creates a new Anthropic client
@@ -36,6 +37,7 @@ func NewAnthropicClient(config *Config) (*AnthropicClient, error) {
 		client:      &client,
 		model:       config.Model,
 		temperature: config.Temperature,
+		maxTokens:   config.MaxTokens,
 	}, nil
 }
 
@@ -61,20 +63,7 @@ func (c *AnthropicClient) Complete(ctx context.Context, req *Request) (*Response
 		return nil, fmt.Errorf("client validation failed: %w", err)
 	}
 
-	// Set defaults
-	maxTokens := req.MaxTokens
-	if maxTokens == 0 {
-		maxTokens = 3000
-	}
-
 	temperature := c.temperature
-
-	// Apply timeout if specified
-	if req.Timeout > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, req.Timeout)
-		defer cancel()
-	}
 
 	// Prefill response to enforce correct JSON output, to prevent markdown formatting of JSON response.
 	// https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/prefill-claudes-response#example-structured-data-extraction-with-prefilling
@@ -100,7 +89,7 @@ func (c *AnthropicClient) Complete(ctx context.Context, req *Request) (*Response
 				}},
 				Role: anthropic.MessageParamRoleAssistant,
 			}},
-		MaxTokens: int64(maxTokens),
+		MaxTokens: int64(c.maxTokens),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("anthropic API request failed: %w", err)

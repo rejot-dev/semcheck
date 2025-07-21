@@ -68,8 +68,8 @@ func ProcessBatch(filePaths []string, options ProcessOptions) ([]*ProcessResult,
 	var results []*ProcessResult
 
 	// Process files with nested loop structure
-	for i := 0; i < len(filePaths); i++ {
-		for j := 0; j < len(filePaths); j++ {
+	for i := range filePaths {
+		for j := range filePaths {
 			if i == j {
 				// Process file
 				result, err := processFileInternal(filePaths[i], options)

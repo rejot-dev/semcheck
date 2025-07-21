@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 )
 
 // CerebrasClient implements the Client interface for Cerebras API
@@ -17,6 +16,7 @@ type CerebrasClient struct {
 	model       string
 	baseURL     string
 	temperature float64
+	maxTokens   int
 }
 
 // NewCerebrasClient creates a new Cerebras client
@@ -26,16 +26,13 @@ func NewCerebrasClient(config *Config) (*CerebrasClient, error) {
 		baseURL = config.BaseURL
 	}
 
-	timeout := config.Timeout * time.Second
-
 	return &CerebrasClient{
-		httpClient: &http.Client{
-			Timeout: timeout,
-		},
+		httpClient:  &http.Client{},
 		apiKey:      config.APIKey,
 		model:       config.Model,
 		baseURL:     baseURL,
 		temperature: config.Temperature,
+		maxTokens:   config.MaxTokens,
 	}, nil
 }
 
@@ -65,9 +62,9 @@ type CerebrasMessage struct {
 }
 
 type CerebrasJsonSchema struct {
-	Name   string      `json:"name"`
-	Strict bool        `json:"strict"`
-	Schema interface{} `json:"schema"`
+	Name   string `json:"name"`
+	Strict bool   `json:"strict"`
+	Schema any    `json:"schema"`
 }
 
 type CerebrasResponseFormat struct {
@@ -128,6 +125,7 @@ func (c *CerebrasClient) Complete(ctx context.Context, req *Request) (*Response,
 		Model:       c.model,
 		Messages:    messages,
 		Temperature: &c.temperature,
+		MaxTokens:   &c.maxTokens,
 		ResponseFormat: &CerebrasResponseFormat{
 			Type: "json_schema",
 			JsonSchema: CerebrasJsonSchema{
@@ -136,13 +134,6 @@ func (c *CerebrasClient) Complete(ctx context.Context, req *Request) (*Response,
 				Schema: schema,
 			},
 		},
-	}
-
-	if req.MaxTokens > 0 {
-		payload.MaxTokens = &req.MaxTokens
-	} else {
-		defaultMaxTokens := 3000
-		payload.MaxTokens = &defaultMaxTokens
 	}
 
 	// Marshal request to JSON
@@ -160,14 +151,6 @@ func (c *CerebrasClient) Complete(ctx context.Context, req *Request) (*Response,
 	// Set headers
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Authorization", "Bearer "+c.apiKey)
-
-	// Apply timeout if specified
-	if req.Timeout > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, req.Timeout)
-		defer cancel()
-		httpReq = httpReq.WithContext(ctx)
-	}
 
 	// Send request
 	resp, err := c.httpClient.Do(httpReq)

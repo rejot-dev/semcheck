@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/rejot-dev/semcheck/internal/config"
 )
@@ -63,7 +62,6 @@ func TestClientInterface(t *testing.T) {
 			request: &Request{
 				SystemPrompt: "You are a helpful assistant",
 				UserPrompt:   "test prompt",
-				MaxTokens:    100,
 			},
 			wantError:  false,
 			wantResult: "test response",
@@ -121,18 +119,10 @@ func TestClientInterface(t *testing.T) {
 func TestRequest(t *testing.T) {
 	req := &Request{
 		UserPrompt: "test prompt",
-		MaxTokens:  500,
-		Timeout:    30 * time.Second,
 	}
 
 	if req.UserPrompt != "test prompt" {
 		t.Errorf("expected prompt 'test prompt', got %s", req.UserPrompt)
-	}
-	if req.MaxTokens != 500 {
-		t.Errorf("expected MaxTokens 500, got %d", req.MaxTokens)
-	}
-	if req.Timeout != 30*time.Second {
-		t.Errorf("expected Timeout 30s, got %v", req.Timeout)
 	}
 }
 

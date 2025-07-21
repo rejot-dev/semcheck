@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	ollama "github.com/prathyushnallamothu/ollamago"
 )
@@ -20,7 +19,6 @@ type OllamaClient struct {
 func NewOllamaClient(config *Config) (*OllamaClient, error) {
 	client := ollama.NewClient(
 		ollama.WithBaseURL(config.BaseURL),
-		ollama.WithTimeout(config.Timeout*time.Second),
 	)
 
 	return &OllamaClient{
@@ -50,13 +48,6 @@ func (c *OllamaClient) Validate() error {
 func (c *OllamaClient) Complete(ctx context.Context, req *Request) (*Response, error) {
 	if err := c.Validate(); err != nil {
 		return nil, fmt.Errorf("client validation failed: %w", err)
-	}
-
-	// Apply timeout if specified
-	if req.Timeout > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, req.Timeout)
-		defer cancel()
 	}
 
 	// Create the generate request

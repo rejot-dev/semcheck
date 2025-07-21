@@ -15,6 +15,7 @@ type OpenAIClient struct {
 	client      *openai.Client
 	model       string
 	temperature float64
+	maxTokens   int
 }
 
 // NewOpenAIClient creates a new OpenAI client
@@ -37,6 +38,7 @@ func NewOpenAIClient(config *Config) (*OpenAIClient, error) {
 		client:      &client,
 		model:       config.Model,
 		temperature: config.Temperature,
+		maxTokens:   config.MaxTokens,
 	}, nil
 }
 
@@ -56,7 +58,7 @@ func (c *OpenAIClient) Validate() error {
 	return nil
 }
 
-func generateSchema[T any]() interface{} {
+func generateSchema[T any]() any {
 	// Structured Outputs uses a subset of JSON schema
 	// These flags are necessary to comply with the subset
 	reflector := jsonschema.Reflector{
@@ -98,20 +100,13 @@ func (c *OpenAIClient) Complete(ctx context.Context, req *Request) (*Response, e
 			openai.SystemMessage(req.SystemPrompt),
 		},
 		Model:               openai.ChatModel(c.model),
-		MaxCompletionTokens: openai.Int(int64(req.MaxTokens)),
+		MaxCompletionTokens: openai.Int(int64(c.maxTokens)),
 		Temperature:         openai.Float(temperature),
 		ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
 			OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{
 				JSONSchema: schemaParam,
 			},
 		},
-	}
-
-	// Apply timeout if specified
-	if req.Timeout > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, req.Timeout)
-		defer cancel()
 	}
 
 	// Send request

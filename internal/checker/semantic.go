@@ -204,10 +204,10 @@ func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Ru
 	req := &providers.Request{
 		SystemPrompt: SystemPrompt,
 		UserPrompt:   userPrompt,
-		MaxTokens:    3000,
 	}
 
 	resp, err := c.client.Complete(ctx, req)
+
 	if err != nil {
 		return nil, fmt.Errorf("AI request failed: %w", err)
 	}

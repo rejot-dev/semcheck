@@ -3,7 +3,6 @@ package providers
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/rejot-dev/semcheck/internal/config"
 )
@@ -96,8 +95,6 @@ type Usage struct {
 type Request struct {
 	SystemPrompt string
 	UserPrompt   string
-	MaxTokens    int
-	Timeout      time.Duration
 }
 
 // Client defines the interface for AI providers
@@ -128,8 +125,8 @@ type Config struct {
 	Model       string
 	APIKey      string
 	BaseURL     string
-	Timeout     time.Duration
 	Temperature float64
+	MaxTokens   int
 }
 
 func CreateAIClient(cfg *config.Config) (Client, error) {
@@ -145,7 +142,7 @@ func CreateAIClient(cfg *config.Config) (Client, error) {
 		Model:       cfg.Model,
 		APIKey:      cfg.APIKey,
 		BaseURL:     cfg.BaseURL,
-		Timeout:     time.Duration(cfg.Timeout) * time.Second,
+		MaxTokens:   cfg.MaxTokens,
 		Temperature: *cfg.Temperature,
 	}
 

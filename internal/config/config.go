@@ -16,6 +16,7 @@ type Config struct {
 	APIKey       string   `yaml:"api_key"`
 	BaseURL      string   `yaml:"base_url,omitempty"`
 	Timeout      int      `yaml:"timeout"`
+	MaxTokens    int      `yaml:"max_tokens"`
 	Temperature  *float64 `yaml:"temperature,omitempty"`
 	FailOnIssues *bool    `yaml:"fail_on_issues,omitempty"`
 	Rules        []Rule   `yaml:"rules"`
@@ -167,6 +168,11 @@ func (c *Config) validate() error {
 	if c.Timeout == 0 {
 		c.Timeout = 30
 	}
+
+	if c.MaxTokens == 0 {
+		c.MaxTokens = 3000
+	}
+
 	if c.Temperature == nil {
 		defaultTemperature := 0.1
 		c.Temperature = &defaultTemperature

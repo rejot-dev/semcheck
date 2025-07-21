@@ -14,9 +14,10 @@ type GeminiClient struct {
 	client      *genai.Client
 	model       string
 	temperature float64
+	maxTokens   int
 }
 
-func generateSchemaForGemini[T any]() interface{} {
+func generateSchemaForGemini[T any]() any {
 	// Generate JSON schema using the same approach as OpenAI
 	reflector := jsonschema.Reflector{
 		AllowAdditionalProperties: false,
@@ -33,6 +34,7 @@ func NewGeminiClient(config *Config) (*GeminiClient, error) {
 		return nil, fmt.Errorf("API key is required for Gemini provider")
 	}
 
+	// TODO: why is there another context is created here?
 	ctx := context.Background()
 
 	// Create client with Gemini API backend
@@ -48,6 +50,7 @@ func NewGeminiClient(config *Config) (*GeminiClient, error) {
 		client:      client,
 		model:       config.Model,
 		temperature: config.Temperature,
+		maxTokens:   config.MaxTokens,
 	}, nil
 }
 
@@ -73,27 +76,13 @@ func (c *GeminiClient) Complete(ctx context.Context, req *Request) (*Response, e
 		return nil, fmt.Errorf("client validation failed: %w", err)
 	}
 
-	// Set defaults
-	maxTokens := int32(req.MaxTokens)
-	if maxTokens == 0 {
-		maxTokens = 3000
-	}
-
-	temperature := float32(c.temperature)
-
-	// Apply timeout if specified
-	if req.Timeout > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, req.Timeout)
-		defer cancel()
-	}
-
 	// Generate schema for structured output using the same approach as OpenAI
 	schema := generateSchemaForGemini[StructuredResponse]()
+	temperature := float32(c.temperature)
 
 	// Create generation config with structured output
 	genConfig := &genai.GenerateContentConfig{
-		MaxOutputTokens:    maxTokens,
+		MaxOutputTokens:    int32(c.maxTokens),
 		Temperature:        &temperature,
 		ResponseMIMEType:   "application/json",
 		ResponseJsonSchema: schema,
