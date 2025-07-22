@@ -4,17 +4,21 @@ import LayoutContent from "~/components/layout-content.astro";
 import Button from "~/components/button.astro";
 ---
 
-<section class="min-h-[35rem] w-full bg-[url(/hero-bg.webp)] bg-cover py-4 md:min-h-[70rem]">
-  <Navbar />
-  <LayoutContent>
-    <div class="md:h-12"></div>
-    <h1 class="text-5xl font-medium md:text-8xl">AI powered specification verification</h1>
-    <div class="max-w-prose text-xl text-gray-700 md:text-2xl">
-      Use AI to verify that your code matches your specification. Define semantic rules and let
-      Semcheck handle the comparison.
-    </div>
-    <div class="flex flex-row items-center justify-start">
-      <Button href="#quickstart"> Get Started </Button>
-    </div>
-  </LayoutContent>
+<section class="w-full bg-white">
+  <div
+    class="m-auto min-h-[35rem] max-w-[128rem] bg-[url(/hero-bg.webp)] bg-cover bg-center py-4 md:min-h-[70rem]"
+  >
+    <Navbar />
+    <LayoutContent>
+      <div class="md:h-12"></div>
+      <h1 class="text-5xl font-medium md:text-8xl">AI powered specification verification</h1>
+      <div class="max-w-prose text-xl text-gray-700 md:text-2xl">
+        Use AI to verify that your code matches your specification. Define semantic rules and let
+        Semcheck handle the comparison.
+      </div>
+      <div class="flex flex-row items-center justify-start">
+        <Button href="#quickstart"> Get Started </Button>
+      </div>
+    </LayoutContent>
+  </div>
 </section>
