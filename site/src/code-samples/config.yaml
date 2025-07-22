@@ -1,0 +1,12 @@
+version: "1.0"
+provider: openai
+model: gpt-4o
+api_key: ${OPENAI_API_KEY}
+
+rules:
+  - name: api-compliance
+    files:
+      include: ["src/**/*.go"]
+      exclude: ["*_test.go"]
+    specs:
+      - path: "docs/api-spec.md"

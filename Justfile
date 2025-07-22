@@ -53,6 +53,7 @@ clean:
 # Format code
 fmt:
     go fmt ./...
+    cd site && npm run format
 
 # Run evaluation suite to test semcheck performance
 eval: build-eval

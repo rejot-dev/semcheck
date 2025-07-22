@@ -1,16 +1,74 @@
 ---
+import HeroAndNav from "~/components/hero.astro";
+import Features from "~/components/features.astro";
+import Footer from "~/components/footer.astro";
+import LayoutContent from "~/components/layout-content.astro";
+import Quickstart from "~/components/quickstart.astro";
+import WhySemcheck from "~/components/why-semcheck.astro";
 
+import "@fontsource/inter";
 ---
 
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1 class="text-4xl font-bold text-blue-600">Astro with Tailwind CSS</h1>
-	</body>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Semcheck - AI-Powered Specification Compliance Tool for Developers</title>
+    <meta
+      name="description"
+      content="Semcheck uses AI to verify that your code implementation matches your specification. Supports OpenAI, Anthropic, Gemini, and local models. Perfect for CI/CD pipelines and pre-commit hooks."
+    />
+    <meta
+      name="keywords"
+      content="AI code verification, specification compliance, semantic checking, code quality, CI/CD, pre-commit hooks, OpenAI, Anthropic, Gemini, developer tools"
+    />
+    <meta name="author" content="ReJot" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://semcheck.ai/" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://rejot-dev.github.io/semcheck/" />
+    <meta property="og:title" content="Semcheck - AI-Powered Specification Compliance Tool" />
+    <meta
+      property="og:description"
+      content="Use AI to verify that your implementation matches your specification. Define semantic rules and let Semcheck handle the comparison."
+    />
+    <meta property="og:image" content="https://semcheck.ai/socials.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://semcheck.ai/" />
+    <meta property="twitter:title" content="Semcheck: AI-powered Specification Compliance Tool" />
+    <meta
+      property="twitter:description"
+      content="Use AI to verify that your implementation matches your specification. Define semantic rules and let Semcheck handle the comparison."
+    />
+    <meta property="twitter:image" content="https://semcheck.ai/socials.png" />
+  </head>
+  <body class="bg-gray-50">
+    <HeroAndNav />
+
+    <section class="w-full bg-white py-16 md:py-24">
+      <LayoutContent>
+        <WhySemcheck />
+      </LayoutContent>
+    </section>
+
+    <section class="w-full py-16 md:py-24">
+      <LayoutContent>
+        <Features />
+      </LayoutContent>
+    </section>
+
+    <section class="w-full bg-white py-16 md:py-24">
+      <LayoutContent>
+        <Quickstart />
+      </LayoutContent>
+    </section>
+
+    <Footer />
+  </body>
 </html>

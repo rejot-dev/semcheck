@@ -1,0 +1,7 @@
+---
+import { Code } from "astro:components";
+
+const { code, ...rest } = Astro.props;
+---
+
+<Code class="rounded-lg p-4" code={code} {...rest} theme="catppuccin-latte" />

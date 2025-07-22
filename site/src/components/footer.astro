@@ -1,0 +1,22 @@
+---
+import ReJotIconWireframe from "~/components/icons/rejot-icon-wireframe.astro";
+---
+
+<footer class="bg-gray-50 py-10">
+  <div
+    class="mx-auto flex max-w-4xl flex-col items-center justify-between gap-4 text-sm text-[var(--color-gray)] sm:flex-row"
+  >
+    <div>
+      &copy; {new Date().getFullYear()}{" "}<a href="https://rejot.dev">ReJot</a>
+    </div>
+
+    <a href="https://labs.rejot.dev">
+      <ReJotIconWireframe class="size-10" />
+    </a>
+
+    <div class="flex gap-4">
+      <a href="https://github.com/rejot-dev/semcheck">GitHub</a>
+      <a href="https://x.com/ReJotSync">X</a>
+    </div>
+  </div>
+</footer>
