@@ -11,3 +11,32 @@ And iterative plan for the implementation is in PLAN.md, only execute a single p
 ## Building project
 
 Build the two binaries in this project through invocations of `just build` for semcheck and `just build-eval` for eval.
+
+## Site Development
+
+The `/site` directory contains an Astro-based website for the project:
+
+- **Framework**: Astro with Tailwind CSS
+- **Development server**: `npm run dev` (from `/site` directory)
+- **Build**: `npm run build` (from `/site` directory)
+- **Format code**: `npm run format` (from `/site` directory)
+
+The site includes:
+- Landing page (`src/pages/index.astro`)
+- Reusable components in `src/components/`
+- Code samples in `src/code-samples/`
+- Static assets in `public/`
+
+## Specification Files
+
+Specification files are located in the `/specs` directory.
+
+## Evaluations (evals)
+
+The `/evals` directory contains the evaluation framework:
+
+- `eval-config.yaml`: Configuration for running evaluations
+- `expectations.csv`: Expected results for test cases
+- `cases/`: Individual test cases, each containing:
+  - `impl.go`: Implementation file to be checked
+  - `spec.md`: Specification file to check against
