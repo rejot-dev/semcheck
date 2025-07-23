@@ -212,15 +212,7 @@ func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Ru
 		return nil, fmt.Errorf("AI request failed: %w", err)
 	}
 
-	// Filter issues by confidence threshold
-	var issues []providers.SemanticIssue
-	for _, semanticIssue := range resp.Issues {
-		if semanticIssue.Confidence >= rule.ConfidenceThreshold {
-			issues = append(issues, semanticIssue)
-		}
-	}
-
-	return issues, nil
+	return resp.Issues, nil
 }
 
 func (c *SemanticChecker) readFile(filePath string) (string, error) {

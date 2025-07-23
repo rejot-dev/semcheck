@@ -35,7 +35,6 @@ rules:
     specs:
       - path: "` + specPath + `"
     fail_on: "error"
-    confidence_threshold: 0.8
 `
 
 	err = os.WriteFile(configPath, []byte(validConfig), 0644)
@@ -93,9 +92,6 @@ rules:
 	}
 	if rule.FailOn != "error" {
 		t.Errorf("expected fail_on 'error', got %s", rule.FailOn)
-	}
-	if rule.ConfidenceThreshold != 0.8 {
-		t.Errorf("expected confidence_threshold 0.8, got %f", rule.ConfidenceThreshold)
 	}
 }
 

@@ -70,8 +70,7 @@ func Add(a, b int) int {
 	cfg := &config.Config{
 		Rules: []config.Rule{
 			{
-				Name:                "test-rule",
-				ConfidenceThreshold: 0.7,
+				Name: "test-rule",
 				Files: config.FilePattern{
 					Include: []string{"**/*.go"},
 				},

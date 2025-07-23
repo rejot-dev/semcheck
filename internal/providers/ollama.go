@@ -123,7 +123,6 @@ func parseTextResponse(text string) ([]SemanticIssue, error) {
 				Reasoning:  "Parsed from text response",
 				Level:      determineLevel(line),
 				Message:    line,
-				Confidence: 0.5, // Lower confidence for text parsing
 				Suggestion: "",
 			}
 			issues = append(issues, issue)

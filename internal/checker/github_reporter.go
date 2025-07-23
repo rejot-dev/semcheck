@@ -65,11 +65,6 @@ func (r *GitHubReporter) outputAnnotation(ruleName string, issue providers.Seman
 	// Build the annotation message
 	message := fmt.Sprintf("[%s] %s", ruleName, issue.Message)
 
-	// Add confidence if available
-	if issue.Confidence > 0 {
-		message += fmt.Sprintf(" (confidence: %.1f%%)", issue.Confidence*100)
-	}
-
 	// Add reasoning if enabled and available
 	if r.options.ShowAnalysis && issue.Reasoning != "" {
 		message += fmt.Sprintf("\n\nReasoning:\n%s", issue.Reasoning)

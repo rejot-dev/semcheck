@@ -111,12 +111,11 @@ type Client interface {
 
 // SemanticIssue represents a single issue found during semantic analysis
 type SemanticIssue struct {
-	Reasoning  string  `json:"reasoning" jsonschema_description:"Reasoning why the found issue has it's severity level"`
-	Level      string  `json:"level" jsonschema_description:"Severity level of the issue"`
-	Message    string  `json:"message" jsonschema_description:"Description of the issue"`
-	Confidence float64 `json:"confidence" jsonschema_description:"Confidence level of the issue (0.0-1.0)"`
-	Suggestion string  `json:"suggestion" jsonschema_description:"Suggestion for fixing the issue (optional)"`
-	File       string  `json:"file" jsonschema_description:"The file that the issue is in"`
+	Reasoning  string `json:"reasoning" jsonschema_description:"Reasoning why the found issue has it's severity level"`
+	Level      string `json:"level" jsonschema_description:"Severity level of the issue"`
+	Message    string `json:"message" jsonschema_description:"Description of the issue"`
+	Suggestion string `json:"suggestion" jsonschema_description:"Suggestion for fixing the issue (optional)"`
+	File       string `json:"file" jsonschema_description:"The file that the issue is in"`
 }
 
 // Config holds common configuration for AI providers

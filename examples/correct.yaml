@@ -22,4 +22,3 @@ rules:
         type: "markdown"
         description: "Project specifications"
     fail_on: "error"
-    confidence_threshold: 0.7

@@ -30,7 +30,7 @@ type Rule struct {
 	Specs               []Spec      `yaml:"specs"`
 	Prompt              string      `yaml:"prompt,omitempty"`
 	FailOn              string      `yaml:"fail_on"`
-	ConfidenceThreshold float64     `yaml:"confidence_threshold"`
+	ConfidenceThreshold *float64    `yaml:"confidence_threshold,omitempty"` // Deprecated field
 }
 
 type FilePattern struct {
@@ -115,18 +115,13 @@ func (c *Config) validate() error {
 			return fmt.Errorf("at least one spec is required for rule: %s", rule.Name)
 		}
 
-		// Set default confidence threshold if not provided
-		if rule.ConfidenceThreshold == 0 {
-			c.Rules[i].ConfidenceThreshold = 0.8
+		if rule.ConfidenceThreshold != nil {
+			fmt.Printf("Warning: confidence_threshold field is deprecated and will be ignored for rule '%s'. Please remove this field from your configuration.\n", rule.Name)
 		}
 
 		// Set default fail_on if not provided
 		if rule.FailOn == "" {
 			c.Rules[i].FailOn = "error"
-		}
-
-		if c.Rules[i].ConfidenceThreshold < 0 || c.Rules[i].ConfidenceThreshold > 1 {
-			return fmt.Errorf("confidence_threshold must be between 0 and 1 for rule: %s", rule.Name)
 		}
 
 		// Validate fail_on values

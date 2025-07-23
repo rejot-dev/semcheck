@@ -130,13 +130,10 @@ func (r *StdoutReporter) Report(result *CheckResult) {
 }
 
 func (r *StdoutReporter) displayIssue(issue providers.SemanticIssue, issueNumber int, issueColor *color.Color) {
-	// Main issue message with number and confidence
+	// Main issue message with number
 	fmt.Print("   ")
 	issueColor.Printf("%d. ", issueNumber)
 	bold.Printf("%s\n", issue.Message)
-	fmt.Print("      ")
-	muted.Printf("Confidence: %.1f", issue.Confidence)
-	fmt.Println()
 
 	// Reasoning section with better formatting
 	if r.options.ShowAnalysis && issue.Reasoning != "" {

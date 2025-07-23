@@ -161,12 +161,6 @@ rules:
     # Default: "error"
     fail_on: "error"
 
-    # Custom confidence threshold (OPTIONAL)
-    # AI confidence level required to report an issue (0.0-1.0)
-    # This filters out potentially false positives based on AI uncertainty
-    # Issues below this threshold are ignored
-    # Default: 0.8
-    confidence_threshold: 0.8
 
   # Example of a second rule with different focus
   - name: "security-standards"
@@ -189,7 +183,6 @@ rules:
       - Input sanitization
       - Secure data handling
     fail_on: "error"
-    confidence_threshold: 0.9
 ```
 
 ## Environment Variable Support
@@ -230,3 +223,21 @@ When you provide a list of files to semcheck, semcheck will automatically match 
 ### Specification File Validation
 
 - All local paths must exist and be readable at configuration load time
+
+## Deprecated Fields
+
+The following fields are deprecated and will be ignored with a warning if present in the configuration:
+
+### confidence_threshold (Deprecated)
+
+Previously used to filter issues based on AI confidence level. This field is no longer supported as confidence-based filtering has been removed.
+
+**Legacy usage:**
+```yaml
+rules:
+  - name: "example-rule"
+    # ... other fields ...
+    confidence_threshold: 0.8  # This will be ignored with a warning
+```
+
+**Migration:** Simply remove the `confidence_threshold` field from your configuration. All issues will now be reported regardless of confidence level.
