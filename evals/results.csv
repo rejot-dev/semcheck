@@ -1,0 +1,5 @@
+commit_sha,date,model,provider,error_accuracy,warning_accuracy,info_accuracy,total_accuracy,num_cases,duration_seconds
+c7fdcd1d5f9dc583a4b6a4dcaf2fb3e665f05617,2025-07-23T14:43:33+02:00,gpt-4.1,openai,0.7667,0.8000,0.9167,0.8278,6,51.0
+c7fdcd1d5f9dc583a4b6a4dcaf2fb3e665f05617,2025-07-23T14:47:13+02:00,llama-4-scout-17b-16e-instruct,cerebras,0.6944,0.7000,0.7500,0.7148,6,2.59
+c7fdcd1d5f9dc583a4b6a4dcaf2fb3e665f05617,2025-07-23T14:48:55+02:00,claude-sonnet-4-0,anthropic,0.9167,0.9333,0.8333,0.8944,6,39.56
+c7fdcd1d5f9dc583a4b6a4dcaf2fb3e665f05617,2025-07-23T14:53:59+02:00,claude-3-7-sonnet-latest,anthropic,0.9167,0.9000,0.8333,0.8833,6,28.77

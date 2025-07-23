@@ -2,7 +2,7 @@ version: "1.0"
 provider: "anthropic"
 model: "claude-sonnet-4-0"
 api_key: "${ANTHROPIC_API_KEY}"
-
+temperature: 0.0
 timeout: 60
 fail_on_issues: false
 

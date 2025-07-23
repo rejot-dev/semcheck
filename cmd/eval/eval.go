@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -38,10 +39,36 @@ type EvalScore struct {
 	WarningAccuracy float64
 	NoticeAccuracy  float64
 	OverallScore    float64
+	RuleResults     map[string]RuleResult
+}
+
+type RuleResult struct {
+	RuleName        string
+	Expected        SeverityCount
+	Actual          SeverityCount
+	ErrorAccuracy   float64
+	WarningAccuracy float64
+	NoticeAccuracy  float64
+	Passed          bool
+	Issues          []providers.SemanticIssue
+}
+
+type EvalResult struct {
+	CommitSHA       string
+	Date            string
+	Model           string
+	Provider        string
+	ErrorAccuracy   float64
+	WarningAccuracy float64
+	InfoAccuracy    float64
+	TotalAccuracy   float64
+	NumCases        int
+	Duration        time.Duration
 }
 
 func RunEvaluation() error {
 	fmt.Println("Running semcheck evaluations...")
+	startTime := time.Now()
 
 	workingDir, err := os.Getwd()
 	if err != nil {
@@ -94,8 +121,18 @@ func RunEvaluation() error {
 		return fmt.Errorf("semantic analysis failed: %w", err)
 	}
 
-	// Compare results to expectations and display accuracy
-	return compareAndDisplayResults(cfg, checkResult, expectations)
+	// Compare results to expectations
+	score, err := compareResults(checkResult, expectations)
+	if err != nil {
+		return fmt.Errorf("failed to compare results: %w", err)
+	}
+
+	// Display results
+	displayResults(cfg, score)
+
+	// Record results to CSV
+	duration := time.Since(startTime)
+	return recordResults(cfg, score, duration)
 }
 
 func loadExpectations(filePath string) (map[string]SeverityCount, error) {
@@ -150,12 +187,11 @@ func loadExpectations(filePath string) (map[string]SeverityCount, error) {
 	return expectations, nil
 }
 
-func compareAndDisplayResults(cfg *config.Config, checkResult *checker.CheckResult, expectations map[string]SeverityCount) error {
-	fmt.Println("\n--- Evaluation Results ---")
-
+func compareResults(checkResult *checker.CheckResult, expectations map[string]SeverityCount) (*EvalScore, error) {
 	var totalErrorAccuracy, totalWarningAccuracy, totalNoticeAccuracy float64
 	totalTests := len(expectations)
 	passedTests := 0
+	ruleResults := make(map[string]RuleResult)
 
 	for ruleName, expected := range expectations {
 		issues := checkResult.Issues[ruleName]
@@ -177,27 +213,17 @@ func compareAndDisplayResults(cfg *config.Config, checkResult *checker.CheckResu
 			passedTests++
 		}
 
-		status := "❌ FAIL"
-		if passed {
-			status = "✅ PASS"
+		// Store rule result
+		ruleResults[ruleName] = RuleResult{
+			RuleName:        ruleName,
+			Expected:        expected,
+			Actual:          actual,
+			ErrorAccuracy:   errorAccuracy,
+			WarningAccuracy: warningAccuracy,
+			NoticeAccuracy:  noticeAccuracy,
+			Passed:          passed,
+			Issues:          issues,
 		}
-
-		fmt.Printf("%s %s:\n", status, ruleName)
-		fmt.Printf("    Errors:   expected %d, got %d (%.1f%% accuracy)\n",
-			expected.Errors, actual.Errors, errorAccuracy*100)
-		fmt.Printf("    Warnings: expected %d, got %d (%.1f%% accuracy)\n",
-			expected.Warnings, actual.Warnings, warningAccuracy*100)
-		fmt.Printf("    Notice:   expected %d, got %d (%.1f%% accuracy)\n",
-			expected.Notice, actual.Notice, noticeAccuracy*100)
-
-		if len(issues) > 0 {
-			fmt.Printf("    Issues found:\n")
-			for _, issue := range issues {
-				fmt.Printf("      - (%s) %s", issue.Level, issue.Message)
-				fmt.Printf("\n")
-			}
-		}
-		fmt.Printf("\n")
 
 		// Accumulate accuracy scores
 		totalErrorAccuracy += errorAccuracy
@@ -212,20 +238,49 @@ func compareAndDisplayResults(cfg *config.Config, checkResult *checker.CheckResu
 		ErrorAccuracy:   totalErrorAccuracy / float64(totalTests),
 		WarningAccuracy: totalWarningAccuracy / float64(totalTests),
 		NoticeAccuracy:  totalNoticeAccuracy / float64(totalTests),
+		RuleResults:     ruleResults,
 	}
 	score.OverallScore = (score.ErrorAccuracy + score.WarningAccuracy + score.NoticeAccuracy) / 3
+
+	return &score, nil
+}
+
+func displayResults(cfg *config.Config, score *EvalScore) {
+	fmt.Println("\n--- Evaluation Results ---")
+
+	for _, result := range score.RuleResults {
+		status := "❌ FAIL"
+		if result.Passed {
+			status = "✅ PASS"
+		}
+
+		fmt.Printf("%s %s:\n", status, result.RuleName)
+		fmt.Printf("    Errors:   expected %d, got %d (%.1f%% accuracy)\n",
+			result.Expected.Errors, result.Actual.Errors, result.ErrorAccuracy*100)
+		fmt.Printf("    Warnings: expected %d, got %d (%.1f%% accuracy)\n",
+			result.Expected.Warnings, result.Actual.Warnings, result.WarningAccuracy*100)
+		fmt.Printf("    Notice:   expected %d, got %d (%.1f%% accuracy)\n",
+			result.Expected.Notice, result.Actual.Notice, result.NoticeAccuracy*100)
+
+		if len(result.Issues) > 0 {
+			fmt.Printf("    Issues found:\n")
+			for _, issue := range result.Issues {
+				fmt.Printf("      - (%s) %s", issue.Level, issue.Message)
+				fmt.Printf("\n")
+			}
+		}
+		fmt.Printf("\n")
+	}
 
 	// Display final scores
 	fmt.Printf("=== EVALUATION SUMMARY ===\n")
 	fmt.Printf("Provider: %s\n", cfg.Provider)
 	fmt.Printf("Model: %s\n", cfg.Model)
-	fmt.Printf("Tests Passed: %d/%d (%.1f%%)\n", passedTests, score.TotalTests, float64(score.PassedTests)/float64(score.TotalTests)*100)
+	fmt.Printf("Tests Passed: %d/%d (%.1f%%)\n", score.PassedTests, score.TotalTests, float64(score.PassedTests)/float64(score.TotalTests)*100)
 	fmt.Printf("Error Accuracy: %.1f%%\n", score.ErrorAccuracy*100)
 	fmt.Printf("Warning Accuracy: %.1f%%\n", score.WarningAccuracy*100)
 	fmt.Printf("Notice Accuracy: %.1f%%\n", score.NoticeAccuracy*100)
 	fmt.Printf("Overall Score: %.1f%%\n", score.OverallScore*100)
-
-	return nil
 }
 
 func countIssuesBySeverity(issues []providers.SemanticIssue) SeverityCount {
@@ -274,4 +329,87 @@ func max(a, b int) int {
 		return a
 	}
 	return b
+}
+
+func getGitCommitSHA() (string, error) {
+	cmd := exec.Command("git", "rev-parse", "HEAD")
+	output, err := cmd.Output()
+	if err != nil {
+		return "unknown", err
+	}
+	return strings.TrimSpace(string(output)), nil
+}
+
+func recordResults(cfg *config.Config, score *EvalScore, duration time.Duration) error {
+	resultsFile := "evals/results.csv"
+
+	// Get current commit SHA
+	commitSHA, err := getGitCommitSHA()
+	if err != nil {
+		fmt.Printf("Warning: could not get git commit SHA: %v\n", err)
+		commitSHA = "unknown"
+	}
+
+	// Create result record
+	result := EvalResult{
+		CommitSHA:       commitSHA,
+		Date:            time.Now().Format(time.RFC3339),
+		Model:           cfg.Model,
+		Provider:        cfg.Provider,
+		ErrorAccuracy:   score.ErrorAccuracy,
+		WarningAccuracy: score.WarningAccuracy,
+		InfoAccuracy:    score.NoticeAccuracy, // Notice maps to Info
+		TotalAccuracy:   score.OverallScore,
+		NumCases:        score.TotalTests,
+		Duration:        duration,
+	}
+
+	// Check if file exists
+	fileExists := true
+	if _, err := os.Stat(resultsFile); os.IsNotExist(err) {
+		fileExists = false
+	}
+
+	// Open file for appending
+	file, err := os.OpenFile(resultsFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to open results file: %w", err)
+	}
+	defer func() {
+		if err := file.Close(); err != nil {
+			fmt.Printf("Warning: failed to close results file: %v\n", err)
+		}
+	}()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	// Write header if file is new
+	if !fileExists {
+		header := []string{"commit_sha", "date", "model", "provider", "error_accuracy", "warning_accuracy", "info_accuracy", "total_accuracy", "num_cases", "duration_seconds"}
+		if err := writer.Write(header); err != nil {
+			return fmt.Errorf("failed to write CSV header: %w", err)
+		}
+	}
+
+	// Write result record
+	record := []string{
+		result.CommitSHA,
+		result.Date,
+		result.Model,
+		result.Provider,
+		fmt.Sprintf("%.4f", result.ErrorAccuracy),
+		fmt.Sprintf("%.4f", result.WarningAccuracy),
+		fmt.Sprintf("%.4f", result.InfoAccuracy),
+		fmt.Sprintf("%.4f", result.TotalAccuracy),
+		fmt.Sprintf("%d", result.NumCases),
+		fmt.Sprintf("%.2f", result.Duration.Seconds()),
+	}
+
+	if err := writer.Write(record); err != nil {
+		return fmt.Errorf("failed to write CSV record: %w", err)
+	}
+
+	fmt.Printf("\n✅ Results recorded to %s\n", resultsFile)
+	return nil
 }
