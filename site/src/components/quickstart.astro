@@ -7,20 +7,20 @@ import runCode from "../code-samples/run.sh?raw";
 <div>
   <h2 id="quickstart" class="mb-8 text-3xl font-bold text-gray-900">Quickstart</h2>
 
-  <div class="space-y-6">
-    <div>
-      <h3 class="mb-3 text-lg font-medium text-gray-900">Install</h3>
+  <div class="space-y-4">
+    <div class="space-y-4">
+      <h3 class="text-lg font-medium text-gray-900">Install</h3>
       <Code code="go install github.com/rejot-dev/semcheck@latest" lang="bash" />
     </div>
 
-    <div>
-      <h3 class="mb-3 text-lg font-medium text-gray-900">Initialize</h3>
+    <div class="space-y-4">
+      <h3 class="text-lg font-medium text-gray-900">Initialize</h3>
       <Code code="semcheck -init" lang="bash" />
     </div>
 
-    <div>
-      <h3 class="mb-3 text-lg font-medium text-gray-900">Define Rules</h3>
-      <p class="mb-3 text-sm text-gray-600">
+    <div class="space-y-4">
+      <h3 class="text-lg font-medium text-gray-900">Define Rules</h3>
+      <p class="text-gray-600">
         Rules tie specification files to implementation files. Semcheck invokes the LLM once per
         rule, and in pre-commit mode, only for rules with modified files. For best results, try to
         keep the number of files per rule small, LLMs perform best with focused context.
@@ -28,8 +28,8 @@ import runCode from "../code-samples/run.sh?raw";
       <Code code={configCode} lang="yaml" />
     </div>
 
-    <div>
-      <h3 class="mb-3 text-lg font-medium text-gray-900">Run</h3>
+    <div class="space-y-4">
+      <h3 class="text-lg font-medium text-gray-900">Run</h3>
       <Code code={runCode} lang="bash" />
     </div>
   </div>

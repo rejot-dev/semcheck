@@ -16,6 +16,7 @@
     "tailwindcss": "^3.4.17"
   },
   "devDependencies": {
+    "@shikijs/transformers": "^3.8.1",
     "prettier": "^3.6.2",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.6.14"

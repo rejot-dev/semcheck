@@ -1,15 +1,56 @@
 ---
-
+import { transformerNotationErrorLevel } from "@shikijs/transformers";
+import Code from "~/components/themed-code.astro";
+import wrongCode from "../code-samples/example.ts?raw";
 ---
 
-<div>
+<div class="space-y-4">
   <h2 id="why-semcheck" class="mb-8 text-3xl font-bold text-gray-900">Why Semcheck?</h2>
 
   <p>
-    Semcheck is a tool that helps you write better code by providing feedback on your code's
-    correctness and style. It does this by using large language models (LLMs) to analyze your code
-    and provide feedback on your code's correctness and style. Semcheck is designed to be used in a
-    variety of contexts, including pre-commit hooks, continuous integration, and continuous
-    delivery.
+    Semcheck is a tool that helps developers who use specification driven developement to keep their
+    code and their specification in sync. Use semcheck in pre-commit hooks and CI/CD pipelines as a
+    last line of defense against implementation drift.
   </p>
+
+  <div class="space-y-4 rounded-lg bg-gray-50 p-4">
+    <h3 class="text-xl font-semibold text-gray-900">Example: HTTP Status Codes</h3>
+
+    <div class="grid gap-4 md:grid-cols-2">
+      <div class="space-y-4">
+        <a
+          class="text-lg font-medium text-gray-700 underline"
+          href="https://www.rfc-editor.org/rfc/rfc9110.html#section-15.3.1"
+        >
+          RFC 9110: 15.3.1. 200 OK</a
+        >
+
+        <pre>
+The 200 (OK) status code indicates that
+the request has succeeded. The content
+sent in a 200 response depends on the
+request method.
+</pre>
+      </div>
+
+      <Code transformers={[transformerNotationErrorLevel()]} lang="typescript" code={wrongCode} />
+    </div>
+
+    <div class="border-l-4 border-red-400 bg-red-50 p-4">
+      <p class="text-sm text-red-700">
+        <strong>Semcheck:</strong> GET request returns 201 (Created) instead of 200 (OK) as specified
+        in RFC 9110
+      </p>
+    </div>
+  </div>
 </div>
+
+<style is:global>
+  /* Classes added by Shiki transformer */
+  .highlighted.error {
+    background-color: #ffe6e6;
+    text-decoration: underline;
+    text-decoration-style: wavy;
+    text-decoration-color: red;
+  }
+</style>
