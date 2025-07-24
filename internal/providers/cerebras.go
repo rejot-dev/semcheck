@@ -10,7 +10,7 @@ import (
 )
 
 // CerebrasClient implements the Client interface for Cerebras API
-type CerebrasClient struct {
+type CerebrasClient[R any] struct {
 	httpClient  *http.Client
 	apiKey      string
 	model       string
@@ -20,13 +20,13 @@ type CerebrasClient struct {
 }
 
 // NewCerebrasClient creates a new Cerebras client
-func NewCerebrasClient(config *Config) (*CerebrasClient, error) {
+func NewCerebrasClient[R any](config *Config) (Client[R], error) {
 	baseURL := "https://api.cerebras.ai/v1"
 	if config.BaseURL != "" {
 		baseURL = config.BaseURL
 	}
 
-	return &CerebrasClient{
+	return &CerebrasClient[R]{
 		httpClient:  &http.Client{},
 		apiKey:      config.APIKey,
 		model:       config.Model,
@@ -37,12 +37,12 @@ func NewCerebrasClient(config *Config) (*CerebrasClient, error) {
 }
 
 // Name returns the provider name
-func (c *CerebrasClient) Name() string {
+func (c *CerebrasClient[R]) Name() string {
 	return string(ProviderCerebras)
 }
 
 // Validate checks if the client configuration is valid
-func (c *CerebrasClient) Validate() error {
+func (c *CerebrasClient[R]) Validate() error {
 	if c.httpClient == nil {
 		return fmt.Errorf("HTTP client is not initialized")
 	}
@@ -106,9 +106,9 @@ type CerebrasResponse struct {
 }
 
 // Complete sends a completion request to Cerebras API
-func (c *CerebrasClient) Complete(ctx context.Context, req *Request) (*Response, error) {
+func (c *CerebrasClient[R]) Complete(ctx context.Context, req *Request) (*R, Usage, error) {
 	if err := c.Validate(); err != nil {
-		return nil, fmt.Errorf("client validation failed: %w", err)
+		return nil, Usage{}, fmt.Errorf("client validation failed: %w", err)
 	}
 
 	// Prepare messages for the API request
@@ -118,7 +118,7 @@ func (c *CerebrasClient) Complete(ctx context.Context, req *Request) (*Response,
 	}
 
 	// Generate schema for structured output
-	schema := generateSchema[StructuredResponse]()
+	schema := generateSchema[R]()
 
 	// Create request payload
 	payload := CerebrasRequest{
@@ -139,13 +139,13 @@ func (c *CerebrasClient) Complete(ctx context.Context, req *Request) (*Response,
 	// Marshal request to JSON
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
+		return nil, Usage{}, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
 	// Create HTTP request
 	httpReq, err := http.NewRequestWithContext(ctx, "POST", c.baseURL+"/chat/completions", bytes.NewBuffer(jsonData))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+		return nil, Usage{}, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
 	// Set headers
@@ -155,45 +155,42 @@ func (c *CerebrasClient) Complete(ctx context.Context, req *Request) (*Response,
 	// Send request
 	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {
-		return nil, fmt.Errorf("cerebras API request failed: %w", err)
+		return nil, Usage{}, fmt.Errorf("cerebras API request failed: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	// Read response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return nil, Usage{}, fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	// Check for HTTP errors
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("cerebras API returned status %d: %s", resp.StatusCode, string(body))
+		return nil, Usage{}, fmt.Errorf("cerebras API returned status %d: %s", resp.StatusCode, string(body))
 	}
 
 	// Parse response
 	var cerebrasResp CerebrasResponse
 	if err := json.Unmarshal(body, &cerebrasResp); err != nil {
-		return nil, fmt.Errorf("failed to parse Cerebras response: %w", err)
+		return nil, Usage{}, fmt.Errorf("failed to parse Cerebras response: %w", err)
 	}
 
 	if len(cerebrasResp.Choices) == 0 {
-		return nil, fmt.Errorf("no choices in response")
+		return nil, Usage{}, fmt.Errorf("no choices in response")
 	}
-	// Parse the response content as JSON to extract semantic issues
-	var structuredResp StructuredResponse
-	if err := json.Unmarshal([]byte(cerebrasResp.Choices[0].Message.Content), &structuredResp); err != nil {
-		return nil, fmt.Errorf("failed to parse structured response: %w", err)
-	}
-
-	// Convert to our response format
-	response := &Response{
-		Usage: Usage{
-			PromptTokens:     cerebrasResp.Usage.PromptTokens,
-			CompletionTokens: cerebrasResp.Usage.CompletionTokens,
-			TotalTokens:      cerebrasResp.Usage.TotalTokens,
-		},
-		Issues: structuredResp.Issues,
+	// Parse the response content directly into type R
+	var result R
+	if err := json.Unmarshal([]byte(cerebrasResp.Choices[0].Message.Content), &result); err != nil {
+		return nil, Usage{}, fmt.Errorf("failed to parse structured response: %w", err)
 	}
 
-	return response, nil
+	// Create usage information
+	usage := Usage{
+		PromptTokens:     cerebrasResp.Usage.PromptTokens,
+		CompletionTokens: cerebrasResp.Usage.CompletionTokens,
+		TotalTokens:      cerebrasResp.Usage.TotalTokens,
+	}
+
+	return &result, usage, nil
 }

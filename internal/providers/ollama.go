@@ -4,24 +4,23 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	ollama "github.com/prathyushnallamothu/ollamago"
 )
 
-type OllamaClient struct {
+type OllamaClient[R any] struct {
 	client      *ollama.Client
 	model       string
 	temperature float64
 }
 
 // NewOllamaClient creates a new Ollama client
-func NewOllamaClient(config *Config) (*OllamaClient, error) {
+func NewOllamaClient[R any](config *Config) (Client[R], error) {
 	client := ollama.NewClient(
 		ollama.WithBaseURL(config.BaseURL),
 	)
 
-	return &OllamaClient{
+	return &OllamaClient[R]{
 		client:      client,
 		model:       config.Model,
 		temperature: config.Temperature,
@@ -29,12 +28,12 @@ func NewOllamaClient(config *Config) (*OllamaClient, error) {
 }
 
 // Name returns the provider name
-func (c *OllamaClient) Name() string {
+func (c *OllamaClient[R]) Name() string {
 	return string(ProviderOllama)
 }
 
 // Validate checks if the client configuration is valid
-func (c *OllamaClient) Validate() error {
+func (c *OllamaClient[R]) Validate() error {
 	if c.client == nil {
 		return fmt.Errorf("client is not initialized")
 	}
@@ -45,9 +44,9 @@ func (c *OllamaClient) Validate() error {
 }
 
 // Complete sends a completion request to Ollama API
-func (c *OllamaClient) Complete(ctx context.Context, req *Request) (*Response, error) {
+func (c *OllamaClient[R]) Complete(ctx context.Context, req *Request) (*R, Usage, error) {
 	if err := c.Validate(); err != nil {
-		return nil, fmt.Errorf("client validation failed: %w", err)
+		return nil, Usage{}, fmt.Errorf("client validation failed: %w", err)
 	}
 
 	// Create the generate request
@@ -65,19 +64,13 @@ func (c *OllamaClient) Complete(ctx context.Context, req *Request) (*Response, e
 	// Send request
 	resp, err := c.client.Generate(ctx, *generateReq)
 	if err != nil {
-		return nil, fmt.Errorf("ollama API request failed: %w", err)
+		return nil, Usage{}, fmt.Errorf("ollama API request failed: %w", err)
 	}
 
-	// Parse the JSON response to extract semantic issues
-	var structuredResp StructuredResponse
-	if err := json.Unmarshal([]byte(resp.Response), &structuredResp); err != nil {
-		// If JSON parsing fails, try to extract issues from plain text
-		// This is a fallback for models that don't follow the exact JSON format
-		issues, parseErr := parseTextResponse(resp.Response)
-		if parseErr != nil {
-			return nil, fmt.Errorf("failed to parse response as JSON: %w, and failed to parse as text: %w", err, parseErr)
-		}
-		structuredResp.Issues = issues
+	// Parse the JSON response directly into type R
+	var result R
+	if err := json.Unmarshal([]byte(resp.Response), &result); err != nil {
+		return nil, Usage{}, fmt.Errorf("failed to parse response as JSON: %w", err)
 	}
 
 	// Convert token usage information
@@ -87,59 +80,5 @@ func (c *OllamaClient) Complete(ctx context.Context, req *Request) (*Response, e
 		TotalTokens:      resp.PromptEvalCount + resp.EvalCount,
 	}
 
-	// Convert to our response format
-	response := &Response{
-		Usage:  usage,
-		Issues: structuredResp.Issues,
-	}
-
-	return response, nil
-}
-
-// parseTextResponse attempts to parse a plain text response and extract semantic issues
-// This is a fallback when the model doesn't return proper JSON
-func parseTextResponse(text string) ([]SemanticIssue, error) {
-	// This is a simple parser - in a real implementation you might want more sophisticated parsing
-	// For now, we'll return an empty list if we can't parse the response
-	// The assumption is that most modern models will be able to return JSON when requested
-
-	// Try to find JSON-like content in the response
-	lines := strings.Split(text, "\n")
-	var issues []SemanticIssue
-
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-
-		// Look for lines that might contain issue information
-		if strings.Contains(strings.ToLower(line), "error") ||
-			strings.Contains(strings.ToLower(line), "warning") ||
-			strings.Contains(strings.ToLower(line), "issue") {
-
-			// Create a basic issue from the text
-			issue := SemanticIssue{
-				Reasoning:  "Parsed from text response",
-				Level:      determineLevel(line),
-				Message:    line,
-				Suggestion: "",
-			}
-			issues = append(issues, issue)
-		}
-	}
-
-	return issues, nil
-}
-
-// determineLevel tries to determine the severity level from text
-func determineLevel(text string) string {
-	lower := strings.ToLower(text)
-	if strings.Contains(lower, "error") || strings.Contains(lower, "critical") {
-		return "error"
-	}
-	if strings.Contains(lower, "warning") || strings.Contains(lower, "warn") {
-		return "warning"
-	}
-	return "notice"
+	return &result, usage, nil
 }
