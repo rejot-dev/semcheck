@@ -2,9 +2,9 @@
 # It maps the relation between code and specification, use it to find which code to update when changing specs.
 version: "1.0"
 
-provider: "openai"
-model: "gpt-4.1"
-api_key: "${OPENAI_API_KEY}"
+provider: "anthropic"
+model: "claude-sonnet-4-0"
+api_key: "${ANTHROPIC_API_KEY}"
 
 timeout: 300
 fail_on_issues: true
