@@ -78,9 +78,8 @@ func GetProviderDefaults(provider Provider) ProviderDefaults {
 	}
 }
 
-// Response represents the response from an AI provider
-type Response struct {
-	Usage  Usage
+// IssueResponse represents the response from an AI provider for semantic issues
+type IssueResponse struct {
 	Issues []SemanticIssue
 }
 
@@ -97,10 +96,10 @@ type Request struct {
 	UserPrompt   string
 }
 
-// Client defines the interface for AI providers
-type Client interface {
+// Client defines the generic interface for AI providers
+type Client[R any] interface {
 	// Complete sends a completion request to the AI provider
-	Complete(ctx context.Context, req *Request) (*Response, error)
+	Complete(ctx context.Context, req *Request) (*R, Usage, error)
 
 	// Name returns the name of the provider
 	Name() string
@@ -128,7 +127,7 @@ type Config struct {
 	MaxTokens   int
 }
 
-func CreateAIClient(cfg *config.Config) (Client, error) {
+func CreateAIClient(cfg *config.Config) (Client[IssueResponse], error) {
 	// Convert config to provider config
 
 	provider, providerErr := ToProvider(cfg.Provider)
@@ -145,20 +144,20 @@ func CreateAIClient(cfg *config.Config) (Client, error) {
 		Temperature: *cfg.Temperature,
 	}
 
-	var client Client
+	var client Client[IssueResponse]
 	var err error
 
 	switch provider {
 	case ProviderOpenAI:
-		client, err = NewOpenAIClient(providerConfig)
+		client, err = NewOpenAIClient[IssueResponse](providerConfig)
 	case ProviderAnthropic:
-		client, err = NewAnthropicClient(providerConfig)
+		client, err = NewAnthropicClient[IssueResponse](providerConfig)
 	case ProviderGemini:
-		client, err = NewGeminiClient(providerConfig)
+		client, err = NewGeminiClient[IssueResponse](providerConfig)
 	case ProviderOllama:
-		client, err = NewOllamaClient(providerConfig)
+		client, err = NewOllamaClient[IssueResponse](providerConfig)
 	case ProviderCerebras:
-		client, err = NewCerebrasClient(providerConfig)
+		client, err = NewCerebrasClient[IssueResponse](providerConfig)
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", provider)
 	}

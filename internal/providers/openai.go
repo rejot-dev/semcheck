@@ -11,7 +11,7 @@ import (
 )
 
 // OpenAIClient implements the Client interface for OpenAI API
-type OpenAIClient struct {
+type OpenAIClient[R any] struct {
 	client      *openai.Client
 	model       string
 	temperature float64
@@ -19,7 +19,7 @@ type OpenAIClient struct {
 }
 
 // NewOpenAIClient creates a new OpenAI client
-func NewOpenAIClient(config *Config) (*OpenAIClient, error) {
+func NewOpenAIClient[R any](config *Config) (Client[R], error) {
 	if config.APIKey == "" {
 		return nil, fmt.Errorf("API key is required for OpenAI provider")
 	}
@@ -34,7 +34,7 @@ func NewOpenAIClient(config *Config) (*OpenAIClient, error) {
 
 	client := openai.NewClient(opts...)
 
-	return &OpenAIClient{
+	return &OpenAIClient[R]{
 		client:      &client,
 		model:       config.Model,
 		temperature: config.Temperature,
@@ -43,12 +43,12 @@ func NewOpenAIClient(config *Config) (*OpenAIClient, error) {
 }
 
 // Name returns the provider name
-func (c *OpenAIClient) Name() string {
+func (c *OpenAIClient[R]) Name() string {
 	return string(ProviderOpenAI)
 }
 
 // Validate checks if the client configuration is valid
-func (c *OpenAIClient) Validate() error {
+func (c *OpenAIClient[R]) Validate() error {
 	if c.client == nil {
 		return fmt.Errorf("client is not initialized")
 	}
@@ -70,20 +70,16 @@ func generateSchema[T any]() any {
 	return schema
 }
 
-type StructuredResponse struct {
-	Issues []SemanticIssue `json:"issues" jsonschema_description:"List of issues found"`
-}
-
 // Complete sends a completion request to OpenAI API
-func (c *OpenAIClient) Complete(ctx context.Context, req *Request) (*Response, error) {
+func (c *OpenAIClient[R]) Complete(ctx context.Context, req *Request) (*R, Usage, error) {
 	if err := c.Validate(); err != nil {
-		return nil, fmt.Errorf("client validation failed: %w", err)
+		return nil, Usage{}, fmt.Errorf("client validation failed: %w", err)
 	}
 
 	temperature := c.temperature
 
 	// Generate schema for structured output
-	schema := generateSchema[StructuredResponse]()
+	schema := generateSchema[R]()
 
 	// Create structured output response format following the example pattern
 	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
@@ -112,28 +108,25 @@ func (c *OpenAIClient) Complete(ctx context.Context, req *Request) (*Response, e
 	// Send request
 	resp, err := c.client.Chat.Completions.New(ctx, chatReq)
 	if err != nil {
-		return nil, fmt.Errorf("OpenAI API request failed: %w", err)
+		return nil, Usage{}, fmt.Errorf("OpenAI API request failed: %w", err)
 	}
 
 	if len(resp.Choices) == 0 {
-		return nil, fmt.Errorf("no choices in response")
+		return nil, Usage{}, fmt.Errorf("no choices in response")
 	}
 
-	// Parse structured JSON response
-	var structuredResp StructuredResponse
-	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &structuredResp); err != nil {
-		return nil, fmt.Errorf("failed to parse structured response: %w", err)
+	// Parse structured JSON response directly into type R
+	var result R
+	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &result); err != nil {
+		return nil, Usage{}, fmt.Errorf("failed to parse structured response: %w", err)
 	}
 
-	// Convert to our response format
-	response := &Response{
-		Usage: Usage{
-			PromptTokens:     int(resp.Usage.PromptTokens),
-			CompletionTokens: int(resp.Usage.CompletionTokens),
-			TotalTokens:      int(resp.Usage.TotalTokens),
-		},
-		Issues: structuredResp.Issues,
+	// Create usage information
+	usage := Usage{
+		PromptTokens:     int(resp.Usage.PromptTokens),
+		CompletionTokens: int(resp.Usage.CompletionTokens),
+		TotalTokens:      int(resp.Usage.TotalTokens),
 	}
 
-	return response, nil
+	return &result, usage, nil
 }

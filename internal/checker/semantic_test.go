@@ -21,17 +21,18 @@ func (m *mockClient) Name() string {
 	return "mock"
 }
 
-func (m *mockClient) Complete(ctx context.Context, req *providers.Request) (*providers.Response, error) {
-	resp := &providers.Response{
-		Usage: providers.Usage{
-			PromptTokens:     100,
-			CompletionTokens: 50,
-			TotalTokens:      150,
-		},
+func (m *mockClient) Complete(ctx context.Context, req *providers.Request) (*providers.IssueResponse, providers.Usage, error) {
+	resp := &providers.IssueResponse{
 		Issues: m.structuredResponse,
 	}
 
-	return resp, nil
+	usage := providers.Usage{
+		PromptTokens:     100,
+		CompletionTokens: 50,
+		TotalTokens:      150,
+	}
+
+	return resp, usage, nil
 }
 
 func (m *mockClient) Validate() error {

@@ -11,19 +11,20 @@ import (
 // mockClient implements the Client interface for testing
 type mockClient struct {
 	name     string
-	response *Response
+	response *IssueResponse
+	usage    Usage
 	err      error
 	valid    bool
 }
 
-func (m *mockClient) Complete(ctx context.Context, req *Request) (*Response, error) {
+func (m *mockClient) Complete(ctx context.Context, req *Request) (*IssueResponse, Usage, error) {
 	if err := m.Validate(); err != nil {
-		return nil, err
+		return nil, Usage{}, err
 	}
 	if m.err != nil {
-		return nil, m.err
+		return nil, Usage{}, m.err
 	}
-	return m.response, nil
+	return m.response, m.usage, nil
 }
 
 func (m *mockClient) Name() string {
@@ -40,7 +41,7 @@ func (m *mockClient) Validate() error {
 func TestClientInterface(t *testing.T) {
 	tests := []struct {
 		name       string
-		client     Client
+		client     Client[IssueResponse]
 		request    *Request
 		wantError  bool
 		wantResult string
@@ -49,13 +50,13 @@ func TestClientInterface(t *testing.T) {
 			name: "successful completion",
 			client: &mockClient{
 				name: "mock",
-				response: &Response{
-					Usage: Usage{
-						PromptTokens:     10,
-						CompletionTokens: 5,
-						TotalTokens:      15,
-					},
+				response: &IssueResponse{
 					Issues: []SemanticIssue{},
+				},
+				usage: Usage{
+					PromptTokens:     10,
+					CompletionTokens: 5,
+					TotalTokens:      15,
 				},
 				valid: true,
 			},
@@ -101,7 +102,7 @@ func TestClientInterface(t *testing.T) {
 			}
 
 			// Test completion (which includes validation)
-			resp, err := tt.client.Complete(ctx, tt.request)
+			resp, usage, err := tt.client.Complete(ctx, tt.request)
 			if tt.wantError && err == nil {
 				t.Error("expected error but got none")
 			}
@@ -111,6 +112,9 @@ func TestClientInterface(t *testing.T) {
 			if !tt.wantError && resp != nil && len(resp.Issues) != 0 {
 				// For successful completion, we expect empty issues array
 				t.Errorf("Complete() returned unexpected issues: %v", resp.Issues)
+			}
+			if !tt.wantError && usage.TotalTokens != 15 {
+				t.Errorf("Expected usage.TotalTokens = 15, got %d", usage.TotalTokens)
 			}
 		})
 	}
@@ -126,13 +130,8 @@ func TestRequest(t *testing.T) {
 	}
 }
 
-func TestResponse(t *testing.T) {
-	resp := &Response{
-		Usage: Usage{
-			PromptTokens:     20,
-			CompletionTokens: 30,
-			TotalTokens:      50,
-		},
+func TestIssueResponse(t *testing.T) {
+	resp := &IssueResponse{
 		Issues: []SemanticIssue{
 			{
 				Level:      "ERROR",
@@ -143,8 +142,14 @@ func TestResponse(t *testing.T) {
 		},
 	}
 
-	if resp.Usage.TotalTokens != 50 {
-		t.Errorf("expected total tokens 50, got %d", resp.Usage.TotalTokens)
+	usage := Usage{
+		PromptTokens:     20,
+		CompletionTokens: 30,
+		TotalTokens:      50,
+	}
+
+	if usage.TotalTokens != 50 {
+		t.Errorf("expected total tokens 50, got %d", usage.TotalTokens)
 	}
 	if len(resp.Issues) != 1 {
 		t.Errorf("expected 1 issue, got %d", len(resp.Issues))
@@ -162,7 +167,7 @@ func TestAnthropicClient(t *testing.T) {
 		APIKey:   "test-key",
 	}
 
-	client, err := NewAnthropicClient(config)
+	client, err := NewAnthropicClient[IssueResponse](config)
 	if err != nil {
 		t.Fatalf("Failed to create Anthropic client: %v", err)
 	}
@@ -178,7 +183,7 @@ func TestAnthropicClient(t *testing.T) {
 	}
 
 	// Test invalid config
-	invalidClient := &AnthropicClient{model: ""}
+	invalidClient := &AnthropicClient[IssueResponse]{model: ""}
 	if err := invalidClient.Validate(); err == nil {
 		t.Error("Expected validation to fail for empty model")
 	}
@@ -226,7 +231,7 @@ func TestGeminiClient(t *testing.T) {
 		APIKey:   "test-key",
 	}
 
-	client, err := NewGeminiClient(config)
+	client, err := NewGeminiClient[IssueResponse](config)
 	if err != nil {
 		t.Fatalf("Failed to create Gemini client: %v", err)
 	}
@@ -242,7 +247,7 @@ func TestGeminiClient(t *testing.T) {
 	}
 
 	// Test invalid config
-	invalidClient := &GeminiClient{model: ""}
+	invalidClient := &GeminiClient[IssueResponse]{model: ""}
 	if err := invalidClient.Validate(); err == nil {
 		t.Error("Expected validation to fail for empty model")
 	}

@@ -10,7 +10,7 @@ import (
 )
 
 // GeminiClient implements the Client interface for Google Gemini API
-type GeminiClient struct {
+type GeminiClient[R any] struct {
 	client      *genai.Client
 	model       string
 	temperature float64
@@ -29,7 +29,7 @@ func generateSchemaForGemini[T any]() any {
 }
 
 // NewGeminiClient creates a new Gemini client
-func NewGeminiClient(config *Config) (*GeminiClient, error) {
+func NewGeminiClient[R any](config *Config) (Client[R], error) {
 	if config.APIKey == "" {
 		return nil, fmt.Errorf("API key is required for Gemini provider")
 	}
@@ -46,7 +46,7 @@ func NewGeminiClient(config *Config) (*GeminiClient, error) {
 		return nil, fmt.Errorf("failed to create Gemini client: %w", err)
 	}
 
-	return &GeminiClient{
+	return &GeminiClient[R]{
 		client:      client,
 		model:       config.Model,
 		temperature: config.Temperature,
@@ -55,12 +55,12 @@ func NewGeminiClient(config *Config) (*GeminiClient, error) {
 }
 
 // Name returns the provider name
-func (c *GeminiClient) Name() string {
+func (c *GeminiClient[R]) Name() string {
 	return string(ProviderGemini)
 }
 
 // Validate checks if the client configuration is valid
-func (c *GeminiClient) Validate() error {
+func (c *GeminiClient[R]) Validate() error {
 	if c.client == nil {
 		return fmt.Errorf("client is not initialized")
 	}
@@ -71,13 +71,13 @@ func (c *GeminiClient) Validate() error {
 }
 
 // Complete sends a completion request to Gemini API
-func (c *GeminiClient) Complete(ctx context.Context, req *Request) (*Response, error) {
+func (c *GeminiClient[R]) Complete(ctx context.Context, req *Request) (*R, Usage, error) {
 	if err := c.Validate(); err != nil {
-		return nil, fmt.Errorf("client validation failed: %w", err)
+		return nil, Usage{}, fmt.Errorf("client validation failed: %w", err)
 	}
 
 	// Generate schema for structured output using the same approach as OpenAI
-	schema := generateSchemaForGemini[StructuredResponse]()
+	schema := generateSchemaForGemini[R]()
 	temperature := float32(c.temperature)
 
 	// Create generation config with structured output
@@ -90,43 +90,40 @@ func (c *GeminiClient) Complete(ctx context.Context, req *Request) (*Response, e
 	}
 
 	// Send request to Gemini using the simpler genai.Text helper
-	result, err := c.client.Models.GenerateContent(ctx, c.model, genai.Text(req.UserPrompt), genConfig)
+	geminiResult, err := c.client.Models.GenerateContent(ctx, c.model, genai.Text(req.UserPrompt), genConfig)
 	if err != nil {
-		return nil, fmt.Errorf("gemini API request failed: %w", err)
+		return nil, Usage{}, fmt.Errorf("gemini API request failed: %w", err)
 	}
 
 	// Extract structured response using result.Text() which handles the JSON parsing
-	responseText := result.Text()
+	responseText := geminiResult.Text()
 	if responseText == "" {
-		return nil, fmt.Errorf("empty response from Gemini")
+		return nil, Usage{}, fmt.Errorf("empty response from Gemini")
 	}
 
-	// Parse JSON response into our structured format
-	var structuredResp StructuredResponse
-	if err := json.Unmarshal([]byte(responseText), &structuredResp); err != nil {
-		return nil, fmt.Errorf("failed to parse AI response: %w, value: %s", err, responseText)
+	// Parse JSON response directly into type R
+	var parsedResult R
+	if err := json.Unmarshal([]byte(responseText), &parsedResult); err != nil {
+		return nil, Usage{}, fmt.Errorf("failed to parse AI response: %w, value: %s", err, responseText)
 	}
 
-	// Convert to our response format
-	response := &Response{
-		Usage: Usage{
-			// Gemini usage information may not be as detailed as other providers
-			// We'll set basic values based on what's available
-			PromptTokens:     0, // Not always available in Gemini response
-			CompletionTokens: 0, // Not always available in Gemini response
-			TotalTokens:      0, // Not always available in Gemini response
-		},
-		Issues: structuredResp.Issues,
+	// Create usage information
+	usage := Usage{
+		// Gemini usage information may not be as detailed as other providers
+		// We'll set basic values based on what's available
+		PromptTokens:     0, // Not always available in Gemini response
+		CompletionTokens: 0, // Not always available in Gemini response
+		TotalTokens:      0, // Not always available in Gemini response
 	}
 
 	// If usage metadata is available, use it
-	if result.UsageMetadata != nil {
-		response.Usage = Usage{
-			PromptTokens:     int(result.UsageMetadata.PromptTokenCount),
-			CompletionTokens: int(result.UsageMetadata.CandidatesTokenCount),
-			TotalTokens:      int(result.UsageMetadata.TotalTokenCount),
+	if geminiResult.UsageMetadata != nil {
+		usage = Usage{
+			PromptTokens:     int(geminiResult.UsageMetadata.PromptTokenCount),
+			CompletionTokens: int(geminiResult.UsageMetadata.CandidatesTokenCount),
+			TotalTokens:      int(geminiResult.UsageMetadata.TotalTokenCount),
 		}
 	}
 
-	return response, nil
+	return &parsedResult, usage, nil
 }

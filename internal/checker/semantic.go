@@ -31,11 +31,11 @@ type RuleComparisonFiles struct {
 
 type SemanticChecker struct {
 	config     *config.Config
-	client     providers.Client
+	client     providers.Client[providers.IssueResponse]
 	workingDir string
 }
 
-func NewSemanticChecker(cfg *config.Config, client providers.Client, workingDir string) *SemanticChecker {
+func NewSemanticChecker(cfg *config.Config, client providers.Client[providers.IssueResponse], workingDir string) *SemanticChecker {
 	return &SemanticChecker{
 		config:     cfg,
 		client:     client,
@@ -206,8 +206,7 @@ func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Ru
 		UserPrompt:   userPrompt,
 	}
 
-	resp, err := c.client.Complete(ctx, req)
-
+	resp, _, err := c.client.Complete(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("AI request failed: %w", err)
 	}

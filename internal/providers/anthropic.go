@@ -10,7 +10,7 @@ import (
 )
 
 // AnthropicClient implements the Client interface for Anthropic API
-type AnthropicClient struct {
+type AnthropicClient[R any] struct {
 	client      *anthropic.Client
 	model       string
 	temperature float64
@@ -18,7 +18,7 @@ type AnthropicClient struct {
 }
 
 // NewAnthropicClient creates a new Anthropic client
-func NewAnthropicClient(config *Config) (*AnthropicClient, error) {
+func NewAnthropicClient[R any](config *Config) (Client[R], error) {
 	if config.APIKey == "" {
 		return nil, fmt.Errorf("API key is required for Anthropic provider")
 	}
@@ -33,7 +33,7 @@ func NewAnthropicClient(config *Config) (*AnthropicClient, error) {
 
 	client := anthropic.NewClient(opts...)
 
-	return &AnthropicClient{
+	return &AnthropicClient[R]{
 		client:      &client,
 		model:       config.Model,
 		temperature: config.Temperature,
@@ -42,12 +42,12 @@ func NewAnthropicClient(config *Config) (*AnthropicClient, error) {
 }
 
 // Name returns the provider name
-func (c *AnthropicClient) Name() string {
+func (c *AnthropicClient[R]) Name() string {
 	return "anthropic"
 }
 
 // Validate checks if the client configuration is valid
-func (c *AnthropicClient) Validate() error {
+func (c *AnthropicClient[R]) Validate() error {
 	if c.client == nil {
 		return fmt.Errorf("client is not initialized")
 	}
@@ -58,9 +58,9 @@ func (c *AnthropicClient) Validate() error {
 }
 
 // Complete sends a completion request to Anthropic API
-func (c *AnthropicClient) Complete(ctx context.Context, req *Request) (*Response, error) {
+func (c *AnthropicClient[R]) Complete(ctx context.Context, req *Request) (*R, Usage, error) {
 	if err := c.Validate(); err != nil {
-		return nil, fmt.Errorf("client validation failed: %w", err)
+		return nil, Usage{}, fmt.Errorf("client validation failed: %w", err)
 	}
 
 	temperature := c.temperature
@@ -92,7 +92,7 @@ func (c *AnthropicClient) Complete(ctx context.Context, req *Request) (*Response
 		MaxTokens: int64(c.maxTokens),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("anthropic API request failed: %w", err)
+		return nil, Usage{}, fmt.Errorf("anthropic API request failed: %w", err)
 	}
 
 	// Extract text content from response
@@ -103,21 +103,18 @@ func (c *AnthropicClient) Complete(ctx context.Context, req *Request) (*Response
 		}
 	}
 
-	// Parse JSON response into our structured format
-	var structuredResp StructuredResponse
-	if err := json.Unmarshal([]byte(responseText), &structuredResp); err != nil {
-		return nil, fmt.Errorf("failed to parse AI response: %w, value: %s", err, responseText)
+	// Parse JSON response directly into type R
+	var result R
+	if err := json.Unmarshal([]byte(responseText), &result); err != nil {
+		return nil, Usage{}, fmt.Errorf("failed to parse AI response: %w, value: %s", err, responseText)
 	}
 
-	// Convert to our response format
-	response := &Response{
-		Usage: Usage{
-			PromptTokens:     int(resp.Usage.InputTokens),
-			CompletionTokens: int(resp.Usage.OutputTokens),
-			TotalTokens:      int(resp.Usage.InputTokens + resp.Usage.OutputTokens),
-		},
-		Issues: structuredResp.Issues,
+	// Create usage information
+	usage := Usage{
+		PromptTokens:     int(resp.Usage.InputTokens),
+		CompletionTokens: int(resp.Usage.OutputTokens),
+		TotalTokens:      int(resp.Usage.InputTokens + resp.Usage.OutputTokens),
 	}
 
-	return response, nil
+	return &result, usage, nil
 }
