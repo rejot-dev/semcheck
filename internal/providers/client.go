@@ -67,7 +67,7 @@ func GetProviderDefaults(provider Provider) ProviderDefaults {
 		}
 	case ProviderCerebras:
 		return ProviderDefaults{
-			Model:     "llama-4-scout-17b-16e-instruct",
+			Model:     "qwen-3-235b-a22b",
 			ApiKeyVar: "CEREBRAS_API_KEY",
 		}
 	default:
