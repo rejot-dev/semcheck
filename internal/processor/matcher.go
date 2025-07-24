@@ -44,9 +44,16 @@ type MatcherResult struct {
 	Type         FileType
 	RuleName     string
 	IgnoreReason IgnoreReason
+	// TODO: better interface for matches that doesn't require us putting this field here
+	Specifically string
 }
 
 type NormalizedPath string
+
+type SpecFile struct {
+	Path         NormalizedPath
+	Specifically string
+}
 
 func NormalizedPathsToStrings(paths []NormalizedPath) []string {
 	result := make([]string, len(paths))
@@ -141,14 +148,17 @@ func (m *Matcher) GetRuleImplFiles(ruleName string) []NormalizedPath {
 }
 
 // Should this really be a method on the matcher?
-func (m *Matcher) GetRuleSpecFiles(ruleName string) []NormalizedPath {
+func (m *Matcher) GetRuleSpecFiles(ruleName string) []SpecFile {
 	rule := m.findRule(ruleName)
 	if rule == nil {
 		return nil
 	}
-	specFiles := make([]NormalizedPath, len(rule.Specs))
+	specFiles := make([]SpecFile, len(rule.Specs))
 	for i, spec := range rule.Specs {
-		specFiles[i] = NormalizePath(spec.Path)
+		specFiles[i] = SpecFile{
+			Path:         NormalizePath(spec.Path),
+			Specifically: spec.Specifically,
+		}
 	}
 	return specFiles
 }
@@ -180,6 +190,7 @@ func (m *Matcher) GetAllMatcherResults() []MatcherResult {
 				Type:         FileTypeSpec,
 				RuleName:     rule.Name,
 				IgnoreReason: IgnoreReasonNone,
+				Specifically: spec.Specifically,
 			})
 		}
 
@@ -191,6 +202,7 @@ func (m *Matcher) GetAllMatcherResults() []MatcherResult {
 					Type:         FileTypeImpl,
 					RuleName:     ruleName,
 					IgnoreReason: IgnoreReasonNone,
+					Specifically: "",
 				})
 			}
 		}

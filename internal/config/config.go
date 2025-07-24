@@ -39,7 +39,8 @@ type FilePattern struct {
 }
 
 type Spec struct {
-	Path string `yaml:"path"`
+	Path         string `yaml:"path"`
+	Specifically string `yaml:"specifically,omitempty"`
 }
 
 func Load(path string) (*Config, error) {

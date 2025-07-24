@@ -134,6 +134,13 @@ rules:
       # Example of URL specification
       - path: "https://www.rfc-editor.org/rfc/rfc7946.txt"
 
+      - path: "./specs/a-very-large-file.md"
+        # Description of a subsection that is relevant for this rule (OPTIONAL)
+        # Can be:
+        #   - A specific section or subsection of the spec (e.g., #section 1.2)
+        #   - General descriptions like "HTTP status codes only"
+        specifically: "validation of user input"
+
     # Additional context for AI analysis (OPTIONAL)
     # Custom instructions to guide the semantic checking process
     # Use cases:

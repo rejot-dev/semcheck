@@ -176,6 +176,9 @@ func (c *CerebrasClient[R]) Complete(ctx context.Context, req *Request) (*R, Usa
 		return nil, Usage{}, fmt.Errorf("failed to parse Cerebras response: %w", err)
 	}
 
+	fmt.Println("RAW RESPONSE")
+	fmt.Println(cerebrasResp.Choices[0].Message.Content)
+
 	if len(cerebrasResp.Choices) == 0 {
 		return nil, Usage{}, fmt.Errorf("no choices in response")
 	}

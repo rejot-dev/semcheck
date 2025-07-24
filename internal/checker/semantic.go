@@ -25,7 +25,7 @@ type CheckResult struct {
 }
 
 type RuleComparisonFiles struct {
-	SpecFiles []string
+	SpecFiles []processor.SpecFile
 	ImplFiles []string
 }
 
@@ -108,7 +108,7 @@ func (c *SemanticChecker) buildRuleComparisons(matches []processor.MatcherResult
 		// Initialize rule comparison if it does not exist
 		if ruleFiles[ruleName] == nil {
 			ruleFiles[ruleName] = &RuleComparisonFiles{
-				SpecFiles: []string{},
+				SpecFiles: []processor.SpecFile{},
 				ImplFiles: []string{},
 			}
 		}
@@ -118,7 +118,10 @@ func (c *SemanticChecker) buildRuleComparisons(matches []processor.MatcherResult
 		// Add file to appropriate list based on type
 		switch match.Type {
 		case processor.FileTypeSpec:
-			comp.SpecFiles = append(comp.SpecFiles, string(match.Path))
+			comp.SpecFiles = append(comp.SpecFiles, processor.SpecFile{
+				Path:         match.Path,
+				Specifically: match.Specifically,
+			})
 		case processor.FileTypeImpl:
 			comp.ImplFiles = append(comp.ImplFiles, string(match.Path))
 		}
@@ -134,12 +137,34 @@ func (c *SemanticChecker) buildRuleComparisons(matches []processor.MatcherResult
 
 		// Get all counterpart files for impls in this rule
 		if len(comp.ImplFiles) > 0 {
-			counterparts := processor.NormalizedPathsToStrings(matcher.GetRuleSpecFiles(ruleName))
-			comp.SpecFiles = c.mergeUnique(comp.SpecFiles, counterparts)
+			comp.SpecFiles = c.mergeUniqueSpecFiles(comp.SpecFiles, matcher.GetRuleSpecFiles(ruleName))
 		}
 	}
 
 	return ruleFiles
+}
+
+func (c *SemanticChecker) mergeUniqueSpecFiles(slice1, slice2 []processor.SpecFile) []processor.SpecFile {
+	seen := make(map[processor.NormalizedPath]bool)
+	result := make([]processor.SpecFile, 0)
+
+	// Add all from slice1
+	for _, item := range slice1 {
+		if !seen[item.Path] {
+			seen[item.Path] = true
+			result = append(result, item)
+		}
+	}
+
+	// Add unique items from slice2
+	for _, item := range slice2 {
+		if !seen[item.Path] {
+			seen[item.Path] = true
+			result = append(result, item)
+		}
+	}
+
+	return result
 }
 
 // mergeUnique merges two string slices, removing duplicates
@@ -175,15 +200,19 @@ func (c *SemanticChecker) findRule(name string) *config.Rule {
 	return nil
 }
 
-func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Rule, specFiles []string, implFiles []string) ([]providers.SemanticIssue, error) {
+func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Rule, specFiles []processor.SpecFile, implFiles []string) ([]providers.SemanticIssue, error) {
 	fmt.Printf("For rule '%s', comparing spec files %s to implementation files %v\n", rule.Name, specFiles, implFiles)
 	// Read specification files
 	specContents := make([]string, len(specFiles))
 	for i, specFile := range specFiles {
-		specContent, err := c.readFile(specFile)
+		specContent, err := c.readFile(string(specFile.Path))
 		if err != nil {
 			return nil, fmt.Errorf("failed to read spec file %s: %w", specFile, err)
 		}
+		// TODO: implement context reduction when specFile.Specifically is set
+		// if specFile.Specifically != "" {
+		//     // reduce the context to focus on specific sections
+		// }
 		specContents[i] = specContent
 	}
 
@@ -198,7 +227,11 @@ func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Ru
 	}
 
 	// Create AI user prompt for comparison
-	userPrompt := c.buildUserPrompt(rule, specFiles, specContents, implFiles, implContents)
+	specFilePaths := make([]string, len(specFiles))
+	for i, specFile := range specFiles {
+		specFilePaths[i] = string(specFile.Path)
+	}
+	userPrompt := c.buildUserPrompt(rule, specFilePaths, specContents, implFiles, implContents)
 
 	// Get AI analysis
 	req := &providers.Request{

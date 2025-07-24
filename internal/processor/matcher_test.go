@@ -369,7 +369,10 @@ func TestMatcher_GetCounterparts(t *testing.T) {
 
 	// Test getting spec files for rule
 	specFiles := matcher.GetRuleSpecFiles("test-rule")
-	expectedSpec := []NormalizedPath{"spec1.md", "spec2.md"}
+	expectedSpec := []SpecFile{
+		{Path: "spec1.md", Specifically: ""},
+		{Path: "spec2.md", Specifically: ""},
+	}
 	if !reflect.DeepEqual(specFiles, expectedSpec) {
 		t.Errorf("GetRuleSpecFiles: expected %v, got %v", expectedSpec, specFiles)
 	}
@@ -575,15 +578,15 @@ func TestMatcher_GetCounterpartsNormalization(t *testing.T) {
 		if i >= len(specFiles) {
 			break
 		}
-		if specFiles[i] != expectedPath {
-			t.Errorf("Expected spec file %s, got %s", expectedPath, specFiles[i])
+		if specFiles[i].Path != expectedPath {
+			t.Errorf("Expected spec file %s, got %s", expectedPath, specFiles[i].Path)
 		}
 	}
 
 	// Verify no ./ prefixes in results
-	for _, path := range specFiles {
-		if len(string(path)) >= 2 && string(path)[:2] == "./" {
-			t.Errorf("Found non-normalized path in spec files: %s", path)
+	for _, specFile := range specFiles {
+		if len(string(specFile.Path)) >= 2 && string(specFile.Path)[:2] == "./" {
+			t.Errorf("Found non-normalized path in spec files: %s", specFile.Path)
 		}
 	}
 }

@@ -154,8 +154,8 @@ func CreateAIClient(cfg *config.Config) (Client[IssueResponse], error) {
 		client, err = NewAnthropicClient[IssueResponse](providerConfig)
 	case ProviderGemini:
 		client, err = NewGeminiClient[IssueResponse](providerConfig)
-	case ProviderOllama:
-		client, err = NewOllamaClient[IssueResponse](providerConfig)
+	// case ProviderOllama:
+	// 	client, err = NewOllamaClient[IssueResponse](providerConfig)
 	case ProviderCerebras:
 		client, err = NewCerebrasClient[IssueResponse](providerConfig)
 	default:

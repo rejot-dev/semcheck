@@ -15,7 +15,7 @@ type OllamaClient[R any] struct {
 }
 
 // NewOllamaClient creates a new Ollama client
-func NewOllamaClient[R any](config *Config) (Client[R], error) {
+func NewOllamaClient[R any](config *Config) (*OllamaClient[R], error) {
 	client := ollama.NewClient(
 		ollama.WithBaseURL(config.BaseURL),
 	)
@@ -81,4 +81,16 @@ func (c *OllamaClient[R]) Complete(ctx context.Context, req *Request) (*R, Usage
 	}
 
 	return &result, usage, nil
+}
+
+func (c *OllamaClient[R]) Embed(ctx context.Context, req *Request) ([]float64, error) {
+	resp, err := c.client.Embeddings(ctx, ollama.EmbeddingsRequest{
+		Model:  c.model,
+		Prompt: req.UserPrompt,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("ollama API request failed: %w", err)
+	}
+
+	return resp.Embedding, nil
 }
