@@ -127,3 +127,14 @@ rules:
     specs:
       - path: "https://www.rfc-editor.org/rfc/rfc6762.txt"
     fail_on: "error"
+
+  - name: "case9"
+    description: "RFC 9535 JSON path"
+    enabled: true
+    files:
+      include:
+        - "./evals/cases/case9/parse.go"
+        - "./evals/cases/case9/selector.go"
+    specs:
+      - path: "https://www.rfc-editor.org/rfc/rfc9535.txt"
+    fail_on: "error"
