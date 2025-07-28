@@ -1,3 +1,5 @@
+//go:build ignore
+
 package math
 
 func Add(a int, b int) int {

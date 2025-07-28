@@ -1,3 +1,5 @@
+//go:build ignore
+
 // Inlined from: https://github.com/theory/jsonpath/blob/48554e0502cd108828c99e48ef90f56382bc7e93/parser/parse.go
 
 // Package parser parses RFC 9535 JSONPath queries into parse trees. Most
