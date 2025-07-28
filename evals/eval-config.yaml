@@ -117,3 +117,13 @@ rules:
     specs:
       - path: "https://www.rfc-editor.org/rfc/rfc8259.txt"
     fail_on: "error"
+
+  - name: "case8"
+    description: "RFC 6762 mDNS Client"
+    enabled: true
+    files:
+      include:
+        - "./evals/cases/case8/client.go"
+    specs:
+      - path: "https://www.rfc-editor.org/rfc/rfc6762.txt"
+    fail_on: "error"
