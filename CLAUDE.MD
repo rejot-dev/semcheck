@@ -41,3 +41,16 @@ The `/evals` directory contains the evaluation framework:
 - `cases/`: Individual test cases, each containing:
   - `impl.go`: Implementation file to be checked
   - `spec.md`: Specification file to check against
+
+### Creating New Eval Cases with Intentional Issues
+
+Creating new evaluation test cases always start from a "correct" implementation and issues that violate the specification are introduces systematically, one by one.
+
+1. **Identify Target Issues**: Research the specification and current implementation as defined by the case rule in eval-config.yaml to get context on potential spec violations that can be introduced in the implementation files.
+
+2. **Introduce Code Issues**: Modify the implementation files to introduce the specific violations:
+   - NEVER include comments documenting spec violations in the implementation
+
+3. **Update Configuration Files**:
+   - DO add a description of the violation introduced in the `eval-config.yaml` rule description key.
+   - Update `expectations.csv` to reflect the expected number of errors, warnings, and notices
