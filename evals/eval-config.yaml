@@ -91,3 +91,15 @@ rules:
     specs:
       - path: "./evals/cases/case6/spec.md"
     fail_on: "error"
+
+  - name: "case7"
+    description: "RFC 8259 JSON Parser"
+    enabled: true
+    files:
+      include:
+        - "./evals/cases/case7/parser.go"
+        - "./evals/cases/case7/bytes.go"
+        - "./evals/cases/case7/escape.go"
+    specs:
+      - path: "https://www.rfc-editor.org/rfc/rfc8259.txt"
+    fail_on: "error"
