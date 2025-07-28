@@ -125,7 +125,7 @@ rules:
       include:
         - "./evals/cases/case8/client.go"
     specs:
-      - path: "https://www.rfc-editor.org/rfc/rfc6762.txt"
+      - path: "./evals/cases/case8/spec.txt"
     fail_on: "error"
 
   - name: "case9"

@@ -1,3 +1,5 @@
+//go:build ignore
+
 // Inlined from:
 // https://raw.githubusercontent.com/buger/jsonparser/refs/heads/master/parser.go
 package jsonparser

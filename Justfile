@@ -32,7 +32,7 @@ build-eval:
 
 # Run tests for all packages
 test:
-    go test ./...
+    go test ./cmd/... ./internal/...
 
 # Run tests with verbose output
 test-verbose:
