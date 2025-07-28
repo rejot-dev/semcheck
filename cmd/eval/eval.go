@@ -66,7 +66,7 @@ type EvalResult struct {
 	Duration        time.Duration
 }
 
-func RunEvaluation() error {
+func RunEvaluation(specificCases []string) error {
 	fmt.Println("Running semcheck evaluations...")
 	startTime := time.Now()
 
@@ -85,6 +85,28 @@ func RunEvaluation() error {
 	cfg, err := config.Load(filepath.Join(workingDir, "evals", "eval-config.yaml"))
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
+	}
+
+	// Filter rules if specific cases are requested
+	if len(specificCases) > 0 {
+		filteredRules := make([]config.Rule, 0)
+		caseSet := make(map[string]bool)
+		for _, caseName := range specificCases {
+			caseSet[caseName] = true
+		}
+
+		for _, rule := range cfg.Rules {
+			if caseSet[rule.Name] {
+				filteredRules = append(filteredRules, rule)
+			}
+		}
+
+		if len(filteredRules) == 0 {
+			return fmt.Errorf("no matching cases found for: %v", specificCases)
+		}
+
+		cfg.Rules = filteredRules
+		fmt.Printf("Running specific cases: %v\n", specificCases)
 	}
 
 	// Create AI client
@@ -121,6 +143,19 @@ func RunEvaluation() error {
 		return fmt.Errorf("semantic analysis failed: %w", err)
 	}
 
+	// Filter expectations to match the cases we're running
+	if len(specificCases) > 0 {
+		filteredExpectations := make(map[string]SeverityCount)
+		for _, caseName := range specificCases {
+			if exp, exists := expectations[caseName]; exists {
+				filteredExpectations[caseName] = exp
+			}
+		}
+		if len(filteredExpectations) > 0 {
+			expectations = filteredExpectations
+		}
+	}
+
 	// Compare results to expectations
 	score, err := compareResults(checkResult, expectations)
 	if err != nil {
@@ -130,9 +165,14 @@ func RunEvaluation() error {
 	// Display results
 	displayResults(cfg, score)
 
-	// Record results to CSV
+	// Record results to CSV only if running all cases
 	duration := time.Since(startTime)
-	return recordResults(cfg, score, duration)
+	if len(specificCases) == 0 {
+		return recordResults(cfg, score, duration)
+	} else {
+		fmt.Printf("\n➡️  Results not recorded (subset of cases selected)\n")
+		return nil
+	}
 }
 
 func loadExpectations(filePath string) (map[string]SeverityCount, error) {
