@@ -93,7 +93,21 @@ rules:
     fail_on: "error"
 
   - name: "case7"
-    description: "RFC 8259 JSON Parser"
+    description: |
+      RFC 8259 JSON Parser with multiple RFC violations
+
+      ERROR level issues (4):
+      - parseInt function accepts leading zeros in numbers (violates RFC 8259 section 6)
+        The parser incorrectly strips leading zeros instead of rejecting them as invalid
+        Examples: "01234", "00042", "-007" should be rejected but are accepted
+      - unescapeToUTF8 function accepts invalid escape sequence \v (violates RFC 8259 section 7)
+        The parser accepts \v (vertical tab) escape which is not valid in JSON
+        Only \", \\, \/, \b, \f, \n, \r, \t, and \uXXXX are valid escape sequences
+      - parseFloat function accepts Infinity values (violates RFC 8259 section 6)
+        The parser accepts "Infinity" and "-Infinity" as valid numbers
+        RFC 8259 prohibits representing Infinity or NaN in JSON
+      - getType function accepts uppercase "NULL" literals (violates RFC 8259 section 3)
+        RFC 8259 requires literals to be lowercase: "true", "false", "null"
     enabled: true
     files:
       include:
