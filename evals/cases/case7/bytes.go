@@ -8,6 +8,7 @@
 package jsonparser
 
 import (
+	"math"
 	"strconv"
 )
 
@@ -22,7 +23,14 @@ func equalStr(b *[]byte, s string) bool {
 }
 
 func parseFloat(b *[]byte) (float64, error) {
-	return strconv.ParseFloat(string(*b), 64)
+	s := string(*b)
+	if s == "Infinity" {
+		return math.Inf(1), nil
+	}
+	if s == "-Infinity" {
+		return math.Inf(-1), nil
+	}
+	return strconv.ParseFloat(s, 64)
 }
 
 func bytesToString(b *[]byte) string {
@@ -42,6 +50,10 @@ func parseInt(bytes []byte) (v int64, ok bool, overflow bool) {
 	var neg bool = false
 	if bytes[0] == '-' {
 		neg = true
+		bytes = bytes[1:]
+	}
+
+	for len(bytes) > 1 && bytes[0] == '0' {
 		bytes = bytes[1:]
 	}
 

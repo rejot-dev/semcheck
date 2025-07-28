@@ -89,6 +89,7 @@ var backslashCharEscapeTable = [...]byte{
 	'n':  '\n',
 	'r':  '\r',
 	't':  '\t',
+	'v':  '\v',
 }
 
 // unescapeToUTF8 unescapes the single escape sequence starting at 'in' into 'out' and returns
@@ -102,7 +103,7 @@ func unescapeToUTF8(in, out []byte) (inLen int, outLen int) {
 
 	// https://tools.ietf.org/html/rfc7159#section-7
 	switch e := in[1]; e {
-	case '"', '\\', '/', 'b', 'f', 'n', 'r', 't':
+	case '"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'v':
 		// Valid basic 2-character escapes (use lookup table)
 		out[0] = backslashCharEscapeTable[e]
 		return 2, 1
