@@ -35,6 +35,17 @@ type SemanticChecker struct {
 	workingDir string
 }
 
+var inlineRule = config.Rule{
+	Name:        "inline-ref",
+	Description: "Check for discrepancies near semcheck's inline references",
+	Enabled:     true,
+	Files:       config.FilePattern{}, // Not used after matching phase, empty here
+	Specs:       []config.Spec{},
+	Prompt: `Inline specification references look as follows and are usually used within a comment:
+				  semcheck:[type](args), for example: semcheck:file(api-compliance.md)`,
+	FailOn: "error", // TODO: not configurable
+}
+
 func NewSemanticChecker(cfg *config.Config, client providers.Client[providers.IssueResponse], workingDir string) *SemanticChecker {
 	return &SemanticChecker{
 		config:     cfg,
@@ -167,6 +178,9 @@ func (c *SemanticChecker) mergeUnique(slice1, slice2 []string) []string {
 }
 
 func (c *SemanticChecker) findRule(name string) *config.Rule {
+	if name == inlineRule.Name {
+		return &inlineRule
+	}
 	for i := range c.config.Rules {
 		if c.config.Rules[i].Name == name {
 			return &c.config.Rules[i]

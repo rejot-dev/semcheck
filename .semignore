@@ -1,0 +1,5 @@
+# These files need to be ignored because they contain valid semcheck inline references
+./internal/inline/parser.go
+./internal/inline/parser_test.go
+./internal/processor/rule_builder_test.go
+./specs/inline.md

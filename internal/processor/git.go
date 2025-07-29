@@ -13,9 +13,9 @@ var (
 	cmdStagedFiles = []string{"git", "diff", "--name-only", "--cached", "--diff-filter=ACMR"}
 )
 
-func (m *Matcher) GetStagedFiles() []string {
+func GetStagedFiles(workingDir string) []string {
 	cmd := exec.Command(cmdStagedFiles[0], cmdStagedFiles[1:]...)
-	cmd.Dir = m.workingDir
+	cmd.Dir = workingDir
 
 	output, err := cmd.Output()
 	if err != nil {
@@ -30,15 +30,23 @@ func (m *Matcher) GetStagedFiles() []string {
 	return files
 }
 
-func (m *Matcher) LoadGitignore() error {
-	gitignorePath := filepath.Join(m.workingDir, ".gitignore")
+func LoadGitignore(workingDir string) ([]string, error) {
+	gitignorePath := filepath.Join(workingDir, ".gitignore")
+	return loadIgnoreFile(gitignorePath)
+}
 
-	file, err := os.Open(gitignorePath)
+func LoadSemignore(workingDir string) ([]string, error) {
+	semignorePath := filepath.Join(workingDir, ".semignore")
+	return loadIgnoreFile(semignorePath)
+}
+
+func loadIgnoreFile(path string) ([]string, error) {
+	file, err := os.Open(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil
+			return nil, nil
 		}
-		return fmt.Errorf("failed to open .gitignore: %w", err)
+		return nil, fmt.Errorf("failed to open ignore file: %w", err)
 	}
 	defer func() {
 		if err := file.Close(); err != nil {
@@ -47,13 +55,14 @@ func (m *Matcher) LoadGitignore() error {
 	}()
 
 	scanner := bufio.NewScanner(file)
+	var ignoreRules []string
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-		m.gitignoreRules = append(m.gitignoreRules, line)
+		ignoreRules = append(ignoreRules, line)
 	}
 
-	return scanner.Err()
+	return ignoreRules, scanner.Err()
 }

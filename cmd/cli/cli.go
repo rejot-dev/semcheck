@@ -80,7 +80,7 @@ func Execute() error {
 		}
 	} else if *preCommit {
 		fmt.Println("Running semcheck on staged files...")
-		stagedFiles := matcher.GetStagedFiles()
+		stagedFiles := processor.GetStagedFiles(workingDir)
 		matchedResults, err = matcher.MatchFiles(stagedFiles)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error matching staged files: %v\n", err)

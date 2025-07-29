@@ -49,7 +49,6 @@ temp/
 }
 
 func TestMatcher_matchesPattern(t *testing.T) {
-	matcher := &Matcher{}
 
 	tests := []struct {
 		name     string
@@ -128,9 +127,9 @@ func TestMatcher_matchesPattern(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := matcher.matchesPattern(tt.filePath, tt.pattern)
+			result := MatchesPattern(tt.filePath, tt.pattern)
 			if result != tt.expected {
-				t.Errorf("matchesPattern(%q, %q) = %v, expected %v", tt.filePath, tt.pattern, result, tt.expected)
+				t.Errorf("MatchesPattern(%q, %q) = %v, expected %v", tt.filePath, tt.pattern, result, tt.expected)
 			}
 		})
 	}
@@ -170,9 +169,9 @@ func TestMatcher_matchesPatterns(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := matcher.matchesPatterns(tt.filePath, matcher.gitignoreRules)
+			result := MatchesPatterns(tt.filePath, matcher.gitignoreRules)
 			if result != tt.expected {
-				t.Errorf("matchesPatterns(%q, gitignore) = %v, expected %v", tt.filePath, result, tt.expected)
+				t.Errorf("MatchesPatterns(%q, gitignore) = %v, expected %v", tt.filePath, result, tt.expected)
 			}
 		})
 	}

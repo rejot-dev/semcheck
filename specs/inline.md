@@ -6,7 +6,7 @@ Inline specification references allow developers to link specification files dir
 
 ## Syntax
 
-The inline specification reference uses a language-agnostic comment-based syntax:
+The inline specification reference uses a language-agnostic syntax and can be used within comments of your respective language.
 
 ```
 // semcheck:[command]([args])
@@ -65,12 +65,16 @@ Links to a document on the web.
 
 ### File Discovery
 1. During semcheck initialization, all files in the working directory are scanned
-2. Files in the following directories are ignored by default:
+2. Files matching the following patterns are ignored by default:
    - `**/.git`, `**/.svn`, `**/.hg`, `**/.jj`, `**/CVS` (version control)
    - `**/.DS_Store`, `**/Thumbs.db` (system files)
    - `**/.classpath`, `**/.settings` (IDE files)
-3. Files excluded by `.gitignore` or rule exclusion patterns are also skipped
+3. Files excluded by `.gitignore`, `.semignore`, or rule exclusion patterns are also skipped
 4. Each remaining file is parsed line-by-line for inline specification references
+
+#### Ignore Files
+- **`.gitignore`**: Standard Git ignore patterns are respected
+- **`.semignore`**: semcheck-specific ignore patterns using the same syntax as `.gitignore`
 
 ### Reference Resolution
 1. **File references**: Resolved relative to the working directory of where semcheck is running
@@ -107,7 +111,7 @@ class MyJsonParser:
 ### Syntax Validation
 - Command is one of  'file', 'rfc', 'url'
 - Arguments must be enclosed in parentheses
-- Multiple arguments separated by commas (future extension)
+- Multiple arguments separated by commas, with optional whitespace
 
 ### Path Validation
 - File paths are validated for existence during processing,
