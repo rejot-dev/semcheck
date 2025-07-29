@@ -38,3 +38,16 @@ rules:
       - path: "./cmd/cli/cli.go" # Command line interface
       - path: "./internal/providers/client.go" # Available providers
     fail_on: "error"
+
+  - name: "Inline specification references"
+    enabled: true
+    prompt: |
+      Check only that the format for the inline references is correct, how those references are handled
+      is not yet implemented.
+    files:
+      include:
+        - "./internal/inline/*.go"
+      exclude:
+        - "./internal/inline/*_test.go"
+    specs:
+      - path: "./specs/inline.md"
