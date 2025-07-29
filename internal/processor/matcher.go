@@ -80,10 +80,11 @@ func NewMatcher(cfg *config.Config, workingDir string) (*Matcher, error) {
 		workingDir: workingDir,
 	}
 
-	if err := m.LoadGitignore(); err != nil {
+	gitignoreRules, err := LoadGitignore(m.workingDir)
+	if err != nil {
 		return nil, fmt.Errorf("failed to load gitignore: %w", err)
 	}
-
+	m.gitignoreRules = gitignoreRules
 	if err := m.resolveImplFiles(); err != nil {
 		return nil, fmt.Errorf("failed to resolve implementation files: %w", err)
 	}
@@ -114,11 +115,11 @@ func (m *Matcher) resolveImplFiles() error {
 			}
 
 			// Check if file matches this rule's patterns
-			if m.matchesPatterns(relPath, rule.Files.Exclude) {
+			if MatchesPatterns(relPath, rule.Files.Exclude) {
 				return nil
 			}
 
-			if m.matchesPatterns(relPath, rule.Files.Include) {
+			if MatchesPatterns(relPath, rule.Files.Include) {
 				files = append(files, NormalizePath(relPath))
 			}
 
@@ -196,6 +197,38 @@ func (m *Matcher) GetAllMatcherResults() []MatcherResult {
 		}
 	}
 
+	inlineSeen := make(map[NormalizedPath]bool)
+	inlineSpecs, err := FindAllInlineReferences(m.workingDir)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	for path, specs := range inlineSpecs {
+		if inlineSeen[path] {
+			continue
+		}
+		inlineSeen[path] = true
+		results = append(results, MatcherResult{
+			Path:         path,
+			Type:         FileTypeImpl,
+			RuleName:     "inline-ref",
+			IgnoreReason: IgnoreReasonNone,
+		})
+		for _, spec := range specs {
+			normPath := NormalizePath(spec.Args[0])
+			if inlineSeen[normPath] {
+				continue
+			}
+			inlineSeen[normPath] = true
+			results = append(results, MatcherResult{
+				Path:         normPath,
+				Type:         FileTypeSpec,
+				RuleName:     "inline-ref",
+				IgnoreReason: IgnoreReasonNone,
+			})
+		}
+	}
+
 	return results
 }
 
@@ -220,7 +253,7 @@ func (m *Matcher) matchFile(filePath string) []MatcherResult {
 	normalizedPath := NormalizePath(filePath)
 
 	// Check if file should be ignored by gitignore
-	if m.matchesPatterns(filePath, m.gitignoreRules) {
+	if MatchesPatterns(filePath, m.gitignoreRules) {
 		return []MatcherResult{{
 			Path:         normalizedPath,
 			Type:         FileTypeIgnored,
@@ -238,13 +271,13 @@ func (m *Matcher) matchFile(filePath string) []MatcherResult {
 		}
 
 		// Check if file matches rule's exclude patterns
-		if m.matchesPatterns(filePath, rule.Files.Exclude) {
+		if MatchesPatterns(filePath, rule.Files.Exclude) {
 			ruleExcluded = true
 			continue
 		}
 
 		// Check if file matches rule's include patterns (impl file)
-		if m.matchesPatterns(filePath, rule.Files.Include) {
+		if MatchesPatterns(filePath, rule.Files.Include) {
 			results = append(results, MatcherResult{
 				Path:         normalizedPath,
 				Type:         FileTypeImpl,
@@ -255,7 +288,7 @@ func (m *Matcher) matchFile(filePath string) []MatcherResult {
 
 		// Check if file matches any spec patterns
 		for _, spec := range rule.Specs {
-			if m.matchesPattern(filePath, spec.Path) {
+			if MatchesPattern(filePath, spec.Path) {
 				results = append(results, MatcherResult{
 					Path:         normalizedPath,
 					Type:         FileTypeSpec,
@@ -281,118 +314,6 @@ func (m *Matcher) matchFile(filePath string) []MatcherResult {
 	}
 
 	return results
-}
-
-func (m *Matcher) matchesPatterns(filePath string, patterns []string) bool {
-	for _, pattern := range patterns {
-		if m.matchesPattern(filePath, pattern) {
-			return true
-		}
-	}
-	return false
-}
-
-// TODO: this pattern matching for files probably doesn't need to be hand rolled like here.
-func (m *Matcher) matchesPattern(filePath, pattern string) bool {
-	// Normalize both file path and pattern by removing ./ prefix
-	const relativePrefixLen = len("./")
-	if strings.HasPrefix(pattern, "./") {
-		pattern = pattern[relativePrefixLen:]
-	}
-	if strings.HasPrefix(filePath, "./") {
-		filePath = filePath[relativePrefixLen:]
-	}
-
-	matched, err := filepath.Match(pattern, filePath)
-	if err != nil {
-		return false
-	}
-	if matched {
-		return true
-	}
-
-	// Handle glob patterns with **
-	if strings.Contains(pattern, "**") {
-		return m.matchesGlobPattern(filePath, pattern)
-	}
-
-	// Handle directory-based patterns
-	if strings.Contains(pattern, "/") {
-		return m.matchesPathPattern(filePath, pattern)
-	}
-
-	return false
-}
-
-func (m *Matcher) matchesGlobPattern(filePath, pattern string) bool {
-	// Simple glob matching for ** patterns
-	if strings.HasPrefix(pattern, "**/") {
-		suffix := pattern[3:]
-		// Check if file matches suffix directly (for root level files)
-		matched, _ := filepath.Match(suffix, filePath)
-		return matched ||
-			strings.HasSuffix(filePath, suffix) ||
-			strings.Contains(filePath, "/"+suffix)
-	}
-
-	if strings.HasSuffix(pattern, "/**") {
-		prefix := pattern[:len(pattern)-3]
-		return strings.HasPrefix(filePath, prefix+"/") ||
-			strings.Contains(filePath, "/"+prefix+"/") ||
-			strings.HasPrefix(filePath, prefix)
-	}
-
-	// For patterns with ** in the middle
-	if strings.Contains(pattern, "**/") {
-		parts := strings.Split(pattern, "**/")
-		if len(parts) == 2 {
-			hasPrefix := strings.HasPrefix(filePath, parts[0])
-			// For the suffix, we need to match it as a pattern, not a literal string
-			if hasPrefix {
-				// Extract the part of the filePath after the prefix
-				remaining := filePath[len(parts[0]):]
-				// Check if the remaining part matches the suffix pattern
-				matched, _ := filepath.Match(parts[1], remaining)
-				if matched {
-					return true
-				}
-				// Also check if any subdirectory matches
-				if strings.Contains(remaining, "/") {
-					pathParts := strings.Split(remaining, "/")
-					for i := range pathParts {
-						subPath := strings.Join(pathParts[i:], "/")
-						if matched, _ := filepath.Match(parts[1], subPath); matched {
-							return true
-						}
-					}
-				}
-			}
-			return false
-		}
-	}
-
-	return false
-}
-
-func (m *Matcher) matchesPathPattern(filePath, pattern string) bool {
-	// Handle patterns with directory separators
-	matched, err := filepath.Match(pattern, filePath)
-	if err != nil {
-		return false
-	}
-	if matched {
-		return true
-	}
-
-	// For simple directory patterns like "temp/"
-	if strings.HasSuffix(pattern, "/") {
-		dirName := strings.TrimSuffix(pattern, "/")
-		return strings.HasPrefix(filePath, pattern) ||
-			strings.Contains(filePath, "/"+pattern) ||
-			strings.HasPrefix(filePath, dirName+"/")
-	}
-
-	return false
 }
 
 func DisplayMatchResults(matchedResults []MatcherResult) {

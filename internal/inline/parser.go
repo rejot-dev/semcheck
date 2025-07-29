@@ -22,6 +22,7 @@ var (
 	ErrorInvalidArgs                          = errors.New("invalid arguments for command")
 	ErrorInvalidArgsMissingOpeningParantheses = errors.New("missing opening paranthesis for argument list")
 	ErrorInvalidArgsMissingClosingParantheses = errors.New("missing closing paranthesis for argument list")
+	ErrorInvalidArgsMissingArguments          = errors.New("must provide at least one argument")
 )
 
 type ParseError struct {
@@ -80,7 +81,14 @@ func consumeCommandArgs(argString string) ([]string, error) {
 	if endIndex == -1 {
 		return nil, ErrorInvalidArgsMissingClosingParantheses
 	}
-	args := strings.Split(argString[1:endIndex], ",")
+	argString = argString[1:endIndex]
+
+	if argString == "" {
+		return nil, ErrorInvalidArgsMissingArguments
+	}
+
+	args := strings.Split(argString, ",")
+
 	for i, arg := range args {
 		args[i] = strings.TrimSpace(arg)
 	}
@@ -105,9 +113,10 @@ func consumeCommandName(commandArgs string) (InlineCommand, string) {
 	return Invalid, ""
 }
 
-func FindReferences(document string) ([]InlineReference, *ParseError) {
+func FindReferences(document string) ([]InlineReference, []ParseError) {
 	lines := strings.Split(document, "\n")
 	refs := make([]InlineReference, 0)
+	var parseErrors []ParseError
 
 	for lineNumber, line := range lines {
 		index := strings.Index(line, semcheckPrefix)
@@ -117,23 +126,25 @@ func FindReferences(document string) ([]InlineReference, *ParseError) {
 
 		command, argString := consumeCommandName(line[index+len(semcheckPrefix):])
 		if command == Invalid {
-			return nil, &ParseError{
+			parseErrors = append(parseErrors, ParseError{
 				Err:          ErrorInvalidCommand,
 				LineNumber:   lineNumber + 1,
 				ColumnNumber: index + len(semcheckPrefix) + 1,
 				Line:         line,
-			}
+			})
+			continue
 		}
 
 		args, err := consumeCommandArgs(argString)
 
 		if err != nil {
-			return nil, &ParseError{
+			parseErrors = append(parseErrors, ParseError{
 				Err:          err,
 				LineNumber:   lineNumber + 1,
 				ColumnNumber: index + len(semcheckPrefix) + len(command) + 1,
 				Line:         line,
-			}
+			})
+			continue
 		}
 
 		refs = append(refs, InlineReference{
@@ -142,5 +153,5 @@ func FindReferences(document string) ([]InlineReference, *ParseError) {
 			LineNumber: lineNumber + 1,
 		})
 	}
-	return refs, nil
+	return refs, parseErrors
 }

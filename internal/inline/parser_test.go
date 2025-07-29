@@ -33,10 +33,10 @@ func TestFindReferences(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		refs, err := FindReferences(tc.input)
+		refs, parseErrors := FindReferences(tc.input)
 
-		if err != nil {
-			t.Errorf("Unexpected error: %v", err)
+		if len(parseErrors) > 0 {
+			t.Errorf("Unexpected errors: %v", parseErrors)
 		}
 
 		if len(refs) != len(tc.expected) {
@@ -97,16 +97,22 @@ func TestErrorsFindReferences(t *testing.T) {
 			input:    "// semcheck\n",
 			expected: ParseError{Err: ErrorInvalidCommand, LineNumber: 1},
 		},
+		{
+			input:    "// semcheck:file()",
+			expected: ParseError{Err: ErrorInvalidArgsMissingArguments, LineNumber: 1},
+		},
 	}
 
 	for _, tc := range cases {
-		_, err := FindReferences(tc.input)
+		_, parseErrors := FindReferences(tc.input)
 
-		if err == nil {
+		if len(parseErrors) == 0 {
 			t.Errorf("Expected error, got nothing")
 			continue
 		}
 
+		// Check first error matches expected
+		err := parseErrors[0]
 		if err.Err != tc.expected.Err {
 			t.Errorf("Expected Error  %s, got %s", tc.expected.Err, err.Err)
 		}
