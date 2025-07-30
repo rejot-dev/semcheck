@@ -1,6 +1,6 @@
 # Semcheck
 
-Semcheck is a tool that uses large language models to verify that your implementation matches your specification. Define semantic rules to describe how your code should align with your specification, then let Semcheck handle the comparison. Use it as a final check before committing or merging code.
+Semcheck is a tool that uses large language models to verify that your implementation matches your specification. Link specifications directly to your code using inline comments, or define semantic rules to describe how your code should align with your specification. Use it as a final check before committing or merging code.
 
 ## Features
 
@@ -37,31 +37,60 @@ semcheck -init
 
 This command creates a `semcheck.yaml` file. Edit this file to suit your project.
 
-Example configuration:
+## Link Specification and Implementation
+
+Semcheck supports two different modes to link specification files to implementation, both modes can be used in combination with each other.
+
+### 1. Inline spec references
+Link specifications directly in your code using special comment syntax.
+
+```python
+# semcheck:rfc(8259)
+class JsonParser:
+    def parse(self, data: bytes):
+        # ... implementation
+```
+A few commands are available for the inline references:
+```python
+semcheck:file(./local/spec.md)  # Link repo local files, relative to semcheck working directory
+semcheck:url(https://example.com/docs/api)  # Link to remote documents
+semcheck:rfc(8259)  # Shorthand for linking to RFC documents on rfc-editor.org
+```
+
+
+### 2. Rules
+
+
+Define rules in your semcheck configuration that link specification files to implementation files. Semcheck runs the LLM once per rule, and in pre-commit mode, only for rules with modified files. For best results, try to keep the number of files per rule small, LLMs perform best with focused context.
+
+Example rules:
 
 ```yaml
-version: "1.0"
-provider: openai  # Options: openai, anthropic, gemini, ollama, cerebras
-model: gpt-4.1
-api_key: ${OPENAI_API_KEY}
-timeout: 30
-fail_on_issues: true
-
 rules:
-  - name: function-spec-compliance
-    description: Check if functions match their specifications
+  - name: "config-spec"
     enabled: true
     files:
       include:
-        - "**/*.go"
+        - "./internal/config/*.go"
       exclude:
         - "*_test.go"
     specs:
-      - path: "docs/api.md"
-      # Remote specs are supported
-      - path: "https://example.com/spec.md"
-    fail_on: "error"
+      - path: "config-spec.md"
+
+  - name: "geojson"
+    description: "Ensure GeoJSON implementation matches RFC 7946"
+    enabled: true
+    files:
+      include:
+        - "packages/geojson/src/*.ts"
+      exclude:
+        - "*.test.ts"
+    specs:
+      - path: "https://www.rfc-editor.org/rfc/rfc7946.txt"
+    prompt: |
+      Our GeoJSON implementation is incomplete; only check implemented features.
 ```
+
 
 ## Usage
 
@@ -94,37 +123,6 @@ semcheck --config my-config.yaml
 semcheck -help
 ```
 
-### Defining Rules
-
-Define rules that link specification files to implementation files. Semcheck runs the LLM once per rule, and in pre-commit mode, only for rules with modified files. For best results, try to keep the number of files per rule small, LLMs perform best with focused context.
-
-Example rules:
-
-```yaml
-rules:
-  - name: "config-spec"
-    enabled: true
-    files:
-      include:
-        - "./internal/config/*.go"
-      exclude:
-        - "*_test.go"
-    specs:
-      - path: "config-spec.md"
-
-  - name: "geojson"
-    description: "Ensure GeoJSON implementation matches RFC 7946"
-    enabled: true
-    files:
-      include:
-        - "packages/geojson/src/*.ts"
-      exclude:
-        - "*.test.ts"
-    specs:
-      - path: "https://www.rfc-editor.org/rfc/rfc7946.txt"
-    prompt: |
-      Our GeoJSON implementation is incomplete; only check implemented features.
-```
 
 ### Development
 
@@ -149,6 +147,10 @@ Semcheck uses itself to check that it has correctly implemented it's [own specif
 ```bash
 semcheck
 ```
+
+## Ignoring files
+
+Semcheck uses the top-level `.gitignore` file to determine which files to skip during processing, if you're not using git you can also create a `.semignore` that follows the same semantics as a gitignore file.
 
 ## Ideal Outcome
 

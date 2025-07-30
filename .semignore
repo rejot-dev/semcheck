@@ -3,3 +3,7 @@
 ./internal/inline/parser_test.go
 ./internal/processor/rule_builder_test.go
 ./specs/inline.md
+./TODO.md
+./site/src/components/quickstart.astro
+./README.md
+./CHANGELOG.md
