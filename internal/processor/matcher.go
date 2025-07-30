@@ -316,7 +316,7 @@ func (m *Matcher) matchFile(filePath string) []MatcherResult {
 			IgnoreReason: IgnoreReasonNone,
 		})
 		results = append(results, MatcherResult{
-			Path:         NormalizePath(ref.Args[0]), // TODO(doesn't work for rfc's just yet)
+			Path:         NormalizePath(ref.Args[0]),
 			Type:         FileTypeSpec,
 			RuleName:     "inline-ref",
 			IgnoreReason: IgnoreReasonNone,

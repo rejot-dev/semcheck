@@ -12,6 +12,19 @@ func TestFindAllInlineReferences(t *testing.T) {
 	// Create a temporary directory for testing
 	tmpDir := t.TempDir()
 
+	// Create the specs directory and spec file
+	specsDir := filepath.Join(tmpDir, "specs")
+	err := os.MkdirAll(specsDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create specs directory: %v", err)
+	}
+
+	specFile := filepath.Join(specsDir, "api.md")
+	err = os.WriteFile(specFile, []byte("# API Spec\nThis is a test spec."), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create spec file: %v", err)
+	}
+
 	// Create test files with inline references
 	testFile1 := filepath.Join(tmpDir, "test1.go")
 	testContent1 := `package main
@@ -23,7 +36,7 @@ func main() {
 	println("hello")
 }`
 
-	err := os.WriteFile(testFile1, []byte(testContent1), 0644)
+	err = os.WriteFile(testFile1, []byte(testContent1), 0644)
 	if err != nil {
 		t.Fatalf("Failed to create test file: %v", err)
 	}
@@ -38,6 +51,22 @@ func helper() {
 	err = os.WriteFile(testFile2, []byte(testContent2), 0644)
 	if err != nil {
 		t.Fatalf("Failed to create test file: %v", err)
+	}
+
+	// Change to the test directory so relative paths work
+	originalDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Failed to get working directory: %v", err)
+	}
+	defer func() {
+		if err := os.Chdir(originalDir); err != nil {
+			t.Errorf("Failed to restore working directory: %v", err)
+		}
+	}()
+
+	err = os.Chdir(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to change to test directory: %v", err)
 	}
 
 	// Call FindAllInlineReferences
@@ -61,8 +90,8 @@ func helper() {
 		t.Errorf("Expected file reference to ./specs/api.md, got %v", test1Refs[0])
 	}
 
-	if test1Refs[1].Command != inline.RFC || len(test1Refs[1].Args) == 0 || test1Refs[1].Args[0] != "1234" {
-		t.Errorf("Expected RFC reference to 1234, got %v", test1Refs[1])
+	if test1Refs[1].Command != inline.RFC || len(test1Refs[1].Args) == 0 || test1Refs[1].Args[0] != "https://www.rfc-editor.org/rfc/rfc1234.txt" {
+		t.Errorf("Expected RFC reference to https://www.rfc-editor.org/rfc/rfc1234.txt, got %v", test1Refs[1])
 	}
 
 	// Check test2.go references

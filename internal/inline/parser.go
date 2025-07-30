@@ -3,6 +3,9 @@ package inline
 import (
 	"errors"
 	"fmt"
+	"net/url"
+	"os"
+	"strconv"
 	"strings"
 )
 
@@ -20,23 +23,27 @@ const semcheckPrefix = "semcheck"
 var (
 	ErrorInvalidCommand                       = errors.New("invalid command")
 	ErrorInvalidArgs                          = errors.New("invalid arguments for command")
+	ErrorInvalidArgsNumber                    = errors.New("invalid number of arguments for command")
 	ErrorInvalidArgsMissingOpeningParantheses = errors.New("missing opening paranthesis for argument list")
 	ErrorInvalidArgsMissingClosingParantheses = errors.New("missing closing paranthesis for argument list")
 	ErrorInvalidArgsMissingArguments          = errors.New("must provide at least one argument")
+	ErrorInvalidArgsMissingSpecFile           = errors.New("file path not found")
+	ErrorInvalidArgsRFCNumber                 = errors.New("RFC number must be a positive integer")
+	ErrorInvalidArgsURL                       = errors.New("invalid URL format")
 )
 
-type ParseError struct {
+type InlineError struct {
 	Err          error
 	LineNumber   int
 	ColumnNumber int
 	Line         string
 }
 
-func (e ParseError) Error() string {
+func (e InlineError) Error() string {
 	return e.Err.Error()
 }
 
-func (e ParseError) Format() string {
+func (e InlineError) Format() string {
 	// Create the caret pointer line
 	caret := strings.Repeat(" ", e.ColumnNumber-1) + "^"
 
@@ -50,18 +57,6 @@ type InlineReference struct {
 	Args []string
 	// Line number where the reference was found
 	LineNumber int
-}
-
-type FileCommandArgs struct {
-	SpecFile string
-}
-
-type UrlCommandArgs struct {
-	Url string
-}
-
-type RfcCommandArgs struct {
-	Rfc int
 }
 
 // argString is a parenthesized enclosed string containing a number of arguments, potentially with additional
@@ -113,10 +108,10 @@ func consumeCommandName(commandArgs string) (InlineCommand, string) {
 	return Invalid, ""
 }
 
-func FindReferences(document string) ([]InlineReference, []ParseError) {
+func FindReferences(document string) ([]InlineReference, []InlineError) {
 	lines := strings.Split(document, "\n")
 	refs := make([]InlineReference, 0)
-	var parseErrors []ParseError
+	var inlineErrors []InlineError
 
 	for lineNumber, line := range lines {
 		index := strings.Index(line, semcheckPrefix)
@@ -126,7 +121,7 @@ func FindReferences(document string) ([]InlineReference, []ParseError) {
 
 		command, argString := consumeCommandName(line[index+len(semcheckPrefix):])
 		if command == Invalid {
-			parseErrors = append(parseErrors, ParseError{
+			inlineErrors = append(inlineErrors, InlineError{
 				Err:          ErrorInvalidCommand,
 				LineNumber:   lineNumber + 1,
 				ColumnNumber: index + len(semcheckPrefix) + 1,
@@ -137,8 +132,12 @@ func FindReferences(document string) ([]InlineReference, []ParseError) {
 
 		args, err := consumeCommandArgs(argString)
 
+		if err == nil {
+			args, err = validateAndTransformArgs(command, args)
+		}
+
 		if err != nil {
-			parseErrors = append(parseErrors, ParseError{
+			inlineErrors = append(inlineErrors, InlineError{
 				Err:          err,
 				LineNumber:   lineNumber + 1,
 				ColumnNumber: index + len(semcheckPrefix) + len(command) + 1,
@@ -153,5 +152,54 @@ func FindReferences(document string) ([]InlineReference, []ParseError) {
 			LineNumber: lineNumber + 1,
 		})
 	}
-	return refs, parseErrors
+	return refs, inlineErrors
+}
+
+func validateAndTransformArgs(command InlineCommand, args []string) ([]string, error) {
+	switch command {
+	case File:
+		if len(args) != 1 {
+			return args, ErrorInvalidArgsNumber
+		}
+
+		// TODO: Consider moving this check outside of the parser
+		if _, err := os.Stat(args[0]); os.IsNotExist(err) {
+			return args, ErrorInvalidArgsMissingSpecFile
+		}
+
+		return args, nil
+	case RFC:
+		if len(args) != 1 {
+			return args, ErrorInvalidArgsNumber
+		}
+
+		// Validate that the argument is a positive integer
+		rfcNumber, err := strconv.Atoi(args[0])
+		if err != nil || rfcNumber <= 0 {
+			return args, ErrorInvalidArgsRFCNumber
+		}
+
+		args = []string{fmt.Sprintf("https://www.rfc-editor.org/rfc/rfc%d.txt", rfcNumber)}
+
+		return args, nil
+	case URL:
+		if len(args) != 1 {
+			return args, ErrorInvalidArgsNumber
+		}
+
+		// Validate that the argument is a valid URL
+		parsedURL, err := url.Parse(args[0])
+		if err != nil || parsedURL.Scheme == "" || parsedURL.Host == "" {
+			return args, ErrorInvalidArgsURL
+		}
+
+		// Only allow HTTP/HTTPS URLs
+		if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+			return args, ErrorInvalidArgsURL
+		}
+
+		return args, nil
+	default:
+		return args, nil
+	}
 }
