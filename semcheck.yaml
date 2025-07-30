@@ -37,6 +37,7 @@ rules:
       - path: "./Justfile" # Justfile instructions
       - path: "./cmd/cli/cli.go" # Command line interface
       - path: "./internal/providers/client.go" # Available providers
+      - path: "./internal/inline/parser.go"
     fail_on: "error"
 
   - name: "Inline specification references"
