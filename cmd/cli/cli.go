@@ -72,23 +72,25 @@ func Execute() error {
 
 	files := flag.Args()
 	var matchedResults []processor.MatcherResult
+	var selectedFiles []string = nil
+
 	if len(files) > 0 && !*preCommit {
-		matchedResults, err = matcher.MatchFiles(files)
+		selectedFiles = files
+	} else if *preCommit {
+		fmt.Println("Running semcheck on staged files...")
+		selectedFiles = processor.GetStagedFiles(workingDir)
+	}
+
+	if selectedFiles == nil {
+		fmt.Println("No file arguments passed, checking all implementation files against all specifications.")
+		matchedResults = matcher.GetAllMatcherResults()
+	} else {
+		matchedResults, err = matcher.MatchFiles(selectedFiles)
+
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error matching files: %v\n", err)
 			return err
 		}
-	} else if *preCommit {
-		fmt.Println("Running semcheck on staged files...")
-		stagedFiles := processor.GetStagedFiles(workingDir)
-		matchedResults, err = matcher.MatchFiles(stagedFiles)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error matching staged files: %v\n", err)
-			return err
-		}
-	} else {
-		fmt.Println("No file arguments passed, checking all implementation files against all specifications.")
-		matchedResults = matcher.GetAllMatcherResults()
 	}
 
 	processor.DisplayMatchResults(matchedResults)
