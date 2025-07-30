@@ -77,8 +77,9 @@ temperature: 0.1
 # Default: true
 fail_on_issues: true
 
-# Checking rules configuration (REQUIRED)
+# Checking rules configuration (OPTIONAL)
 # Array of rules that define what to check and how
+# If no rules are provided, semcheck will only process inline specification references
 rules:
   - # Rule identifier (REQUIRED)
     # Used for logging, reporting, and selective rule execution
@@ -210,7 +211,7 @@ When you provide a list of files to semcheck, semcheck will automatically match 
 - `provider`: Must be "openai", "anthropic", "gemini", or "ollama"
 - `model`: Must be a valid model name for the selected provider
 - `api_key`: Required for cloud providers (openai, anthropic, gemini), optional for local providers (ollama)
-- `rules`: Must contain at least one rule object
+- `rules`: Optional array of rule objects. If empty or omitted, semcheck will only process inline specification references
 - `rules[].name`: Must be unique within the configuration
 - `rules[].files.include`: Must contain at least one pattern
 - `rules[].specs`: Must contain at least one specification

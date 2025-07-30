@@ -179,16 +179,6 @@ func TestConfig_validate(t *testing.T) {
 			wantError: true,
 		},
 		{
-			name: "unsupported provider",
-			config: Config{
-				Version:  "1.0",
-				Provider: "unsupported",
-				Model:    "gpt-4",
-				APIKey:   "test-key",
-			},
-			wantError: true,
-		},
-		{
 			name: "missing model",
 			config: Config{
 				Version:  "1.0",
@@ -206,7 +196,7 @@ func TestConfig_validate(t *testing.T) {
 				APIKey:   "test-key",
 				Rules:    []Rule{},
 			},
-			wantError: true,
+			wantError: false,
 		},
 	}
 

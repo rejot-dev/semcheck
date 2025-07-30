@@ -94,10 +94,6 @@ func (c *Config) validate() error {
 		return fmt.Errorf("api_key is required for provider %s", c.Provider)
 	}
 
-	if len(c.Rules) == 0 {
-		return fmt.Errorf("at least one rule is required")
-	}
-
 	ruleNames := make(map[string]bool)
 	for i, rule := range c.Rules {
 		if rule.Name == "" {
