@@ -19,13 +19,41 @@ import runCode from "../code-samples/run.sh?raw";
     </div>
 
     <div class="space-y-4">
-      <h3 class="text-lg font-medium text-gray-900">Define Rules</h3>
+      <h3 class="text-lg font-medium text-gray-900">Link Specs to Implementation</h3>
       <p class="text-gray-600">
-        Rules tie specification files to implementation files. Semcheck invokes the LLM once per
-        rule, and in pre-commit mode, only for rules with modified files. For best results, try to
-        keep the number of files per rule small, LLMs perform best with focused context.
+        Semcheck supports two ways to link specifications to implementation files. Both can be used
+        together.
       </p>
-      <Code code={configCode} lang="yaml" />
+
+      <div class="space-y-3">
+        <h4 class="text-md font-medium text-gray-800">1. Inline spec references (recommended)</h4>
+        <p class="text-sm text-gray-600">
+          Link specifications directly in your code using special comment syntax:
+        </p>
+        <Code
+          code=`# semcheck:rfc(8259)
+class JsonParser:
+    def parse(self, data: bytes):
+        # ... implementation`
+          lang="python"
+        />
+        <p class="text-sm text-gray-600">Available commands:</p>
+        <Code
+          code=`semcheck:file(./local/spec.md)  # Link repo local files
+semcheck:url(https://example.com/docs/api)  # Link to remote documents
+semcheck:rfc(8259)  # Shorthand for linking to RFC documents on rfc-editor.org`
+          lang="python"
+        />
+      </div>
+
+      <div class="space-y-3">
+        <h4 class="text-md font-medium text-gray-800">2. Rules (advanced)</h4>
+        <p class="text-sm text-gray-600">
+          Define rules in your <code>semcheck.yaml</code> configuration that tie specification files
+          to implementation files:
+        </p>
+        <Code code={configCode} lang="yaml" />
+      </div>
     </div>
 
     <div class="space-y-4">

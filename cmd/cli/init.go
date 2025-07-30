@@ -28,9 +28,11 @@ base_url: "http://localhost:11434"
 {{- end }}
 
 # Rules define which files to check and their specifications
+# You can also link specification files directly from source code using comments:
+# 	// semcheck:file(./path/to/spec.md)
 rules:
   - name: "example-rule"
-    description: "Example rule - edit this to match your project"
+    description: "Example rule - edit or remove this to match your project"
     enabled: true
     files:
       include:

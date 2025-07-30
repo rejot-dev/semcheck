@@ -1,5 +1,8 @@
 # TODOs
 
+Issues
+- `semcheck spec/inline.md` currently doesn't check for inline spec references that mention this file, only rules.
+
 Experiments
 - Consider the developer workflow, requirements -> design -> implementation plan -> execute -> verify
   - implementation plan and execution are left to the dev/coding agent
@@ -25,6 +28,7 @@ Maturity
 
 Cool
 - Auto derive rules from existing specification files and implementation
+- You can provide semantic descriptions of subsections for specs: e.g. semcheck:file(spec.md, Section 14.3)
 - Implementation or specification 'quotes' to be displayed along issues
   - or more generally, improve UX when trying to backtrack an issue to it's origin
 - Have a "thinking" preview in the terminal saying things like "considering function arguments in config validation..."
