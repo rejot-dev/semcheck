@@ -41,9 +41,6 @@ rules:
 
   - name: "Inline specification references"
     enabled: true
-    prompt: |
-      Check only that the format for the inline references is correct, how those references are handled
-      is not yet implemented.
     files:
       include:
         - "./internal/inline/*.go"

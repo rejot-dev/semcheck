@@ -43,8 +43,8 @@ temp/
 	}
 
 	expectedRules := []string{"*.log", "temp/", ".DS_Store"}
-	if !reflect.DeepEqual(matcher.gitignoreRules, expectedRules) {
-		t.Errorf("Expected gitignore rules %v, got %v", expectedRules, matcher.gitignoreRules)
+	if !reflect.DeepEqual(matcher.ignoreRules, expectedRules) {
+		t.Errorf("Expected gitignore rules %v, got %v", expectedRules, matcher.ignoreRules)
 	}
 }
 
@@ -137,7 +137,7 @@ func TestMatcher_matchesPattern(t *testing.T) {
 
 func TestMatcher_matchesPatterns(t *testing.T) {
 	matcher := &Matcher{
-		gitignoreRules: []string{"*.log", "temp/", ".DS_Store"},
+		ignoreRules: []string{"*.log", "temp/", ".DS_Store"},
 	}
 
 	tests := []struct {
@@ -169,7 +169,7 @@ func TestMatcher_matchesPatterns(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := MatchesPatterns(tt.filePath, matcher.gitignoreRules)
+			result := MatchesPatterns(tt.filePath, matcher.ignoreRules)
 			if result != tt.expected {
 				t.Errorf("MatchesPatterns(%q, gitignore) = %v, expected %v", tt.filePath, result, tt.expected)
 			}
@@ -197,8 +197,8 @@ func TestMatcher_matchFile(t *testing.T) {
 	}
 
 	matcher := &Matcher{
-		config:         cfg,
-		gitignoreRules: []string{"*.log"},
+		config:      cfg,
+		ignoreRules: []string{"*.log"},
 	}
 
 	tests := []struct {

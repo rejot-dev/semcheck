@@ -21,15 +21,15 @@ type IgnoreReason int
 
 const (
 	IgnoreReasonNone IgnoreReason = iota
-	IgnoreReasonGitignore
+	IgnoreReasonIgnore
 	IgnoreReasonExcludedByRule
 	IgnoreReasonNoRuleMatch
 )
 
 func (r IgnoreReason) String() string {
 	switch r {
-	case IgnoreReasonGitignore:
-		return "gitignore"
+	case IgnoreReasonIgnore:
+		return "ignore"
 	case IgnoreReasonExcludedByRule:
 		return "excluded by rule"
 	case IgnoreReasonNoRuleMatch:
@@ -67,10 +67,10 @@ func NormalizePath(path string) NormalizedPath {
 type RuleFileMap map[string][]NormalizedPath
 
 type Matcher struct {
-	config         *config.Config
-	gitignoreRules []string
-	implFiles      RuleFileMap
-	workingDir     string
+	config      *config.Config
+	ignoreRules []string
+	implFiles   RuleFileMap
+	workingDir  string
 }
 
 func NewMatcher(cfg *config.Config, workingDir string) (*Matcher, error) {
@@ -84,7 +84,11 @@ func NewMatcher(cfg *config.Config, workingDir string) (*Matcher, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to load gitignore: %w", err)
 	}
-	m.gitignoreRules = gitignoreRules
+	semignoreRules, err := LoadSemignore(m.workingDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load semignore: %w", err)
+	}
+	m.ignoreRules = append(gitignoreRules, semignoreRules...)
 	if err := m.resolveImplFiles(); err != nil {
 		return nil, fmt.Errorf("failed to resolve implementation files: %w", err)
 	}
@@ -165,6 +169,7 @@ func (m *Matcher) findRule(name string) *config.Rule {
 	return nil
 }
 
+// TODO: GetAllMatcherResults doesn't use MatchFile function, therefore there is some code duplication here
 // Returns all implementation and specification files from all rules
 func (m *Matcher) GetAllMatcherResults() []MatcherResult {
 	var results []MatcherResult
@@ -252,12 +257,12 @@ func (m *Matcher) MatchFiles(inputFiles []string) ([]MatcherResult, error) {
 func (m *Matcher) matchFile(filePath string) []MatcherResult {
 	normalizedPath := NormalizePath(filePath)
 
-	// Check if file should be ignored by gitignore
-	if MatchesPatterns(filePath, m.gitignoreRules) {
+	// Check if file should be ignored
+	if MatchesPatterns(filePath, m.ignoreRules) {
 		return []MatcherResult{{
 			Path:         normalizedPath,
 			Type:         FileTypeIgnored,
-			IgnoreReason: IgnoreReasonGitignore,
+			IgnoreReason: IgnoreReasonIgnore,
 		}}
 	}
 
@@ -298,6 +303,24 @@ func (m *Matcher) matchFile(filePath string) []MatcherResult {
 				break // Only one spec match per rule is needed
 			}
 		}
+	}
+
+	// Check for inline spec references
+	refs := FindInlineReferencesInFile(filePath)
+
+	for _, ref := range refs {
+		results = append(results, MatcherResult{
+			Path:         normalizedPath,
+			Type:         FileTypeImpl,
+			RuleName:     "inline-ref",
+			IgnoreReason: IgnoreReasonNone,
+		})
+		results = append(results, MatcherResult{
+			Path:         NormalizePath(ref.Args[0]), // TODO(doesn't work for rfc's just yet)
+			Type:         FileTypeSpec,
+			RuleName:     "inline-ref",
+			IgnoreReason: IgnoreReasonNone,
+		})
 	}
 
 	// If no matches found, return ignored result

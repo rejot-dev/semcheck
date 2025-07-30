@@ -56,22 +56,7 @@ func FindAllInlineReferences(workingDir string) (map[NormalizedPath][]inline.Inl
 			return nil // Skip this file
 		}
 
-		// Read file content
-		content, err := os.ReadFile(path)
-		if err != nil {
-			// Skip files that cannot be read (e.g., binary files, permission issues)
-			return nil
-		}
-
-		// Parse file for inline references
-		refs, parseErrors := inline.FindReferences(string(content))
-
-		for _, parseError := range parseErrors {
-			// Log warnings for Argument errors
-			if parseError.Err != inline.ErrorInvalidCommand {
-				fmt.Fprintf(os.Stderr, "Warning: failed to parse inline reference in %s: %s\n", relPath, parseError.Format())
-			}
-		}
+		refs := FindInlineReferencesInFile(path)
 
 		// Store references grouped by file path
 		if len(refs) > 0 {
@@ -87,4 +72,24 @@ func FindAllInlineReferences(workingDir string) (map[NormalizedPath][]inline.Inl
 	}
 
 	return allReferences, nil
+}
+
+func FindInlineReferencesInFile(path string) []inline.InlineReference {
+	content, err := os.ReadFile(path)
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not read file, won't check for inline spec references: %s\n", path)
+		return nil
+	}
+
+	// Parse file for inline references
+	refs, parseErrors := inline.FindReferences(string(content))
+
+	for _, parseError := range parseErrors {
+		// Log warnings for Argument errors
+		if parseError.Err != inline.ErrorInvalidCommand {
+			fmt.Fprintf(os.Stderr, "Warning: failed to parse inline reference in %s: %s\n", path, parseError.Format())
+		}
+	}
+	return refs
 }
