@@ -11,12 +11,12 @@ func TestFindReferences(t *testing.T) {
 		expected []InlineReference
 	}{
 		{
-			input:    "// semcheck:file(./some-file.md)\n",
-			expected: []InlineReference{{Command: File, Args: []string{"./some-file.md"}, LineNumber: 1}},
+			input:    "// semcheck:file(/tmp/test_spec.md)\n",
+			expected: []InlineReference{{Command: File, Args: []string{"/tmp/test_spec.md"}, LineNumber: 1}},
 		},
 		{
 			input:    "semcheck:rfc(123) some other text\n",
-			expected: []InlineReference{{Command: RFC, Args: []string{"123"}, LineNumber: 1}},
+			expected: []InlineReference{{Command: RFC, Args: []string{"https://www.rfc-editor.org/rfc/rfc123.txt"}, LineNumber: 1}},
 		},
 		{
 			input:    "semcheck:url(https://example.com/) some other text\n",
@@ -25,10 +25,6 @@ func TestFindReferences(t *testing.T) {
 		{
 			input:    "Multi Line \n  // semcheck:url(https://example.com/) \n some other text\n",
 			expected: []InlineReference{{Command: URL, Args: []string{"https://example.com/"}, LineNumber: 2}},
-		},
-		{
-			input:    "semcheck:rfc(123, another)",
-			expected: []InlineReference{{Command: RFC, Args: []string{"123", "another"}, LineNumber: 1}},
 		},
 	}
 
@@ -67,39 +63,67 @@ func TestErrorsFindReferences(t *testing.T) {
 
 	cases := []struct {
 		input    string
-		expected ParseError
+		expected InlineError
 	}{
 		{
 			input:    "// semcheck:invalidcommand(./some-file.md)\n",
-			expected: ParseError{Err: ErrorInvalidCommand, LineNumber: 1},
+			expected: InlineError{Err: ErrorInvalidCommand, LineNumber: 1},
 		},
 		{
 			input:    "Multiple Lines \n// semcheck:invalidcommand(./some-file.md)\n",
-			expected: ParseError{Err: ErrorInvalidCommand, LineNumber: 2},
+			expected: InlineError{Err: ErrorInvalidCommand, LineNumber: 2},
 		},
 		{
 			input:    "// semcheck:file(args broken\n",
-			expected: ParseError{Err: ErrorInvalidArgsMissingClosingParantheses, LineNumber: 1},
+			expected: InlineError{Err: ErrorInvalidArgsMissingClosingParantheses, LineNumber: 1},
 		},
 		{
 			input:    "// semcheck(args broken\n",
-			expected: ParseError{Err: ErrorInvalidCommand, LineNumber: 1},
+			expected: InlineError{Err: ErrorInvalidCommand, LineNumber: 1},
 		},
 		{
 			input:    "// semcheck:file\n",
-			expected: ParseError{Err: ErrorInvalidArgsMissingOpeningParantheses, LineNumber: 1},
+			expected: InlineError{Err: ErrorInvalidArgsMissingOpeningParantheses, LineNumber: 1},
 		},
 		{
 			input:    "// semcheck:rfc 123\n",
-			expected: ParseError{Err: ErrorInvalidArgsMissingOpeningParantheses, LineNumber: 1},
+			expected: InlineError{Err: ErrorInvalidArgsMissingOpeningParantheses, LineNumber: 1},
 		},
 		{
 			input:    "// semcheck\n",
-			expected: ParseError{Err: ErrorInvalidCommand, LineNumber: 1},
+			expected: InlineError{Err: ErrorInvalidCommand, LineNumber: 1},
 		},
 		{
 			input:    "// semcheck:file()",
-			expected: ParseError{Err: ErrorInvalidArgsMissingArguments, LineNumber: 1},
+			expected: InlineError{Err: ErrorInvalidArgsMissingArguments, LineNumber: 1},
+		},
+		{
+			input:    "// semcheck:rfc()",
+			expected: InlineError{Err: ErrorInvalidArgsMissingArguments, LineNumber: 1},
+		},
+		{
+			input:    "// semcheck:rfc(not_a_number)",
+			expected: InlineError{Err: ErrorInvalidArgsRFCNumber, LineNumber: 1},
+		},
+		{
+			input:    "// semcheck:rfc(-1)",
+			expected: InlineError{Err: ErrorInvalidArgsRFCNumber, LineNumber: 1},
+		},
+		{
+			input:    "// semcheck:rfc(0)",
+			expected: InlineError{Err: ErrorInvalidArgsRFCNumber, LineNumber: 1},
+		},
+		{
+			input:    "// semcheck:url()",
+			expected: InlineError{Err: ErrorInvalidArgsMissingArguments, LineNumber: 1},
+		},
+		{
+			input:    "// semcheck:url(not_a_url)",
+			expected: InlineError{Err: ErrorInvalidArgsURL, LineNumber: 1},
+		},
+		{
+			input:    "// semcheck:url(ftp://example.com)",
+			expected: InlineError{Err: ErrorInvalidArgsURL, LineNumber: 1},
 		},
 	}
 

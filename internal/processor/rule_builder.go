@@ -83,12 +83,12 @@ func FindInlineReferencesInFile(path string) []inline.InlineReference {
 	}
 
 	// Parse file for inline references
-	refs, parseErrors := inline.FindReferences(string(content))
+	refs, inlineErrors := inline.FindReferences(string(content))
 
-	for _, parseError := range parseErrors {
-		// Log warnings for Argument errors
+	for _, parseError := range inlineErrors {
+		// Log warnings for argument errors only, ignore the rest
 		if parseError.Err != inline.ErrorInvalidCommand {
-			fmt.Fprintf(os.Stderr, "Warning: failed to parse inline reference in %s: %s\n", path, parseError.Format())
+			fmt.Fprintf(os.Stderr, "Warning: failed to process inline reference in %s: %s\n", path, parseError.Format())
 		}
 	}
 	return refs

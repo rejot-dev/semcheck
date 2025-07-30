@@ -26,7 +26,7 @@ Links to a local specification file.
 **Syntax**: `semcheck:file(path)`
 
 **Arguments**:
-- `path`: file relative path or repo relative path to a specification file, absolute paths starting with `/` consider the repo as the root directory. If not located inside a git repository, the CWD will be used as root.
+- `path`: file relative path to directory semcheck is running in.
 
 **Examples**:
 ```javascript
