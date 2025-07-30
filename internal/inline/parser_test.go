@@ -78,20 +78,12 @@ func TestErrorsFindReferences(t *testing.T) {
 			expected: InlineError{Err: ErrorInvalidArgsMissingClosingParantheses, LineNumber: 1},
 		},
 		{
-			input:    "// semcheck(args broken\n",
-			expected: InlineError{Err: ErrorInvalidCommand, LineNumber: 1},
-		},
-		{
 			input:    "// semcheck:file\n",
 			expected: InlineError{Err: ErrorInvalidArgsMissingOpeningParantheses, LineNumber: 1},
 		},
 		{
 			input:    "// semcheck:rfc 123\n",
 			expected: InlineError{Err: ErrorInvalidArgsMissingOpeningParantheses, LineNumber: 1},
-		},
-		{
-			input:    "// semcheck\n",
-			expected: InlineError{Err: ErrorInvalidCommand, LineNumber: 1},
 		},
 		{
 			input:    "// semcheck:file()",
@@ -122,27 +114,29 @@ func TestErrorsFindReferences(t *testing.T) {
 			expected: InlineError{Err: ErrorInvalidArgsURL, LineNumber: 1},
 		},
 		{
-			input:    "// semcheck:url(ftp://example.com)",
+			input:    "semcheck:url(ftp://example.com)",
 			expected: InlineError{Err: ErrorInvalidArgsURL, LineNumber: 1},
 		},
 	}
 
 	for _, tc := range cases {
-		_, parseErrors := FindReferences(tc.input)
+		t.Run(tc.input, func(t *testing.T) {
+			_, parseErrors := FindReferences(tc.input)
 
-		if len(parseErrors) == 0 {
-			t.Errorf("Expected error, got nothing")
-			continue
-		}
+			if len(parseErrors) == 0 {
+				t.Errorf("Expected error, got nothing")
+				return
+			}
 
-		// Check first error matches expected
-		err := parseErrors[0]
-		if err.Err != tc.expected.Err {
-			t.Errorf("Expected Error  %s, got %s", tc.expected.Err, err.Err)
-		}
-		if err.LineNumber != tc.expected.LineNumber {
-			t.Errorf("Expected LineNumber %d, got %d", tc.expected.LineNumber, err.LineNumber)
-		}
-		// fmt.Printf("Error: %s\n", err.Format())
+			// Check first error matches expected
+			err := parseErrors[0]
+			if err.Err != tc.expected.Err {
+				t.Errorf("Expected Error  %s, got %s", tc.expected.Err, err.Err)
+			}
+			if err.LineNumber != tc.expected.LineNumber {
+				t.Errorf("Expected LineNumber %d, got %d", tc.expected.LineNumber, err.LineNumber)
+			}
+			// fmt.Printf("Error: %s\n", err.Format())
+		})
 	}
 }

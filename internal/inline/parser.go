@@ -18,7 +18,7 @@ const (
 	Invalid InlineCommand = "invalid"
 )
 
-const semcheckPrefix = "semcheck"
+const semcheckPrefix = "semcheck:"
 
 var (
 	ErrorInvalidCommand                       = errors.New("invalid command")
@@ -91,12 +91,9 @@ func consumeCommandArgs(argString string) ([]string, error) {
 }
 
 func consumeCommandName(commandArgs string) (InlineCommand, string) {
-	if len(commandArgs) == 0 || commandArgs[0] != ':' {
-		// A colon is required to delineate the command from the prefix (i.e. semcheck:command)
+	if len(commandArgs) == 0 {
 		return Invalid, ""
 	}
-
-	commandArgs = commandArgs[1:]
 
 	if strings.HasPrefix(commandArgs, "file") {
 		return File, commandArgs[4:]
