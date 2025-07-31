@@ -5,44 +5,45 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/rejot-dev/semcheck/internal/color"
 	"github.com/rejot-dev/semcheck/internal/providers"
 )
 
 var (
 	boldCyan = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("14"))
+			Foreground(color.Cyan)
 
 	muted = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("240"))
+		Foreground(color.DarkGray)
 
 	foreground = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("252"))
+			Foreground(color.LightGray)
 
 	boldGreen = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("2"))
+			Foreground(color.DarkGreen)
 
 	boldRed = lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color("1"))
+		Foreground(color.DarkRed)
 
 	red = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("9"))
+		Foreground(color.Red)
 
 	boldYellow = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("3"))
+			Foreground(color.Orange)
 
 	yellow = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("11"))
+		Foreground(color.Yellow)
 
 	boldBlue = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("4"))
+			Foreground(color.DarkBlue)
 
 	blue = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("12"))
+		Foreground(color.Blue)
 
 	bold = lipgloss.NewStyle().
 		Bold(true)

@@ -8,6 +8,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
+	"github.com/rejot-dev/semcheck/internal/color"
 	"github.com/rejot-dev/semcheck/internal/config"
 )
 
@@ -358,35 +359,35 @@ func DisplayMatchResults(matchedResults []MatcherResult) {
 	// Define styles
 	titleStyle := lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color("15")).
+		Foreground(color.White).
 		MarginTop(1)
 
 	sectionStyle := lipgloss.NewStyle().
 		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
+		BorderForeground(color.DarkGray).
 		Padding(0, 1)
 
 	specTitleStyle := titleStyle.
-		Foreground(lipgloss.Color("39"))
+		Foreground(color.Cyan)
 
 	implTitleStyle := titleStyle.
-		Foreground(lipgloss.Color("214"))
+		Foreground(color.Yellow)
 
 	ignoredTitleStyle := titleStyle.
-		Foreground(lipgloss.Color("245"))
+		Foreground(color.Gray)
 
 	fileStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("252"))
+		Foreground(color.LightGray)
 
 	ruleStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("243")).
+		Foreground(color.Gray).
 		Italic(true)
 
 	bulletStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("39"))
+		Foreground(color.Cyan)
 
 	reasonStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("245")).
+		Foreground(color.Gray).
 		Bold(true)
 
 	// Display specification files
