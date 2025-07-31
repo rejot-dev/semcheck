@@ -8,7 +8,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/charmbracelet/log"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/rejot-dev/semcheck/internal/providers"
 )
 
@@ -55,9 +55,21 @@ type ConfigData struct {
 }
 
 func runInit() error {
-	log.Info("🚀 Welcome to semcheck configuration setup!")
-	log.Info("This will create a semcheck.yaml configuration file for you.")
-	log.Info("")
+	// Create styled title
+	titleStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("15")).
+		BorderStyle(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("12")).
+		Padding(0, 2).
+		MarginBottom(1)
+
+	subtitleStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("15")).
+		MarginBottom(1)
+
+	fmt.Println(titleStyle.Render("📋 Semcheck Configuration Setup"))
+	fmt.Println(subtitleStyle.Render("Will setup your semcheck.yaml configuration file."))
 
 	reader := bufio.NewReader(os.Stdin)
 
@@ -66,7 +78,12 @@ func runInit() error {
 
 	// Check if file already exists
 	if _, err := os.Stat(configFile); err == nil {
-		fmt.Printf("⚠️  File '%s' already exists. Overwrite? (y/N): ", configFile)
+		warningStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("3")).
+			Bold(true)
+
+		fmt.Printf("%s File '%s' already exists. Overwrite? (y/N): ",
+			warningStyle.Render("⚠️"), configFile)
 		response, _ := reader.ReadString('\n')
 		response = strings.TrimSpace(strings.ToLower(response))
 		if response != "y" && response != "yes" {
@@ -104,32 +121,70 @@ func runInit() error {
 		return fmt.Errorf("failed to write config file: %w", err)
 	}
 
-	fmt.Printf("\n✅ Configuration file '%s' created successfully!\n", configFile)
+	// Success message
+	successStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("10")).
+		Bold(true).
+		MarginTop(1)
+
+	fmt.Println(successStyle.Render(fmt.Sprintf("✅ Configuration file '%s' created successfully!", configFile)))
+
+	// Next steps styling
+	nextStepsStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("12")).
+		Bold(true).
+		MarginTop(1)
+
+	stepStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("15")).
+		MarginLeft(3)
+
+	codeStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("11")).
+		Background(lipgloss.Color("0")).
+		Padding(0, 1)
+
+	noteStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("3")).
+		Bold(true)
 
 	if providerDefaults.ApiKeyVar != "" {
-		fmt.Printf("📝 Don't forget to set your %s environment variable.\n", providerDefaults.ApiKeyVar)
-		log.Info("🎯 Next steps:")
-		fmt.Printf("   1. Set your API key: export %s='your-api-key-here'\n", providerDefaults.ApiKeyVar)
-		fmt.Printf("   2. Edit the rules in '%s' to match your project\n", configFile)
-		fmt.Printf("   3. Run: semcheck <files>\n")
+		fmt.Println(noteStyle.Render(fmt.Sprintf("📝 Don't forget to set your %s environment variable.", providerDefaults.ApiKeyVar)))
+		fmt.Println(nextStepsStyle.Render("🎯 Next steps:"))
+		fmt.Println(stepStyle.Render(fmt.Sprintf("1. Set your API key: %s",
+			codeStyle.Render("export "+providerDefaults.ApiKeyVar+"='your-api-key-here'"))))
+		fmt.Println(stepStyle.Render(fmt.Sprintf("2. Edit the rules in '%s' to match your project", configFile)))
+		fmt.Println(stepStyle.Render(fmt.Sprintf("3. Run: %s", codeStyle.Render("semcheck <files>"))))
 	} else {
-		log.Info("🎯 Next steps:")
+		fmt.Println(nextStepsStyle.Render("🎯 Next steps:"))
 		if string(provider) == "ollama" {
-			log.Info("   1. Make sure Ollama is running: ollama serve")
-			log.Info("   2. Pull a model: ollama pull llama3.2")
+			fmt.Println(stepStyle.Render(fmt.Sprintf("1. Make sure Ollama is running: %s",
+				codeStyle.Render("ollama serve"))))
+			fmt.Println(stepStyle.Render(fmt.Sprintf("2. Pull a model: %s",
+				codeStyle.Render("ollama pull llama3.2"))))
 		}
-		fmt.Printf("   3. Edit the rules in '%s' to match your project\n", configFile)
-		fmt.Printf("   4. Run: semcheck <files>\n")
+		fmt.Println(stepStyle.Render(fmt.Sprintf("3. Edit the rules in '%s' to match your project", configFile)))
+		fmt.Println(stepStyle.Render(fmt.Sprintf("4. Run: %s", codeStyle.Render("semcheck <files>"))))
 	}
 
 	return nil
 }
 
 func promptForInput(reader *bufio.Reader, prompt, defaultValue string) string {
+	promptStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("14")).
+		Bold(true)
+
+	defaultStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("15")).
+		Italic(true)
+
 	if defaultValue != "" {
-		fmt.Printf("%s (default: %s): ", prompt, defaultValue)
+		fmt.Printf("%s %s: ",
+			promptStyle.Render(prompt),
+			defaultStyle.Render("(default: "+defaultValue+")"))
 	} else {
-		fmt.Printf("%s: ", prompt)
+		fmt.Printf("%s: ", promptStyle.Render(prompt))
 	}
 
 	input, _ := reader.ReadString('\n')
