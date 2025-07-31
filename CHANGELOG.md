@@ -3,6 +3,8 @@ Changelog entries should be added to this file in reverse chronological order. O
 
 ## [Unreleased]
 
+## v1.1
+
 ### Added
 - **Inline Specification References**: Link specifications directly in code comments using `semcheck:file()`, `semcheck:rfc()`, or `semcheck:url()` commands
 - **New landing page**: Added a dedicated landing page hosted on [semcheck.ai](https://semcheck.ai)

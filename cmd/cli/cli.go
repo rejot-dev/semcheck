@@ -33,7 +33,7 @@ var (
 	ErrorSemanticAnalysisFailed = errors.New("semantic analysis found issues")
 )
 
-const version = "1.0.0"
+const version = "1.1.0"
 
 func Execute() error {
 	flag.Parse()
