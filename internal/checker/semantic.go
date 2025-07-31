@@ -11,6 +11,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/charmbracelet/log"
 	"github.com/rejot-dev/semcheck/internal/config"
 	"github.com/rejot-dev/semcheck/internal/processor"
 	"github.com/rejot-dev/semcheck/internal/providers"
@@ -62,6 +63,15 @@ func (c *SemanticChecker) CheckFiles(ctx context.Context, matches []processor.Ma
 	// Group files by rule for comparison
 	ruleComparisons := c.buildRuleComparisons(matches, matcher)
 
+	// Show progress indicator
+	if len(ruleComparisons) > 0 {
+		ruleStr := "rule"
+		if len(ruleComparisons) > 1 {
+			ruleStr = "rules"
+		}
+		fmt.Printf("✨ Analyzing %d %s ", len(ruleComparisons), ruleStr)
+	}
+
 	for ruleName, comparison := range ruleComparisons {
 		rule := c.findRule(ruleName)
 		if rule == nil {
@@ -73,6 +83,9 @@ func (c *SemanticChecker) CheckFiles(ctx context.Context, matches []processor.Ma
 		if err != nil {
 			return nil, fmt.Errorf("failed to compare rule %s: %w", ruleName, err)
 		}
+
+		// Print progress dot
+		fmt.Print(".")
 
 		result.Issues[ruleName] = issues
 		result.Processed++
@@ -99,6 +112,11 @@ func (c *SemanticChecker) CheckFiles(ctx context.Context, matches []processor.Ma
 				result.Passed++
 			}
 		}
+	}
+
+	// Complete the progress line
+	if len(ruleComparisons) > 0 {
+		fmt.Println(" ✓")
 	}
 
 	return result, nil
@@ -190,7 +208,7 @@ func (c *SemanticChecker) findRule(name string) *config.Rule {
 }
 
 func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Rule, specFiles []string, implFiles []string) ([]providers.SemanticIssue, error) {
-	fmt.Printf("For rule '%s', comparing spec files %s to implementation files %v\n", rule.Name, specFiles, implFiles)
+	log.Debug("Analyzing", "rule", rule.Name, "specs", specFiles, "implementations", implFiles)
 	// Read specification files
 	specContents := make([]string, len(specFiles))
 	for i, specFile := range specFiles {
@@ -261,7 +279,7 @@ func (c *SemanticChecker) readURL(url string) (string, error) {
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
 			// Log error but don't fail the operation
-			fmt.Fprintf(os.Stderr, "Warning: failed to close response body: %v\n", err)
+			log.Warn("Failed to close response body", "err", err)
 		}
 	}()
 

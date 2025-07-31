@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/charmbracelet/log"
 	"github.com/goccy/go-yaml"
 )
 
@@ -112,7 +113,7 @@ func (c *Config) validate() error {
 		}
 
 		if rule.ConfidenceThreshold != nil {
-			fmt.Printf("Warning: confidence_threshold field is deprecated and will be ignored for rule '%s'. Please remove this field from your configuration.\n", rule.Name)
+			log.Warn("confidence_threshold field is deprecated and will be ignored", "rule", rule.Name, "message", "Please remove this field from your configuration")
 		}
 
 		// Set default fail_on if not provided

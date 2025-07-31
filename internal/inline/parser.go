@@ -137,7 +137,7 @@ func FindReferences(document string) ([]InlineReference, []InlineError) {
 			inlineErrors = append(inlineErrors, InlineError{
 				Err:          err,
 				LineNumber:   lineNumber + 1,
-				ColumnNumber: index + len(semcheckPrefix) + len(command) + 1,
+				ColumnNumber: index + len(semcheckPrefix) + len(command) + 2,
 				Line:         line,
 			})
 			continue

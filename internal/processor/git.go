@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/charmbracelet/log"
 )
 
 var (
@@ -50,7 +52,7 @@ func loadIgnoreFile(path string) ([]string, error) {
 	}
 	defer func() {
 		if err := file.Close(); err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: failed to close file: %v\n", err)
+			log.Warn("failed to close file: %v\n", err)
 		}
 	}()
 

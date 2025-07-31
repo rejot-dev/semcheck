@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 	"github.com/rejot-dev/semcheck/internal/config"
 )
 
@@ -205,7 +207,7 @@ func (m *Matcher) GetAllMatcherResults() []MatcherResult {
 	inlineSeen := make(map[NormalizedPath]bool)
 	inlineSpecs, err := FindAllInlineReferences(m.workingDir)
 	if err != nil {
-		fmt.Println(err)
+		log.Error("Failed to find inline references", "err", err)
 		return nil
 	}
 	for path, specs := range inlineSpecs {
@@ -353,30 +355,76 @@ func DisplayMatchResults(matchedResults []MatcherResult) {
 		}
 	}
 
+	// Define styles
+	titleStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("15")).
+		MarginTop(1)
+
+	sectionStyle := lipgloss.NewStyle().
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("240")).
+		Padding(0, 1)
+
+	specTitleStyle := titleStyle.
+		Foreground(lipgloss.Color("39"))
+
+	implTitleStyle := titleStyle.
+		Foreground(lipgloss.Color("214"))
+
+	ignoredTitleStyle := titleStyle.
+		Foreground(lipgloss.Color("245"))
+
+	fileStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("252"))
+
+	ruleStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("243")).
+		Italic(true)
+
+	bulletStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("39"))
+
+	reasonStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("245")).
+		Bold(true)
+
+	// Display specification files
 	if len(specFiles) > 0 {
-		fmt.Printf("\n📋 Specification Files (%d):\n", len(specFiles))
+		title := fmt.Sprintf("📋 Specification Files (%d)", len(specFiles))
+		fmt.Println(specTitleStyle.Render(title))
+
+		var content string
 		for _, file := range specFiles {
-			fmt.Printf("  • %s", file.Path)
+			line := bulletStyle.Render("•") + " " + fileStyle.Render(string(file.Path))
 			if file.RuleName != "" {
-				fmt.Printf(" [rule: %s]", file.RuleName)
+				line += " " + ruleStyle.Render(fmt.Sprintf("[%s]", file.RuleName))
 			}
-			fmt.Println()
+			content += line + "\n"
 		}
+		fmt.Println(sectionStyle.Render(strings.TrimRight(content, "\n")))
 	}
 
+	// Display implementation files
 	if len(implFiles) > 0 {
-		fmt.Printf("\n⚙️  Implementation Files (%d):\n", len(implFiles))
+		title := fmt.Sprintf("⚙️  Implementation Files (%d)", len(implFiles))
+		fmt.Println(implTitleStyle.Render(title))
+
+		var content string
 		for _, file := range implFiles {
-			fmt.Printf("  • %s", file.Path)
+			line := bulletStyle.Render("•") + " " + fileStyle.Render(string(file.Path))
 			if file.RuleName != "" {
-				fmt.Printf(" [rule: %s]", file.RuleName)
+				line += " " + ruleStyle.Render(fmt.Sprintf("[%s]", file.RuleName))
 			}
-			fmt.Println()
+			content += line + "\n"
 		}
+		fmt.Println(sectionStyle.Render(strings.TrimRight(content, "\n")))
 	}
 
+	// Display ignored files
 	if len(ignoredFiles) > 0 {
-		fmt.Printf("\n🚫 Ignored Files (%d):\n", len(ignoredFiles))
+		title := fmt.Sprintf("🚫 Ignored Files (%d)", len(ignoredFiles))
+		fmt.Println(ignoredTitleStyle.Render(title))
 
 		// Group by ignore reason
 		reasonGroups := make(map[string][]MatcherResult)
@@ -385,11 +433,13 @@ func DisplayMatchResults(matchedResults []MatcherResult) {
 			reasonGroups[reason] = append(reasonGroups[reason], file)
 		}
 
+		var content string
 		for reason, files := range reasonGroups {
-			fmt.Printf("  [%s]\n", reason)
+			content += reasonStyle.Render(fmt.Sprintf("▸ %s", reason)) + "\n"
 			for _, file := range files {
-				fmt.Printf("    • %s\n", file.Path)
+				content += "  " + fileStyle.Render(string(file.Path)) + "\n"
 			}
 		}
+		fmt.Println(sectionStyle.Render(strings.TrimRight(content, "\n")))
 	}
 }

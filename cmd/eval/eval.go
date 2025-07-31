@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/log"
 	"github.com/rejot-dev/semcheck/internal/checker"
 	"github.com/rejot-dev/semcheck/internal/config"
 	"github.com/rejot-dev/semcheck/internal/processor"
@@ -67,7 +68,7 @@ type EvalResult struct {
 }
 
 func RunEvaluation(specificCases []string) error {
-	fmt.Println("Running semcheck evaluations...")
+	log.Info("Running semcheck evaluations...")
 	startTime := time.Now()
 
 	workingDir, err := os.Getwd()
@@ -286,7 +287,7 @@ func compareResults(checkResult *checker.CheckResult, expectations map[string]Se
 }
 
 func displayResults(cfg *config.Config, score *EvalScore) {
-	fmt.Println("\n--- Evaluation Results ---")
+	log.Info("--- Evaluation Results ---")
 
 	for _, result := range score.RuleResults {
 		status := "❌ FAIL"

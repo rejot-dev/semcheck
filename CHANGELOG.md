@@ -10,6 +10,7 @@ Changelog entries should be added to this file in reverse chronological order. O
 
 ### Changed
   - **Config**: Rules are now optional, semcheck can run with only inline specification references
+  - **Logging**: Replaced fmt.Println with charmbracelet/log for colorful output and migrated stdout reporter from fatih/color to lipgloss to keep things consistent
 
 ### Removed
 - The `confidence_threshold` configuration option has been marked as deprecated, and will be removed in a future release. We found that LLMs almost always report high confidence levels and that this mechanism doesn't bring much value.
