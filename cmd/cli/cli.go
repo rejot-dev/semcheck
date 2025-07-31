@@ -2,16 +2,17 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
-
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 
 	"github.com/rejot-dev/semcheck/internal/checker"
+	"github.com/rejot-dev/semcheck/internal/color"
 	"github.com/rejot-dev/semcheck/internal/config"
 	"github.com/rejot-dev/semcheck/internal/processor"
 	"github.com/rejot-dev/semcheck/internal/providers"
@@ -26,6 +27,10 @@ var (
 	preCommit    = flag.Bool("pre-commit", false, "Runs semcheck on staged files")
 	initConfig   = flag.Bool("init", false, "create a semcheck.yaml file interactively")
 	githubOutput = flag.Bool("github-output", false, "output GitHub Actions annotations")
+)
+
+var (
+	ErrorSemanticAnalysisFailed = errors.New("semantic analysis found issues")
 )
 
 const version = "0.1.0"
@@ -63,7 +68,7 @@ func Execute() error {
 	titleStyle := lipgloss.NewStyle().
 		Italic(true).
 		Bold(true).
-		Foreground(lipgloss.Color("15")).
+		Foreground(color.White).
 		BorderStyle(lipgloss.RoundedBorder()).
 		Padding(0, 1).
 		MarginTop(1).
@@ -143,7 +148,7 @@ func Execute() error {
 
 	// Determine exit code based on results
 	if checkResult.ShouldFail(cfg) {
-		return fmt.Errorf("semantic analysis failed with errors")
+		return ErrorSemanticAnalysisFailed
 	}
 
 	return nil

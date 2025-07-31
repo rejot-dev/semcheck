@@ -16,8 +16,11 @@ func init() {
 }
 
 func main() {
-	if err := cli.Execute(); err != nil {
-		log.Error("Command failed", "err", err)
+	err := cli.Execute()
+	if err != nil {
+		if err != cli.ErrorSemanticAnalysisFailed {
+			log.Error("Command failed", "err", err)
+		}
 		os.Exit(1)
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"text/template"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/rejot-dev/semcheck/internal/color"
 	"github.com/rejot-dev/semcheck/internal/providers"
 )
 
@@ -58,14 +59,14 @@ func runInit() error {
 	// Create styled title
 	titleStyle := lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color("15")).
+		Foreground(color.White).
 		BorderStyle(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("12")).
+		BorderForeground(color.Blue).
 		Padding(0, 2).
 		MarginBottom(1)
 
 	subtitleStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("15")).
+		Foreground(color.White).
 		MarginBottom(1)
 
 	fmt.Println(titleStyle.Render("📋 Semcheck Configuration Setup"))
@@ -79,7 +80,7 @@ func runInit() error {
 	// Check if file already exists
 	if _, err := os.Stat(configFile); err == nil {
 		warningStyle := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("3")).
+			Foreground(color.Orange).
 			Bold(true)
 
 		fmt.Printf("%s File '%s' already exists. Overwrite? (y/N): ",
@@ -123,7 +124,7 @@ func runInit() error {
 
 	// Success message
 	successStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("10")).
+		Foreground(color.Green).
 		Bold(true).
 		MarginTop(1)
 
@@ -131,21 +132,21 @@ func runInit() error {
 
 	// Next steps styling
 	nextStepsStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("12")).
+		Foreground(color.Blue).
 		Bold(true).
 		MarginTop(1)
 
 	stepStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("15")).
+		Foreground(color.White).
 		MarginLeft(3)
 
 	codeStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("11")).
-		Background(lipgloss.Color("0")).
+		Foreground(color.Yellow).
+		Background(color.Black).
 		Padding(0, 1)
 
 	noteStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("3")).
+		Foreground(color.Orange).
 		Bold(true)
 
 	if providerDefaults.ApiKeyVar != "" {
@@ -172,11 +173,11 @@ func runInit() error {
 
 func promptForInput(reader *bufio.Reader, prompt, defaultValue string) string {
 	promptStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("14")).
+		Foreground(color.Cyan).
 		Bold(true)
 
 	defaultStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("15")).
+		Foreground(color.Gray).
 		Italic(true)
 
 	if defaultValue != "" {
