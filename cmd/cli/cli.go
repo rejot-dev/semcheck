@@ -5,7 +5,11 @@ import (
 	"flag"
 	"fmt"
 	"os"
+
 	"time"
+
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
 
 	"github.com/rejot-dev/semcheck/internal/checker"
 	"github.com/rejot-dev/semcheck/internal/config"
@@ -55,7 +59,17 @@ func Execute() error {
 		}
 		return nil
 	}
-	fmt.Printf("Provider: %s, Model: %s\n", cfg.Provider, cfg.Model)
+
+	titleStyle := lipgloss.NewStyle().
+		Italic(true).
+		Bold(true).
+		Foreground(lipgloss.Color("15")).
+		BorderStyle(lipgloss.RoundedBorder()).
+		Padding(0, 1).
+		MarginTop(1).
+		BorderBottom(true)
+
+	fmt.Println(titleStyle.Render("🤖 Semcheck"))
 
 	// Initialize file matcher
 	workingDir, err := os.Getwd()
@@ -77,12 +91,12 @@ func Execute() error {
 	if len(files) > 0 && !*preCommit {
 		selectedFiles = files
 	} else if *preCommit {
-		fmt.Println("Running semcheck on staged files...")
+		log.Info("Running semcheck on staged files...")
 		selectedFiles = processor.GetStagedFiles(workingDir)
 	}
 
 	if selectedFiles == nil {
-		fmt.Println("No file arguments passed, checking all implementation files against all specifications.")
+		log.Info("No file arguments passed, checking all implementation files against all specifications.")
 		matchedResults = matcher.GetAllMatcherResults()
 	} else {
 		matchedResults, err = matcher.MatchFiles(selectedFiles)

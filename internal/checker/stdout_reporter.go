@@ -4,22 +4,48 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fatih/color"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/rejot-dev/semcheck/internal/providers"
 )
 
 var (
-	boldCyan   = color.New(color.Bold, color.FgCyan)
-	muted      = color.New(color.FgHiBlack)
-	foreground = color.New(color.FgWhite)
-	boldGreen  = color.New(color.Bold, color.FgGreen)
-	boldRed    = color.New(color.Bold, color.FgRed)
-	red        = color.New(color.FgRed)
-	boldYellow = color.New(color.Bold, color.FgYellow)
-	yellow     = color.New(color.FgYellow)
-	boldBlue   = color.New(color.Bold, color.FgBlue)
-	blue       = color.New(color.FgBlue)
-	bold       = color.New(color.Bold)
+	boldCyan = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("14"))
+
+	muted = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("240"))
+
+	foreground = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("252"))
+
+	boldGreen = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("2"))
+
+	boldRed = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("1"))
+
+	red = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("9"))
+
+	boldYellow = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("3"))
+
+	yellow = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("11"))
+
+	boldBlue = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("4"))
+
+	blue = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("12"))
+
+	bold = lipgloss.NewStyle().
+		Bold(true)
 )
 
 // StdoutReporter implements Reporter interface for console output
@@ -47,10 +73,10 @@ func NewStdoutReporter(options *StdoutReporterOptions) *StdoutReporter {
 // Report formats and displays the semantic analysis results to stdout
 func (r *StdoutReporter) Report(result *CheckResult) {
 	fmt.Print("\n")
-	boldCyan.Println("🔍 SEMANTIC ANALYSIS RESULTS")
+	fmt.Println(boldCyan.Render("🔍 SEMANTIC ANALYSIS RESULTS"))
 
 	if result.Processed == 0 {
-		muted.Println("Nothing found to analyze.")
+		fmt.Println(muted.Render("Nothing found to analyze."))
 		return
 	}
 
@@ -61,7 +87,7 @@ func (r *StdoutReporter) Report(result *CheckResult) {
 
 	if totalIssues == 0 {
 		fmt.Print("\n")
-		boldGreen.Println("🎉 No issues found! All implementations match their specifications.")
+		fmt.Println(boldGreen.Render("🎉 No issues found! All implementations match their specifications."))
 		return
 	}
 
@@ -86,7 +112,7 @@ func (r *StdoutReporter) Report(result *CheckResult) {
 	// Display errors
 	if len(errorIssues) > 0 {
 		fmt.Print("\n")
-		boldRed.Printf("🚨 ERRORS (%d)\n", len(errorIssues))
+		fmt.Println(boldRed.Render(fmt.Sprintf("🚨 ERRORS (%d)", len(errorIssues))))
 		for i, issue := range errorIssues {
 			r.displayIssue(issue, i+1, red)
 			if i < len(errorIssues)-1 {
@@ -98,7 +124,7 @@ func (r *StdoutReporter) Report(result *CheckResult) {
 	// Display warnings
 	if len(warningIssues) > 0 {
 		fmt.Print("\n")
-		boldYellow.Printf("⚠️  WARNINGS (%d)\n", len(warningIssues))
+		fmt.Println(boldYellow.Render(fmt.Sprintf("⚠️  WARNINGS (%d)", len(warningIssues))))
 		for i, issue := range warningIssues {
 			r.displayIssue(issue, i+1, yellow)
 			if i < len(warningIssues)-1 {
@@ -110,7 +136,7 @@ func (r *StdoutReporter) Report(result *CheckResult) {
 	// Display notices
 	if len(noticeIssues) > 0 {
 		fmt.Print("\n")
-		boldBlue.Printf("💡 NOTICE (%d)\n", len(noticeIssues))
+		fmt.Println(boldBlue.Render(fmt.Sprintf("💡 NOTICE (%d)", len(noticeIssues))))
 		for i, issue := range noticeIssues {
 			r.displayIssue(issue, i+1, blue)
 			if i < len(noticeIssues)-1 {
@@ -120,38 +146,36 @@ func (r *StdoutReporter) Report(result *CheckResult) {
 	}
 
 	fmt.Print("\n")
-	bold.Print("📊 SUMMARY: ")
-	red.Printf("%d", len(errorIssues))
-	fmt.Print(" errors, ")
-	yellow.Printf("%d", len(warningIssues))
-	fmt.Print(" warnings, ")
-	blue.Printf("%d", len(noticeIssues))
-	fmt.Println(" notices")
+	summary := bold.Render("📊 SUMMARY: ") +
+		red.Render(fmt.Sprintf("%d", len(errorIssues))) +
+		" errors, " +
+		yellow.Render(fmt.Sprintf("%d", len(warningIssues))) +
+		" warnings, " +
+		blue.Render(fmt.Sprintf("%d", len(noticeIssues))) +
+		" notices"
+	fmt.Println(summary)
 }
 
-func (r *StdoutReporter) displayIssue(issue providers.SemanticIssue, issueNumber int, issueColor *color.Color) {
+func (r *StdoutReporter) displayIssue(issue providers.SemanticIssue, issueNumber int, issueColor lipgloss.Style) {
 	// Main issue message with number
-	fmt.Print("   ")
-	issueColor.Printf("%d. ", issueNumber)
-	bold.Printf("%s\n", issue.Message)
+	numberText := issueColor.Render(fmt.Sprintf("%d. ", issueNumber))
+	messageText := bold.Render(issue.Message)
+	fmt.Printf("   %s%s\n", numberText, messageText)
 
 	// Reasoning section with better formatting
 	if r.options.ShowAnalysis && issue.Reasoning != "" {
 		reasoning := r.wrapText(issue.Reasoning, r.options.TextWidth)
 		for _, line := range reasoning {
-			fmt.Print("      ")
-			foreground.Println(line)
+			fmt.Printf("      %s\n", foreground.Render(line))
 		}
 	}
 
 	// Suggestion section with better formatting
 	if issue.Suggestion != "" {
-		fmt.Print("      ")
-		bold.Println("Suggestion:")
+		fmt.Printf("      %s\n", bold.Render("Suggestion:"))
 		suggestion := r.wrapText(issue.Suggestion, r.options.TextWidth)
 		for _, line := range suggestion {
-			fmt.Print("      ")
-			foreground.Println(line)
+			fmt.Printf("      %s\n", foreground.Render(line))
 		}
 	}
 

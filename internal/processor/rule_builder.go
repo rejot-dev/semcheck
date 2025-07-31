@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/charmbracelet/log"
 	"github.com/rejot-dev/semcheck/internal/inline"
 )
 
@@ -78,7 +79,7 @@ func FindInlineReferencesInFile(path string) []inline.InlineReference {
 	content, err := os.ReadFile(path)
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: could not read file, won't check for inline spec references: %s\n", path)
+		log.Warn("Could not read file, won't check for inline spec references", "path", path)
 		return nil
 	}
 
@@ -88,7 +89,7 @@ func FindInlineReferencesInFile(path string) []inline.InlineReference {
 	for _, parseError := range inlineErrors {
 		// Log warnings for argument errors only, ignore the rest
 		if parseError.Err != inline.ErrorInvalidCommand {
-			fmt.Fprintf(os.Stderr, "Warning: failed to process inline reference in %s: %s\n", path, parseError.Format())
+			log.Warn("Failed to process inline reference", path, parseError.Format())
 		}
 	}
 	return refs
