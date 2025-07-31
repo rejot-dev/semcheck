@@ -33,7 +33,7 @@ var (
 	ErrorSemanticAnalysisFailed = errors.New("semantic analysis found issues")
 )
 
-const version = "0.1.0"
+const version = "1.0.0"
 
 func Execute() error {
 	flag.Parse()
@@ -44,7 +44,7 @@ func Execute() error {
 	}
 
 	if *showVer {
-		fmt.Printf("semcheck version %s\n", version)
+		fmt.Printf("v%s\n", version)
 		return nil
 	}
 
