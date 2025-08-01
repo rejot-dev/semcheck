@@ -10,6 +10,7 @@ require (
 	github.com/invopop/jsonschema v0.13.0
 	github.com/openai/openai-go v1.5.0
 	github.com/prathyushnallamothu/ollamago v1.0.0
+	github.com/yuin/goldmark v1.7.13
 	google.golang.org/genai v1.13.0
 )
 
