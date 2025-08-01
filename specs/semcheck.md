@@ -135,6 +135,12 @@ rules:
       # Example of URL specification
       - path: "https://www.rfc-editor.org/rfc/rfc7946.txt"
 
+      # Use Anchors to include only a subsection of a document
+      - path: "specs/api.md#section-3.1"
+
+      # Also works for URIs
+      - path: "https://datatracker.ietf.org/doc/html/rfc7946#section-5"
+
     # Additional context for AI analysis (OPTIONAL)
     # Custom instructions to guide the semantic checking process
     # Use cases:
