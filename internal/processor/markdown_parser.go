@@ -20,7 +20,7 @@ func NewMarkdownParser() DocumentParser {
 	return &markdownParser{}
 }
 
-func (p *markdownParser) Parse(content []byte) (StructuredDocument, error) {
+func (p *markdownParser) Parse(content []byte) (CollectedDocument, error) {
 	anchors := make(map[string]string)
 
 	// Parse markdown using goldmark
@@ -33,7 +33,7 @@ func (p *markdownParser) Parse(content []byte) (StructuredDocument, error) {
 		if entering && node.Kind() == ast.KindHeading {
 			heading := node.(*ast.Heading)
 			headingText := extractNodeText(heading, content)
-			anchor := generateAnchor(headingText)
+			anchor := textToAnchor(headingText)
 
 			headings = append(headings, headingInfo{
 				node:   node,
@@ -44,7 +44,7 @@ func (p *markdownParser) Parse(content []byte) (StructuredDocument, error) {
 		return ast.WalkContinue, nil
 	})
 	if err != nil {
-		return StructuredDocument{}, err
+		return CollectedDocument{}, err
 	}
 
 	// Extract content for each heading
@@ -63,7 +63,7 @@ func (p *markdownParser) Parse(content []byte) (StructuredDocument, error) {
 		anchors[anchor] = sectionContent
 	}
 
-	return StructuredDocument{
+	return CollectedDocument{
 		Type:    Markdown,
 		content: content,
 		anchors: anchors,
@@ -86,19 +86,6 @@ func extractNodeText(node ast.Node, source []byte) string {
 		}
 	}
 	return sb.String()
-}
-
-func generateAnchor(text string) string {
-	// Convert to lowercase
-	anchor := strings.ToLower(text)
-
-	// Replace spaces and other characters with hyphens
-	anchor = anchorRegex.ReplaceAllString(anchor, "-")
-
-	// Remove leading/trailing hyphens
-	anchor = strings.Trim(anchor, "-")
-
-	return anchor
 }
 
 func getNextSameLevelOrHigher(headings []headingInfo, currentIndex int) ast.Node {

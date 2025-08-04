@@ -33,27 +33,43 @@ var (
 	ErrorParsing                                  = errors.New("error parsing document")
 )
 
-// TODO: Rename, if type == TXT then it is actually unstructured
-type StructuredDocument struct {
+type CollectedDocument struct {
 	Type    DocumentType
 	content []byte
 	anchors map[string]string
 }
 
-func UnstructuredDocument(content []byte) StructuredDocument {
-	return StructuredDocument{
+func textToAnchor(text string) string {
+	// Convert to lowercase
+	anchor := strings.ToLower(text)
+
+	// Replace spaces and other characters with hyphens
+	anchor = anchorRegex.ReplaceAllString(anchor, "-")
+
+	// Remove leading/trailing hyphens
+	anchor = strings.Trim(anchor, "-")
+
+	return anchor
+}
+
+func UnstructuredDocument(content []byte) CollectedDocument {
+	return CollectedDocument{
 		Type:    TXT,
 		content: content,
 		anchors: make(map[string]string),
 	}
 }
 
-func (s *StructuredDocument) GetSubsection(anchor string) string {
-	return s.anchors[anchor]
+func (s *CollectedDocument) GetAnchoredSection(anchor string) string {
+	return s.anchors[textToAnchor(anchor)]
+}
+
+func (s *CollectedDocument) IsStructuredDocument() bool {
+	return s.Type == Markdown || s.Type == HTML
 }
 
 type DocumentParser interface {
-	Parse(content []byte) (StructuredDocument, error)
+	Parse(content []byte) (CollectedDocument, error)
 }
 
 func collectLocalFile(path string) ([]byte, DocumentType, error) {
@@ -142,28 +158,21 @@ func collectRemoteFile(url *url.URL) ([]byte, DocumentType, error) {
 	return content, docType, nil
 }
 
-func CollectDocument(path string) (structuredDoc StructuredDocument, anchor string, err error) {
-	parsedUrl, err := url.Parse(path)
-
-	if err != nil {
-		return StructuredDocument{}, "", ErrorCollectingBadURL
-	}
-
-	anchor = parsedUrl.Fragment
-
+func CollectDocument(url *url.URL) (CollectedDocument, error) {
 	var content []byte
 	var docType DocumentType
+	var err error
 
-	if parsedUrl.Scheme == "" || parsedUrl.Scheme == "file" {
-		log.Debug("Collecting local file", "path", path)
-		content, docType, err = collectLocalFile(path)
+	if url.Scheme == "" || url.Scheme == "file" {
+		log.Debug("Collecting local file", "url", url)
+		content, docType, err = collectLocalFile(url.Path)
 	} else {
-		log.Debug("Collecting remote file", "path", path)
-		content, docType, err = collectRemoteFile(parsedUrl)
+		log.Debug("Collecting remote file", "url", url)
+		content, docType, err = collectRemoteFile(url)
 	}
 
 	if err != nil {
-		return StructuredDocument{}, anchor, err
+		return CollectedDocument{}, err
 	}
 
 	var parser DocumentParser
@@ -172,18 +181,75 @@ func CollectDocument(path string) (structuredDoc StructuredDocument, anchor stri
 	case Markdown:
 		parser = NewMarkdownParser()
 	case TXT:
-		if anchor != "" {
-			return StructuredDocument{}, anchor, ErrorAnchorNotSupportedOnUnstructuredDocument
-		}
-		return UnstructuredDocument(content), "", nil
+		return UnstructuredDocument(content), nil
 	case UNKNOWN:
 		// Consider to return an unstructured document as fallback
-		return StructuredDocument{}, anchor, ErrorCollectingUnknownDocumentType
+		return CollectedDocument{}, ErrorCollectingUnknownDocumentType
 	default:
-		return StructuredDocument{}, anchor, ErrorCollectingNoDocumentParser
+		return CollectedDocument{}, ErrorCollectingNoDocumentParser
 	}
 
-	structuredDoc, err = parser.Parse(content)
+	structuredDoc, err := parser.Parse(content)
 
-	return structuredDoc, anchor, err
+	return structuredDoc, err
+}
+
+type DocumentCollection struct {
+	DocumentCache map[string]CollectedDocument
+}
+
+func NewDocumentCollection() DocumentCollection {
+	dc := DocumentCollection{
+		DocumentCache: make(map[string]CollectedDocument),
+	}
+	return dc
+}
+
+func (dc *DocumentCollection) cacheKey(url *url.URL) string {
+	var remoteLocal string
+	if url.Scheme == "" || url.Scheme == "file" {
+		remoteLocal = "local"
+	} else {
+		remoteLocal = "remote"
+	}
+
+	if url.Path == "" {
+		url.Path = "/"
+	}
+
+	return fmt.Sprintf("%s-%s%s", remoteLocal, url.Host, url.Path)
+
+}
+
+func (dc *DocumentCollection) GetDocument(path string) (string, error) {
+	url, err := url.Parse(path)
+
+	if err != nil {
+		return "", ErrorCollectingBadURL
+	}
+
+	anchor := url.Fragment
+
+	key := dc.cacheKey(url)
+	var retrievedDoc CollectedDocument
+
+	if doc, ok := dc.DocumentCache[key]; ok {
+		retrievedDoc = doc
+	} else {
+		doc, err := CollectDocument(url)
+		if err != nil {
+			return "", err
+		}
+
+		retrievedDoc = doc
+		dc.DocumentCache[key] = doc
+	}
+
+	if anchor != "" && !retrievedDoc.IsStructuredDocument() {
+		return "", ErrorAnchorNotSupportedOnUnstructuredDocument
+	} else if anchor != "" {
+		return retrievedDoc.GetAnchoredSection(anchor), nil
+	}
+
+	return string(retrievedDoc.content), nil
 }

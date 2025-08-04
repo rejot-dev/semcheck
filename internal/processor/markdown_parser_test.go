@@ -179,7 +179,7 @@ func TestGenerateAnchor(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			result := generateAnchor(tt.input)
+			result := textToAnchor(tt.input)
 			if result != tt.expected {
 				t.Errorf("generateAnchor(%q) = %q, want %q", tt.input, result, tt.expected)
 			}
@@ -188,7 +188,7 @@ func TestGenerateAnchor(t *testing.T) {
 }
 
 func TestStructuredDocument_GetSubsection(t *testing.T) {
-	doc := StructuredDocument{
+	doc := CollectedDocument{
 		Type:    Markdown,
 		content: []byte("test content"),
 		anchors: map[string]string{
@@ -208,9 +208,9 @@ func TestStructuredDocument_GetSubsection(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.anchor, func(t *testing.T) {
-			result := doc.GetSubsection(tt.anchor)
+			result := doc.GetAnchoredSection(tt.anchor)
 			if result != tt.expected {
-				t.Errorf("GetSubsection(%q) = %q, want %q", tt.anchor, result, tt.expected)
+				t.Errorf("GetAnchoredSection(%q) = %q, want %q", tt.anchor, result, tt.expected)
 			}
 		})
 	}
