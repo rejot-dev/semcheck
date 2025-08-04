@@ -31,9 +31,10 @@ type RuleComparisonFiles struct {
 }
 
 type SemanticChecker struct {
-	config     *config.Config
-	client     providers.Client[providers.IssueResponse]
-	workingDir string
+	config        *config.Config
+	client        providers.Client[providers.IssueResponse]
+	workingDir    string
+	docCollection processor.DocumentCollection
 }
 
 var inlineRule = config.Rule{
@@ -42,16 +43,17 @@ var inlineRule = config.Rule{
 	Enabled:     true,
 	Files:       config.FilePattern{}, // Not used after matching phase, empty here
 	Specs:       []config.Spec{},
-	Prompt: `Inline specification references look as follows and are usually used within a comment:
-				  semcheck:[type](args), for example: semcheck:file(api-compliance.md)`,
+	Prompt: `Inline specification references look as follows and are usually used within a comment. Anchors are optionally added to specify subsections of a document:
+	semcheck:[type](path), for example: semcheck:file(api-compliance.md#section-1-1)`,
 	FailOn: "error", // TODO: not configurable
 }
 
 func NewSemanticChecker(cfg *config.Config, client providers.Client[providers.IssueResponse], workingDir string) *SemanticChecker {
 	return &SemanticChecker{
-		config:     cfg,
-		client:     client,
-		workingDir: workingDir,
+		config:        cfg,
+		client:        client,
+		workingDir:    workingDir,
+		docCollection: processor.NewDocumentCollection(),
 	}
 }
 
@@ -209,20 +211,20 @@ func (c *SemanticChecker) findRule(name string) *config.Rule {
 
 func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Rule, specFiles []string, implFiles []string) ([]providers.SemanticIssue, error) {
 	log.Debug("Analyzing", "rule", rule.Name, "specs", specFiles, "implementations", implFiles)
-	// Read specification files
+	// Read specification files using DocumentCollection
 	specContents := make([]string, len(specFiles))
 	for i, specFile := range specFiles {
-		specContent, err := c.readFile(specFile)
+		specContent, err := c.readSpecFile(specFile)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read spec file %s: %w", specFile, err)
 		}
 		specContents[i] = specContent
 	}
 
-	// Read implementation files
+	// Read implementation files using direct file reading
 	var implContents []string
 	for _, implFile := range implFiles {
-		implContent, err := c.readFile(implFile)
+		implContent, err := c.readImplFile(implFile)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read implementation file %s: %w", implFile, err)
 		}
@@ -231,6 +233,8 @@ func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Ru
 
 	// Create AI user prompt for comparison
 	userPrompt := c.buildUserPrompt(rule, specFiles, specContents, implFiles, implContents)
+
+	log.Debugf("User prompt: \n %s", userPrompt)
 
 	// Get AI analysis
 	req := &providers.Request{
@@ -246,7 +250,21 @@ func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Ru
 	return resp.Issues, nil
 }
 
-func (c *SemanticChecker) readFile(filePath string) (string, error) {
+// readSpecFile reads specification files using DocumentCollection (supports anchors, caching, etc.)
+func (c *SemanticChecker) readSpecFile(filePath string) (string, error) {
+	// For local files, convert relative paths to absolute paths
+	if !strings.Contains(filePath, "://") {
+		// This is a local file - make it absolute if relative
+		if !filepath.IsAbs(filePath) {
+			filePath = filepath.Join(c.workingDir, filePath)
+		}
+	}
+
+	return c.docCollection.GetDocument(filePath)
+}
+
+// readImplFile reads implementation files using direct file access (for any file type)
+func (c *SemanticChecker) readImplFile(filePath string) (string, error) {
 	// Check if the path is a URL
 	if isURL(filePath) {
 		return c.readURL(filePath)
