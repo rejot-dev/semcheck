@@ -9,7 +9,7 @@ import (
 	"github.com/charmbracelet/log"
 )
 
-func TestDocumentCollection(t *testing.T) {
+func TestDocumentCollector(t *testing.T) {
 	log.SetLevel(log.DebugLevel)
 
 	t.Run("local file collection", func(t *testing.T) {
@@ -47,7 +47,8 @@ func TestDocumentCollection(t *testing.T) {
 	})
 
 	t.Run("collect unstructured document", func(t *testing.T) {
-		structuredDoc, anchor, err := CollectDocument("https://www.rfc-editor.org/rfc/rfc6762.txt")
+		parsedURL, _ := url.Parse("https://www.rfc-editor.org/rfc/rfc6762.txt")
+		structuredDoc, err := CollectDocument(parsedURL)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -55,31 +56,14 @@ func TestDocumentCollection(t *testing.T) {
 		if structuredDoc.Type != TXT {
 			t.Errorf("Expected docType txt, got %s", structuredDoc.Type)
 		}
-		if anchor != "" {
-			t.Errorf("Expected anchor to be empty, got %s", anchor)
-		}
-	})
-
-	t.Run("collect unstructured document with anchor", func(t *testing.T) {
-		_, anchor, err := CollectDocument("https://www.rfc-editor.org/rfc/rfc6762.txt#section-1")
-		if anchor != "section-1" {
-			t.Errorf("Expected anchor to be section-1, got %s", anchor)
-		}
-
-		if err != ErrorAnchorNotSupportedOnUnstructuredDocument {
-			t.Errorf("Expected %v, got %v", ErrorAnchorNotSupportedOnUnstructuredDocument, err)
-		}
 	})
 
 	t.Run("collect remote markdown", func(t *testing.T) {
-		doc, anchor, err := CollectDocument("https://raw.githubusercontent.com/rejot-dev/semcheck/4d634dc6bfd7b5a00b98b2f862f2fd567b08919b/specs/semcheck.md")
+		parsedURL, _ := url.Parse("https://raw.githubusercontent.com/rejot-dev/semcheck/4d634dc6bfd7b5a00b98b2f862f2fd567b08919b/specs/semcheck.md")
+		doc, err := CollectDocument(parsedURL)
 
 		if err != nil {
 			t.Fatal(err)
-		}
-
-		if anchor != "" {
-			t.Errorf("Expected anchor to be empty, got %s", anchor)
 		}
 
 		if doc.Type != Markdown {
@@ -88,10 +72,78 @@ func TestDocumentCollection(t *testing.T) {
 	})
 
 	t.Run("collect document with anchor", func(t *testing.T) {
-		_, _, err := CollectDocument("https://semcheck.ai#my-anchor")
+		parsedURL, _ := url.Parse("https://semcheck.ai#my-anchor")
+		_, err := CollectDocument(parsedURL)
 		// TODO: add test once implemented
 		if err != ErrorCollectingNoDocumentParser {
 			t.Errorf("Expected %v, got %v", ErrorCollectingNoDocumentParser, err)
+		}
+	})
+}
+
+func TestTextToAnchor(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"Hello World", "hello-world"},
+		{"Section 1.1", "section-1-1"},
+		{"section @ level 2", "section-level-2"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result := textToAnchor(tt.input)
+			if result != tt.expected {
+				t.Errorf("textToAnchor(%q) = %q, want %q", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestDocumentCollection(t *testing.T) {
+
+	dc := NewDocumentCollection()
+
+	cacheKeyTests := []struct {
+		input    string
+		expected string
+	}{
+		{"https://semcheck.ai", "remote-semcheck.ai/"},
+		{"http://semcheck.ai", "remote-semcheck.ai/"},
+		{"https://semcheck.ai/", "remote-semcheck.ai/"},
+		{"https://semcheck.ai/#section", "remote-semcheck.ai/"},
+		{"./specs/my-spec.md", "local-./specs/my-spec.md"},
+		{"../specs/my-spec.md", "local-../specs/my-spec.md"},
+		{"../specs/my-spec.md#section-10", "local-../specs/my-spec.md"},
+		{"https://www.rfc-editor.org/rfc/rfc6762.txt#section-1", "remote-www.rfc-editor.org/rfc/rfc6762.txt"},
+	}
+
+	for _, tt := range cacheKeyTests {
+		t.Run("cache key "+tt.input, func(t *testing.T) {
+			url, _ := url.Parse(tt.input)
+			key := dc.cacheKey(url)
+			if key != tt.expected {
+				t.Errorf("cacheKey(%q) = %q, want %q", tt.input, key, tt.expected)
+			}
+		})
+	}
+
+	t.Run("document collection", func(t *testing.T) {
+		content, err := dc.GetDocument("https://www.rfc-editor.org/rfc/rfc6762.txt")
+
+		if err != nil {
+			t.Errorf("GetDocument() error = %v", err)
+		}
+
+		if len(content) < 1 {
+			t.Errorf("GetDocument() content length = %d, want > 0", len(content))
+		}
+	})
+	t.Run("anchors error on unstructureddocument collection", func(t *testing.T) {
+		_, err := dc.GetDocument("https://www.rfc-editor.org/rfc/rfc6762.txt#section-1")
+		if err != ErrorAnchorNotSupportedOnUnstructuredDocument {
+			t.Errorf("GetDocument() error is not the one expected = %v", err)
 		}
 	})
 }
