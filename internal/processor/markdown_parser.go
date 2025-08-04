@@ -1,7 +1,6 @@
 package processor
 
 import (
-	"bytes"
 	"fmt"
 	"regexp"
 	"strings"
@@ -106,55 +105,34 @@ func getNextSameLevelOrHigher(headings []headingInfo, currentIndex int) ast.Node
 }
 
 func extractSectionContentBetweenHeadings(startHeading, endHeading ast.Node, source []byte) string {
-	var content bytes.Buffer
+	// Convert source to string for easier string manipulation
+	sourceStr := string(source)
 
-	// Start from the node after the heading
-	current := startHeading.NextSibling()
+	// Get the raw start and end positions from the AST
+	startLine := int(startHeading.(*ast.Heading).Lines().At(0).Start)
 
-	for current != nil && current != endHeading {
-		// Include ALL content - both headings and non-heading content
-		nodeContent := extractFullNodeText(current, source)
-		if nodeContent != "" {
-			if content.Len() > 0 {
-				content.WriteString("\n")
-			}
-			content.WriteString(nodeContent)
-		}
-		current = current.NextSibling()
+	// Find the beginning of the line (includes the markdown heading symbols)
+	startPos := startLine
+	for startPos > 0 && sourceStr[startPos-1] != '\n' {
+		startPos--
 	}
 
-	return strings.TrimSpace(content.String())
-}
-
-func extractFullNodeText(node ast.Node, source []byte) string {
-	var parts []string
-
-	if node.Kind() == ast.KindParagraph {
-		// For paragraphs, collect text nodes and join with newlines to preserve line breaks
-		var texts []string
-		for child := node.FirstChild(); child != nil; child = child.NextSibling() {
-			if child.Kind() == ast.KindText {
-				if textNode, ok := child.(*ast.Text); ok {
-					texts = append(texts, string(textNode.Value(source)))
-				}
-			}
-		}
-		if len(texts) > 0 {
-			parts = append(parts, strings.Join(texts, "\n"))
+	var endPos int
+	if endHeading != nil {
+		// Get position of the next heading line start
+		endLine := int(endHeading.(*ast.Heading).Lines().At(0).Start)
+		endPos = endLine
+		// Find the beginning of that line
+		for endPos > 0 && sourceStr[endPos-1] != '\n' {
+			endPos--
 		}
 	} else {
-		// For other nodes, walk and collect text
-		err := ast.Walk(node, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
-			if entering && n.Kind() == ast.KindText {
-				if textNode, ok := n.(*ast.Text); ok {
-					parts = append(parts, string(textNode.Value(source)))
-				}
-			}
-			return ast.WalkContinue, nil
-		})
-		// Note: ast.Walk in goldmark typically doesn't return errors for simple traversal
-		_ = err
+		// If no next heading, go to end of document
+		endPos = len(sourceStr)
 	}
 
-	return strings.TrimSpace(strings.Join(parts, ""))
+	// Extract raw markdown content from source, preserving original formatting
+	rawContent := sourceStr[startPos:endPos]
+
+	return strings.TrimSpace(rawContent)
 }

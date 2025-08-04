@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -157,11 +156,6 @@ func validateAndTransformArgs(command InlineCommand, args []string) ([]string, e
 	case File:
 		if len(args) != 1 {
 			return args, ErrorInvalidArgsNumber
-		}
-
-		// TODO: Consider moving this check outside of the parser
-		if _, err := os.Stat(args[0]); os.IsNotExist(err) {
-			return args, ErrorInvalidArgsMissingSpecFile
 		}
 
 		return args, nil

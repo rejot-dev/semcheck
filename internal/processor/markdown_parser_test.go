@@ -33,11 +33,11 @@ Subsection content.
 
 Final content.`,
 			expected: map[string]string{
-				"main-title":    "This is the main content under the title.\nSection One\nContent for section one.\nSome more content here.\nSection Two\nContent for section two.\nSubsection\nSubsection content.\nFinal Section\nFinal content.",
-				"section-one":   "Content for section one.\nSome more content here.",
-				"section-two":   "Content for section two.\nSubsection\nSubsection content.",
-				"subsection":    "Subsection content.",
-				"final-section": "Final content.",
+				"main-title":    "# Main Title\n\nThis is the main content under the title.\n\n## Section One\n\nContent for section one.\nSome more content here.\n\n## Section Two\n\nContent for section two.\n\n### Subsection\n\nSubsection content.\n\n## Final Section\n\nFinal content.",
+				"section-one":   "## Section One\n\nContent for section one.\nSome more content here.",
+				"section-two":   "## Section Two\n\nContent for section two.\n\n### Subsection\n\nSubsection content.",
+				"subsection":    "### Subsection\n\nSubsection content.",
+				"final-section": "## Final Section\n\nFinal content.",
 			},
 		},
 		{
@@ -50,8 +50,8 @@ Content here.
 
 More content.`,
 			expected: map[string]string{
-				"title-with-special-characters": "Content here.\nSection: With Colon\nMore content.",
-				"section-with-colon":            "More content.",
+				"title-with-special-characters": "# Title with Special & Characters!\n\nContent here.\n\n## Section: With Colon\n\nMore content.",
+				"section-with-colon":            "## Section: With Colon\n\nMore content.",
 			},
 		},
 		{
@@ -76,11 +76,11 @@ Content at level 4.
 
 Back to level 2.`,
 			expected: map[string]string{
-				"level-1":         "Content at level 1.\nLevel 2\nContent at level 2.\nLevel 3\nContent at level 3.\nLevel 4\nContent at level 4.\nAnother Level 2\nBack to level 2.",
-				"level-2":         "Content at level 2.\nLevel 3\nContent at level 3.\nLevel 4\nContent at level 4.",
-				"level-3":         "Content at level 3.\nLevel 4\nContent at level 4.",
-				"level-4":         "Content at level 4.",
-				"another-level-2": "Back to level 2.",
+				"level-1":         "# Level 1\n\nContent at level 1.\n\n## Level 2\n\nContent at level 2.\n\n### Level 3\n\nContent at level 3.\n\n#### Level 4\n\nContent at level 4.\n\n## Another Level 2\n\nBack to level 2.",
+				"level-2":         "## Level 2\n\nContent at level 2.\n\n### Level 3\n\nContent at level 3.\n\n#### Level 4\n\nContent at level 4.",
+				"level-3":         "### Level 3\n\nContent at level 3.\n\n#### Level 4\n\nContent at level 4.",
+				"level-4":         "#### Level 4\n\nContent at level 4.",
+				"another-level-2": "## Another Level 2\n\nBack to level 2.",
 			},
 		},
 		{
@@ -93,9 +93,9 @@ Back to level 2.`,
 
 This has content.`,
 			expected: map[string]string{
-				"first-section":        "Empty Section\nSection with Content\nThis has content.",
-				"empty-section":        "",
-				"section-with-content": "This has content.",
+				"first-section":        "# First Section\n\n## Empty Section\n\n## Section with Content\n\nThis has content.",
+				"empty-section":        "## Empty Section",
+				"section-with-content": "## Section with Content\n\nThis has content.",
 			},
 		},
 		{
@@ -105,8 +105,8 @@ hey
 ## level 2
 there`,
 			expected: map[string]string{
-				"level-1": "hey\nlevel 2\nthere",
-				"level-2": "there",
+				"level-1": "# level 1\nhey\n## level 2\nthere",
+				"level-2": "## level 2\nthere",
 			},
 		},
 		{
@@ -123,9 +123,9 @@ Content 2
 
 Content 3`,
 			expected: map[string]string{
-				"test-section":   "Content 1",
-				"test-section-2": "Content 2\nTest Section\nContent 3",
-				"test-section-3": "Content 3",
+				"test-section":   "# Test Section\n\nContent 1",
+				"test-section-2": "# Test Section\n\nContent 2\n\n## Test Section\n\nContent 3",
+				"test-section-3": "## Test Section\n\nContent 3",
 			},
 		},
 	}

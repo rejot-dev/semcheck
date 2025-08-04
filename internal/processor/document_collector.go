@@ -28,7 +28,6 @@ var (
 	ErrorCollectingBadURL                         = errors.New("error collecting document, bad URL")
 	ErrorCollectingUnknownDocumentType            = errors.New("error collecting document, unknown document type")
 	ErrorCollectingNoDocumentParser               = errors.New("error collecting document, no document parser for document type")
-	ErrorLocalFileNoExtension                     = errors.New("error collecting document, local file has no extension")
 	ErrorAnchorNotSupportedOnUnstructuredDocument = errors.New("error collecting document, anchor not supported on unstructured document")
 	ErrorParsing                                  = errors.New("error parsing document")
 )
@@ -79,11 +78,6 @@ func collectLocalFile(path string) ([]byte, DocumentType, error) {
 		return nil, "", err
 	}
 	fileExtension := filepath.Ext(path)
-
-	if fileExtension == "" {
-		return nil, UNKNOWN, ErrorLocalFileNoExtension
-	}
-
 	return content, extensionToDocumentType(fileExtension), nil
 }
 
@@ -183,8 +177,8 @@ func CollectDocument(url *url.URL) (CollectedDocument, error) {
 	case TXT:
 		return UnstructuredDocument(content), nil
 	case UNKNOWN:
-		// Consider to return an unstructured document as fallback
-		return CollectedDocument{}, ErrorCollectingUnknownDocumentType
+		// Return an unstructured document as fallback
+		return UnstructuredDocument(content), nil
 	default:
 		return CollectedDocument{}, ErrorCollectingNoDocumentParser
 	}
