@@ -27,6 +27,7 @@ var (
 	preCommit    = flag.Bool("pre-commit", false, "Runs semcheck on staged files")
 	initConfig   = flag.Bool("init", false, "create a semcheck.yaml file interactively")
 	githubOutput = flag.Bool("github-output", false, "output GitHub Actions annotations")
+	logLevel     = flag.String("log-level", "info", "set log level (info, debug, error, warning)")
 )
 
 var (
@@ -41,6 +42,23 @@ func Execute() error {
 	if *showHelp {
 		showUsage()
 		return nil
+	}
+
+	if *logLevel != "" {
+		switch *logLevel {
+		case "info":
+			log.SetLevel(log.InfoLevel)
+		case "debug":
+			log.SetLevel(log.DebugLevel)
+		case "error":
+			log.SetLevel(log.ErrorLevel)
+		case "warning":
+			log.SetLevel(log.WarnLevel)
+		default:
+			fmt.Fprintf(os.Stderr, "Invalid log level: %s\n", *logLevel)
+			return errors.New("invalid log level")
+		}
+
 	}
 
 	if *showVer {
