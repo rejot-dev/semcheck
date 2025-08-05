@@ -57,6 +57,23 @@ semcheck:url(https://example.com/docs/api)  # Link to remote documents
 semcheck:rfc(8259)  # Shorthand for linking to RFC documents on rfc-editor.org
 ```
 
+#### Using Fragments/Anchors
+
+You can target specific sections of structured documents (HTML and Markdown) using URL fragments:
+
+```python
+# Link to a specific section in an HTML document
+# semcheck:url(https://www.rfc-editor.org/rfc/rfc7946.html#section-3.1.1)
+
+# Link to a specific section in a Markdown document using header text
+# semcheck:file(./docs/api-spec.md#authentication)
+
+# Works with RFC documents too
+# semcheck:rfc(8259#section1)
+```
+
+For HTML documents, fragments work the same way as browser navigation, they target elements with matching `id` or `name` attributes. For Markdown documents, you can use the header text as the fragment identifier (spaces and special characters are converted to anchor format).
+
 
 ### 2. Rules
 
