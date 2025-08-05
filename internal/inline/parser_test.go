@@ -16,7 +16,11 @@ func TestFindReferences(t *testing.T) {
 		},
 		{
 			input:    "semcheck:rfc(123) some other text\n",
-			expected: []InlineReference{{Command: RFC, Args: []string{"https://www.rfc-editor.org/rfc/rfc123.txt"}, LineNumber: 1}},
+			expected: []InlineReference{{Command: RFC, Args: []string{"https://datatracker.ietf.org/doc/html/rfc123"}, LineNumber: 1}},
+		},
+		{
+			input:    "semcheck:rfc(123#section-1) some other text\n",
+			expected: []InlineReference{{Command: RFC, Args: []string{"https://datatracker.ietf.org/doc/html/rfc123#section-1"}, LineNumber: 1}},
 		},
 		{
 			input:    "semcheck:url(https://example.com/) some other text\n",
