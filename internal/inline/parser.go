@@ -164,13 +164,19 @@ func validateAndTransformArgs(command InlineCommand, args []string) ([]string, e
 			return args, ErrorInvalidArgsNumber
 		}
 
-		// Validate that the argument is a positive integer
-		rfcNumber, err := strconv.Atoi(args[0])
+		// Split off anchor from number
+		rfcParts := strings.Split(args[0], "#")
+		rfcNumber, err := strconv.Atoi(rfcParts[0])
 		if err != nil || rfcNumber <= 0 {
 			return args, ErrorInvalidArgsRFCNumber
 		}
 
-		args = []string{fmt.Sprintf("https://www.rfc-editor.org/rfc/rfc%d.txt", rfcNumber)}
+		anchor := ""
+		if len(rfcParts) > 1 && rfcParts[1] != "" {
+			anchor = "#" + rfcParts[1]
+		}
+
+		args = []string{fmt.Sprintf("https://datatracker.ietf.org/doc/html/rfc%d%s", rfcNumber, anchor)}
 
 		return args, nil
 	case URL:
