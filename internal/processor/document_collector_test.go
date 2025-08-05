@@ -73,10 +73,17 @@ func TestDocumentCollector(t *testing.T) {
 
 	t.Run("collect document with anchor", func(t *testing.T) {
 		parsedURL, _ := url.Parse("https://semcheck.ai#my-anchor")
-		_, err := CollectDocument(parsedURL)
-		// TODO: add test once implemented
-		if err != ErrorCollectingNoDocumentParser {
-			t.Errorf("Expected %v, got %v", ErrorCollectingNoDocumentParser, err)
+		doc, err := CollectDocument(parsedURL)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+
+		if doc.Type != HTML {
+			t.Errorf("Expected docType html, got %s", doc.Type)
+		}
+
+		if !doc.IsStructuredDocument() {
+			t.Errorf("Expected structured document for HTML")
 		}
 	})
 }
@@ -144,6 +151,17 @@ func TestDocumentCollection(t *testing.T) {
 		_, err := dc.GetDocument("https://www.rfc-editor.org/rfc/rfc6762.txt#section-1")
 		if err != ErrorAnchorNotSupportedOnUnstructuredDocument {
 			t.Errorf("GetDocument() error is not the one expected = %v", err)
+		}
+	})
+
+	t.Run("anchors error on unstructureddocument collection", func(t *testing.T) {
+		content, err := dc.GetDocument("https://www.rfc-editor.org/rfc/rfc7946.html#section-1")
+		if err != nil {
+			t.Errorf("GetDocument() error = %v", err)
+		}
+
+		if len(content) < 1 {
+			t.Errorf("GetDocument() content length = %d, want > 0", len(content))
 		}
 	})
 }
