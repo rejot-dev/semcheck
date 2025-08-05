@@ -90,8 +90,8 @@ func helper() {
 		t.Errorf("Expected file reference to ./specs/api.md, got %v", test1Refs[0])
 	}
 
-	if test1Refs[1].Command != inline.RFC || len(test1Refs[1].Args) == 0 || test1Refs[1].Args[0] != "https://www.rfc-editor.org/rfc/rfc1234.txt" {
-		t.Errorf("Expected RFC reference to https://www.rfc-editor.org/rfc/rfc1234.txt, got %v", test1Refs[1])
+	if test1Refs[1].Command != inline.RFC || len(test1Refs[1].Args) == 0 || test1Refs[1].Args[0] != "https://datatracker.ietf.org/doc/html/rfc1234" {
+		t.Errorf("Expected RFC reference to https://datatracker.ietf.org/doc/html/rfc1234, got %v", test1Refs[1])
 	}
 
 	// Check test2.go references

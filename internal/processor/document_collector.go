@@ -28,7 +28,7 @@ var (
 	ErrorCollectingBadURL                         = errors.New("error collecting document, bad URL")
 	ErrorCollectingUnknownDocumentType            = errors.New("error collecting document, unknown document type")
 	ErrorCollectingNoDocumentParser               = errors.New("error collecting document, no document parser for document type")
-	ErrorAnchorNotSupportedOnUnstructuredDocument = errors.New("error collecting document, anchor not supported on unstructured document")
+	ErrorAnchorNotSupportedOnUnstructuredDocument = errors.New("error collecting document, fragment or anchor not supported on this document")
 	ErrorParsing                                  = errors.New("error parsing document")
 )
 
@@ -59,8 +59,11 @@ func UnstructuredDocument(content []byte) CollectedDocument {
 	}
 }
 
-func (s *CollectedDocument) GetAnchoredSection(anchor string) string {
-	return s.anchors[textToAnchor(anchor)]
+func (s *CollectedDocument) GetAnchoredSection(anchor string) (string, error) {
+	if !s.IsStructuredDocument() {
+		return "", ErrorAnchorNotSupportedOnUnstructuredDocument
+	}
+	return s.anchors[textToAnchor(anchor)], nil
 }
 
 func (s *CollectedDocument) IsStructuredDocument() bool {
@@ -174,6 +177,8 @@ func CollectDocument(url *url.URL) (CollectedDocument, error) {
 	switch docType {
 	case Markdown:
 		parser = NewMarkdownParser()
+	case HTML:
+		parser = NewHTMLParser()
 	case TXT:
 		return UnstructuredDocument(content), nil
 	case UNKNOWN:
@@ -239,10 +244,8 @@ func (dc *DocumentCollection) GetDocument(path string) (string, error) {
 		dc.DocumentCache[key] = doc
 	}
 
-	if anchor != "" && !retrievedDoc.IsStructuredDocument() {
-		return "", ErrorAnchorNotSupportedOnUnstructuredDocument
-	} else if anchor != "" {
-		return retrievedDoc.GetAnchoredSection(anchor), nil
+	if anchor != "" {
+		return retrievedDoc.GetAnchoredSection(anchor)
 	}
 
 	return string(retrievedDoc.content), nil

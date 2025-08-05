@@ -208,7 +208,10 @@ func TestStructuredDocument_GetSubsection(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.anchor, func(t *testing.T) {
-			result := doc.GetAnchoredSection(tt.anchor)
+			result, err := doc.GetAnchoredSection(tt.anchor)
+			if err != nil {
+				t.Errorf("GetAnchoredSection(%q) = %v, want nil", tt.anchor, err)
+			}
 			if result != tt.expected {
 				t.Errorf("GetAnchoredSection(%q) = %q, want %q", tt.anchor, result, tt.expected)
 			}

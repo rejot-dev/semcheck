@@ -11,6 +11,7 @@ require (
 	github.com/openai/openai-go v1.5.0
 	github.com/prathyushnallamothu/ollamago v1.0.0
 	github.com/yuin/goldmark v1.7.13
+	golang.org/x/net v0.34.0
 	google.golang.org/genai v1.13.0
 )
 
@@ -46,7 +47,6 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
-	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
