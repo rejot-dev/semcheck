@@ -6,6 +6,7 @@ Changelog entries should be added to this file in reverse chronological order. O
 ### Added
 - **Anchor Support**: Added support for URL fragments/anchors for structured formats such as markdown and HTML. Include a subsection of your specification by using link fragment like `#section-3.1.1`. For HTML documents, this follows the same semantics as your browser targeting a section, for markdown you can use the header text as a link instead.
 - **Log Level CLI Option**: Added `--log-level` command line option to control logging verbosity (info, debug, error, warning)
+- **Configurable Inference Delay**: Added `inference_delay` configuration option to control the delay between AI API calls for rate limiting. Set to 0 to disable delays, or adjust based on your API provider's rate limits. Default is 0 seconds.
 
 ### Changed
 - **HTML Content Filtering**: Implemented content filtering to remove unwanted HTML elements (scripts, styles, forms, etc.) and attributes using allowlist approach

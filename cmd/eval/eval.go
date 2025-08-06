@@ -159,6 +159,7 @@ func RunEvaluation(specificCases []string) error {
 
 	// Compare results to expectations
 	score, err := compareResults(checkResult, expectations)
+
 	if err != nil {
 		return fmt.Errorf("failed to compare results: %w", err)
 	}
@@ -167,9 +168,13 @@ func RunEvaluation(specificCases []string) error {
 	displayResults(cfg, score)
 
 	// Record results to CSV only if running all cases
-	duration := time.Since(startTime)
+	totalDuration := time.Since(startTime)
+	// Subtract artificial delay time from total duration to get actual inference time
+	delayPerRule := time.Duration(*cfg.InferenceDelay) * time.Second
+	totalDelayTime := delayPerRule * time.Duration(checkResult.Processed)
+	actualInferenceDuration := totalDuration - totalDelayTime
 	if len(specificCases) == 0 {
-		return recordResults(cfg, score, duration)
+		return recordResults(cfg, score, actualInferenceDuration)
 	} else {
 		fmt.Printf("\n➡️  Results not recorded (subset of cases selected)\n")
 		return nil

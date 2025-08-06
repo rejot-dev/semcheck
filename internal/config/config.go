@@ -11,16 +11,17 @@ import (
 )
 
 type Config struct {
-	Version      string   `yaml:"version"`
-	Provider     string   `yaml:"provider"`
-	Model        string   `yaml:"model"`
-	APIKey       string   `yaml:"api_key"`
-	BaseURL      string   `yaml:"base_url,omitempty"`
-	Timeout      int      `yaml:"timeout"`
-	MaxTokens    int      `yaml:"max_tokens"`
-	Temperature  *float64 `yaml:"temperature,omitempty"`
-	FailOnIssues *bool    `yaml:"fail_on_issues,omitempty"`
-	Rules        []Rule   `yaml:"rules"`
+	Version        string   `yaml:"version"`
+	Provider       string   `yaml:"provider"`
+	Model          string   `yaml:"model"`
+	APIKey         string   `yaml:"api_key"`
+	BaseURL        string   `yaml:"base_url,omitempty"`
+	Timeout        int      `yaml:"timeout"`
+	MaxTokens      int      `yaml:"max_tokens"`
+	Temperature    *float64 `yaml:"temperature,omitempty"`
+	FailOnIssues   *bool    `yaml:"fail_on_issues,omitempty"`
+	InferenceDelay *int     `yaml:"inference_delay,omitempty"`
+	Rules          []Rule   `yaml:"rules"`
 }
 
 type Rule struct {
@@ -171,9 +172,20 @@ func (c *Config) validate() error {
 		c.FailOnIssues = &defaultFailOnIssues
 	}
 
+	// Set default for inference delay if not provided
+	if c.InferenceDelay == nil {
+		defaultInferenceDelay := 0
+		c.InferenceDelay = &defaultInferenceDelay
+	}
+
 	// Validate timeout range
-	if c.Timeout < 0 {
+	if c.Timeout <= 0 {
 		return fmt.Errorf("timeout must be positive number, got: %d", c.Timeout)
+	}
+
+	// Validate inference delay range
+	if *c.InferenceDelay < 0 {
+		return fmt.Errorf("inference_delay must be non-negative, got: %d", *c.InferenceDelay)
 	}
 
 	// Validate temperature range (0.0 is allowed for deterministic output)

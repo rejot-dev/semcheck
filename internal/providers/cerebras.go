@@ -130,7 +130,7 @@ func (c *CerebrasClient[R]) Complete(ctx context.Context, req *Request) (*R, Usa
 			Type: "json_schema",
 			JsonSchema: CerebrasJsonSchema{
 				Name:   "semantic_analysis",
-				Strict: true,
+				Strict: false,
 				Schema: schema,
 			},
 		},

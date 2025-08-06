@@ -86,6 +86,12 @@ func (c *SemanticChecker) CheckFiles(ctx context.Context, matches []processor.Ma
 			return nil, fmt.Errorf("failed to compare rule %s: %w", ruleName, err)
 		}
 
+		// Apply configurable inference delay to prevent rate limit hits
+		if *c.config.InferenceDelay > 0 {
+			log.Debug("Applying inference delay to prevent rate limit hit", "delay_seconds", *c.config.InferenceDelay)
+			time.Sleep(time.Duration(*c.config.InferenceDelay) * time.Second)
+		}
+
 		// Print progress dot
 		fmt.Print(".")
 

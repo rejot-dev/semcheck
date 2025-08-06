@@ -68,7 +68,9 @@ func Add(a, b int) int {
 		t.Fatalf("Failed to create impl file: %v", err)
 	}
 
+	inferenceDelay := 0
 	cfg := &config.Config{
+		InferenceDelay: &inferenceDelay,
 		Rules: []config.Rule{
 			{
 				Name: "test-rule",

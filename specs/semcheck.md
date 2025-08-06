@@ -77,6 +77,17 @@ temperature: 0.1
 # Default: true
 fail_on_issues: true
 
+# Inference delay in seconds (OPTIONAL)
+# Time to wait between AI API calls to avoid hitting rate limits
+# Considerations:
+#   - Set to 0 to disable delay
+#   - Increase for stricter rate limits or to be conservative
+#   - Different providers have different rate limit policies
+#   - Does not affect timing measurements in evaluations
+# Default: 0 seconds
+# Range: 0 or positive integers
+inference_delay: 0
+
 # Checking rules configuration (OPTIONAL)
 # Array of rules that define what to check and how
 # If no rules are provided, semcheck will only process inline specification references
