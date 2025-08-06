@@ -63,6 +63,9 @@ eval: build-eval
 check: fmt test
     go mod tidy
 
+plot:
+    cd evals && uv run plot.py
+
 # Help for available recipes
 help:
     @just --list

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    #vis.vega-embed {
+      width: 100%;
+      display: flex;
+    }
+
+    #vis.vega-embed details,
+    #vis.vega-embed details summary {
+      position: relative;
+    }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-lite@5.20.1"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+  <div id="vis"></div>
+  <script>
+    (function(vegaEmbed) {
+      var spec = {"config": {"view": {"continuousWidth": 300, "continuousHeight": 300}}, "layer": [{"mark": {"type": "point", "tooltip": true}, "encoding": {"color": {"field": "model", "type": "nominal"}, "x": {"field": "duration_seconds", "scale": {"domain": [0, 225]}, "type": "quantitative"}, "y": {"field": "total_accuracy_pct", "type": "quantitative"}}, "name": "view_1"}, {"mark": {"type": "text", "align": "left", "angle": 45, "dx": 10, "fontSize": 14}, "encoding": {"text": {"field": "model", "type": "nominal"}, "x": {"field": "duration_seconds", "type": "quantitative"}, "y": {"field": "total_accuracy_pct", "type": "quantitative"}}, "name": "view_2"}], "data": {"name": "data-5cceedf66ba815f6bf096c6895ab261d"}, "height": 500, "params": [{"name": "param_1", "select": {"type": "interval", "encodings": ["x", "y"]}, "bind": "scales", "views": ["view_1"]}, {"name": "param_2", "select": {"type": "interval", "encodings": ["x", "y"]}, "bind": "scales", "views": ["view_2"]}], "resolve": {"scale": {"color": "independent"}}, "title": "Total Accuracy vs Duration (Latest Results by Model)", "width": 1000, "$schema": "https://vega.github.io/schema/vega-lite/v5.20.1.json", "datasets": {"data-5cceedf66ba815f6bf096c6895ab261d": [{"model": "gpt-oss-120b", "commit_sha": "28716a313f91827f79d238c9ebe91cc1f7393bec", "date": "2025-08-06T09:41:50", "provider": "cerebras", "error_accuracy": 0.5278, "warning_accuracy": 0.6, "info_accuracy": 0.9167, "total_accuracy": 0.6815, "num_cases": 9, "duration_seconds": 22.15, "input_tokens": 115998, "output_tokens": 3262, "total_tokens": 119260, "total_accuracy_pct": 68.15}, {"model": "gpt-4.1", "commit_sha": "c7fdcd1d5f9dc583a4b6a4dcaf2fb3e665f05617", "date": "2025-07-23T12:43:33", "provider": "openai", "error_accuracy": 0.7667, "warning_accuracy": 0.8, "info_accuracy": 0.9167, "total_accuracy": 0.8278, "num_cases": 6, "duration_seconds": 51.0, "input_tokens": null, "output_tokens": null, "total_tokens": null, "total_accuracy_pct": 82.78}, {"model": "claude-3-7-sonnet-latest", "commit_sha": "c7fdcd1d5f9dc583a4b6a4dcaf2fb3e665f05617", "date": "2025-07-23T12:53:59", "provider": "anthropic", "error_accuracy": 0.9167, "warning_accuracy": 0.9, "info_accuracy": 0.8333, "total_accuracy": 0.8833, "num_cases": 6, "duration_seconds": 28.77, "input_tokens": null, "output_tokens": null, "total_tokens": null, "total_accuracy_pct": 88.33}, {"model": "claude-sonnet-4-0", "commit_sha": "b007ad9850d62ca66dd1642a7bc56d4dfb18d847", "date": "2025-08-06T09:13:11", "provider": "anthropic", "error_accuracy": 0.65, "warning_accuracy": 0.6222, "info_accuracy": 0.5556, "total_accuracy": 0.6093, "num_cases": 9, "duration_seconds": 204.12, "input_tokens": 115998, "output_tokens": 3262, "total_tokens": 119260, "total_accuracy_pct": 60.92999999999999}, {"model": "qwen-3-235b-a22b", "commit_sha": "43adba88d2c13213712450a87c1e6082242a93b9", "date": "2025-07-23T13:20:16", "provider": "cerebras", "error_accuracy": 0.85, "warning_accuracy": 0.9, "info_accuracy": 0.75, "total_accuracy": 0.8333, "num_cases": 6, "duration_seconds": 8.29, "input_tokens": null, "output_tokens": null, "total_tokens": null, "total_accuracy_pct": 83.33}, {"model": "llama-4-scout-17b-16e-instruct", "commit_sha": "c7fdcd1d5f9dc583a4b6a4dcaf2fb3e665f05617", "date": "2025-07-23T12:47:13", "provider": "cerebras", "error_accuracy": 0.6944, "warning_accuracy": 0.7, "info_accuracy": 0.75, "total_accuracy": 0.7148, "num_cases": 6, "duration_seconds": 2.59, "input_tokens": null, "output_tokens": null, "total_tokens": null, "total_accuracy_pct": 71.48}]}};
+      var embedOpt = {"mode": "vega-lite"};
+
+      function showError(el, error){
+          el.innerHTML = ('<div style="color:red;">'
+                          + '<p>JavaScript Error: ' + error.message + '</p>'
+                          + "<p>This usually means there's a typo in your chart specification. "
+                          + "See the javascript console for the full traceback.</p>"
+                          + '</div>');
+          throw error;
+      }
+      const el = document.getElementById('vis');
+      vegaEmbed("#vis", spec, embedOpt)
+        .catch(error => showError(el, error));
+    })(vegaEmbed);
+
+  </script>
+</body>
+</html>

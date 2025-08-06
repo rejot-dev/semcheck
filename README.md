@@ -205,3 +205,8 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }} # or other provider API key, configurable in semcheck.yaml
 ```
+
+## Evaluation
+
+A (somewhat) primitive evaluation suite is available in `evals` in order to measure the accuracy of models and prompts over time.
+To get an idea which model/providers get the best results take a [look at the evaluation results](./evals/accuracy_duration.html)
