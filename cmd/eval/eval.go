@@ -65,6 +65,9 @@ type EvalResult struct {
 	TotalAccuracy   float64
 	NumCases        int
 	Duration        time.Duration
+	InputTokens     int
+	OutputTokens    int
+	TotalTokens     int
 }
 
 func RunEvaluation(specificCases []string) error {
@@ -165,7 +168,7 @@ func RunEvaluation(specificCases []string) error {
 	}
 
 	// Display results
-	displayResults(cfg, score)
+	displayResults(cfg, score, checkResult.TotalUsage)
 
 	// Record results to CSV only if running all cases
 	totalDuration := time.Since(startTime)
@@ -174,7 +177,7 @@ func RunEvaluation(specificCases []string) error {
 	totalDelayTime := delayPerRule * time.Duration(checkResult.Processed)
 	actualInferenceDuration := totalDuration - totalDelayTime
 	if len(specificCases) == 0 {
-		return recordResults(cfg, score, actualInferenceDuration)
+		return recordResults(cfg, score, actualInferenceDuration, checkResult.TotalUsage)
 	} else {
 		fmt.Printf("\n➡️  Results not recorded (subset of cases selected)\n")
 		return nil
@@ -291,7 +294,7 @@ func compareResults(checkResult *checker.CheckResult, expectations map[string]Se
 	return &score, nil
 }
 
-func displayResults(cfg *config.Config, score *EvalScore) {
+func displayResults(cfg *config.Config, score *EvalScore, usage providers.Usage) {
 	log.Info("--- Evaluation Results ---")
 
 	for _, result := range score.RuleResults {
@@ -327,6 +330,7 @@ func displayResults(cfg *config.Config, score *EvalScore) {
 	fmt.Printf("Warning Accuracy: %.1f%%\n", score.WarningAccuracy*100)
 	fmt.Printf("Notice Accuracy: %.1f%%\n", score.NoticeAccuracy*100)
 	fmt.Printf("Overall Score: %.1f%%\n", score.OverallScore*100)
+	fmt.Printf("Token Usage: %d input + %d output = %d total tokens\n", usage.InputTokens, usage.OutputTokens, usage.TotalTokens)
 }
 
 func countIssuesBySeverity(issues []providers.SemanticIssue) SeverityCount {
@@ -386,7 +390,7 @@ func getGitCommitSHA() (string, error) {
 	return strings.TrimSpace(string(output)), nil
 }
 
-func recordResults(cfg *config.Config, score *EvalScore, duration time.Duration) error {
+func recordResults(cfg *config.Config, score *EvalScore, duration time.Duration, usage providers.Usage) error {
 	resultsFile := "evals/results.csv"
 
 	// Get current commit SHA
@@ -408,6 +412,9 @@ func recordResults(cfg *config.Config, score *EvalScore, duration time.Duration)
 		TotalAccuracy:   score.OverallScore,
 		NumCases:        score.TotalTests,
 		Duration:        duration,
+		InputTokens:     usage.InputTokens,
+		OutputTokens:    usage.OutputTokens,
+		TotalTokens:     usage.TotalTokens,
 	}
 
 	// Check if file exists
@@ -432,7 +439,7 @@ func recordResults(cfg *config.Config, score *EvalScore, duration time.Duration)
 
 	// Write header if file is new
 	if !fileExists {
-		header := []string{"commit_sha", "date", "model", "provider", "error_accuracy", "warning_accuracy", "info_accuracy", "total_accuracy", "num_cases", "duration_seconds"}
+		header := []string{"commit_sha", "date", "model", "provider", "error_accuracy", "warning_accuracy", "info_accuracy", "total_accuracy", "num_cases", "duration_seconds", "input_tokens", "output_tokens", "total_tokens"}
 		if err := writer.Write(header); err != nil {
 			return fmt.Errorf("failed to write CSV header: %w", err)
 		}
@@ -450,6 +457,9 @@ func recordResults(cfg *config.Config, score *EvalScore, duration time.Duration)
 		fmt.Sprintf("%.4f", result.TotalAccuracy),
 		fmt.Sprintf("%d", result.NumCases),
 		fmt.Sprintf("%.2f", result.Duration.Seconds()),
+		fmt.Sprintf("%d", result.InputTokens),
+		fmt.Sprintf("%d", result.OutputTokens),
+		fmt.Sprintf("%d", result.TotalTokens),
 	}
 
 	if err := writer.Write(record); err != nil {

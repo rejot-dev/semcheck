@@ -111,9 +111,9 @@ func (c *AnthropicClient[R]) Complete(ctx context.Context, req *Request) (*R, Us
 
 	// Create usage information
 	usage := Usage{
-		PromptTokens:     int(resp.Usage.InputTokens),
-		CompletionTokens: int(resp.Usage.OutputTokens),
-		TotalTokens:      int(resp.Usage.InputTokens + resp.Usage.OutputTokens),
+		InputTokens:  int(resp.Usage.InputTokens),
+		OutputTokens: int(resp.Usage.OutputTokens),
+		TotalTokens:  int(resp.Usage.InputTokens + resp.Usage.OutputTokens),
 	}
 
 	return &result, usage, nil

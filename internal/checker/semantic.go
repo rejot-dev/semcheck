@@ -23,6 +23,7 @@ type CheckResult struct {
 	Passed      int
 	Failed      int
 	HasFailures bool
+	TotalUsage  providers.Usage // Total token usage across all rules
 }
 
 type RuleComparisonFiles struct {
@@ -81,10 +82,15 @@ func (c *SemanticChecker) CheckFiles(ctx context.Context, matches []processor.Ma
 		}
 
 		// Make a single comparison for all files in this rule
-		issues, err := c.compareSpecToImpl(ctx, rule, comparison.SpecFiles, comparison.ImplFiles)
+		issues, usage, err := c.compareSpecToImpl(ctx, rule, comparison.SpecFiles, comparison.ImplFiles)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compare rule %s: %w", ruleName, err)
 		}
+
+		// Accumulate token usage
+		result.TotalUsage.InputTokens += usage.InputTokens
+		result.TotalUsage.OutputTokens += usage.OutputTokens
+		result.TotalUsage.TotalTokens += usage.TotalTokens
 
 		// Apply configurable inference delay to prevent rate limit hits
 		if *c.config.InferenceDelay > 0 {
@@ -215,14 +221,14 @@ func (c *SemanticChecker) findRule(name string) *config.Rule {
 	return nil
 }
 
-func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Rule, specFiles []string, implFiles []string) ([]providers.SemanticIssue, error) {
+func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Rule, specFiles []string, implFiles []string) ([]providers.SemanticIssue, providers.Usage, error) {
 	log.Debug("Analyzing", "rule", rule.Name, "specs", specFiles, "implementations", implFiles)
 	// Read specification files using DocumentCollection
 	specContents := make([]string, len(specFiles))
 	for i, specFile := range specFiles {
 		specContent, err := c.readSpecFile(specFile)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read spec file %s: %w", specFile, err)
+			return nil, providers.Usage{}, fmt.Errorf("failed to read spec file %s: %w", specFile, err)
 		}
 		specContents[i] = specContent
 	}
@@ -232,7 +238,7 @@ func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Ru
 	for _, implFile := range implFiles {
 		implContent, err := c.readImplFile(implFile)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read implementation file %s: %w", implFile, err)
+			return nil, providers.Usage{}, fmt.Errorf("failed to read implementation file %s: %w", implFile, err)
 		}
 		implContents = append(implContents, implContent)
 	}
@@ -248,12 +254,12 @@ func (c *SemanticChecker) compareSpecToImpl(ctx context.Context, rule *config.Ru
 		UserPrompt:   userPrompt,
 	}
 
-	resp, _, err := c.client.Complete(ctx, req)
+	resp, usage, err := c.client.Complete(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("AI request failed: %w", err)
+		return nil, providers.Usage{}, fmt.Errorf("AI request failed: %w", err)
 	}
 
-	return resp.Issues, nil
+	return resp.Issues, usage, nil
 }
 
 // readSpecFile reads specification files using DocumentCollection (supports anchors, caching, etc.)

@@ -123,9 +123,9 @@ func (c *OpenAIClient[R]) Complete(ctx context.Context, req *Request) (*R, Usage
 
 	// Create usage information
 	usage := Usage{
-		PromptTokens:     int(resp.Usage.PromptTokens),
-		CompletionTokens: int(resp.Usage.CompletionTokens),
-		TotalTokens:      int(resp.Usage.TotalTokens),
+		InputTokens:  int(resp.Usage.PromptTokens),
+		OutputTokens: int(resp.Usage.CompletionTokens),
+		TotalTokens:  int(resp.Usage.TotalTokens),
 	}
 
 	return &result, usage, nil

@@ -111,17 +111,17 @@ func (c *GeminiClient[R]) Complete(ctx context.Context, req *Request) (*R, Usage
 	usage := Usage{
 		// Gemini usage information may not be as detailed as other providers
 		// We'll set basic values based on what's available
-		PromptTokens:     0, // Not always available in Gemini response
-		CompletionTokens: 0, // Not always available in Gemini response
-		TotalTokens:      0, // Not always available in Gemini response
+		InputTokens:  0, // Not always available in Gemini response
+		OutputTokens: 0, // Not always available in Gemini response
+		TotalTokens:  0, // Not always available in Gemini response
 	}
 
 	// If usage metadata is available, use it
 	if geminiResult.UsageMetadata != nil {
 		usage = Usage{
-			PromptTokens:     int(geminiResult.UsageMetadata.PromptTokenCount),
-			CompletionTokens: int(geminiResult.UsageMetadata.CandidatesTokenCount),
-			TotalTokens:      int(geminiResult.UsageMetadata.TotalTokenCount),
+			InputTokens:  int(geminiResult.UsageMetadata.PromptTokenCount),
+			OutputTokens: int(geminiResult.UsageMetadata.CandidatesTokenCount),
+			TotalTokens:  int(geminiResult.UsageMetadata.TotalTokenCount),
 		}
 	}
 

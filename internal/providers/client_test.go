@@ -54,9 +54,9 @@ func TestClientInterface(t *testing.T) {
 					Issues: []SemanticIssue{},
 				},
 				usage: Usage{
-					PromptTokens:     10,
-					CompletionTokens: 5,
-					TotalTokens:      15,
+					InputTokens:  10,
+					OutputTokens: 5,
+					TotalTokens:  15,
 				},
 				valid: true,
 			},
@@ -143,9 +143,9 @@ func TestIssueResponse(t *testing.T) {
 	}
 
 	usage := Usage{
-		PromptTokens:     20,
-		CompletionTokens: 30,
-		TotalTokens:      50,
+		InputTokens:  20,
+		OutputTokens: 30,
+		TotalTokens:  50,
 	}
 
 	if usage.TotalTokens != 50 {

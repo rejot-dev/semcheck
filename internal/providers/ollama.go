@@ -75,9 +75,9 @@ func (c *OllamaClient[R]) Complete(ctx context.Context, req *Request) (*R, Usage
 
 	// Convert token usage information
 	usage := Usage{
-		PromptTokens:     resp.PromptEvalCount,
-		CompletionTokens: resp.EvalCount,
-		TotalTokens:      resp.PromptEvalCount + resp.EvalCount,
+		InputTokens:  resp.PromptEvalCount,
+		OutputTokens: resp.EvalCount,
+		TotalTokens:  resp.PromptEvalCount + resp.EvalCount,
 	}
 
 	return &result, usage, nil

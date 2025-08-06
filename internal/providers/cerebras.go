@@ -187,9 +187,9 @@ func (c *CerebrasClient[R]) Complete(ctx context.Context, req *Request) (*R, Usa
 
 	// Create usage information
 	usage := Usage{
-		PromptTokens:     cerebrasResp.Usage.PromptTokens,
-		CompletionTokens: cerebrasResp.Usage.CompletionTokens,
-		TotalTokens:      cerebrasResp.Usage.TotalTokens,
+		InputTokens:  cerebrasResp.Usage.PromptTokens,
+		OutputTokens: cerebrasResp.Usage.CompletionTokens,
+		TotalTokens:  cerebrasResp.Usage.TotalTokens,
 	}
 
 	return &result, usage, nil

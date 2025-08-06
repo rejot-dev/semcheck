@@ -85,9 +85,9 @@ type IssueResponse struct {
 
 // Usage represents token usage information
 type Usage struct {
-	PromptTokens     int
-	CompletionTokens int
-	TotalTokens      int
+	InputTokens  int
+	OutputTokens int
+	TotalTokens  int
 }
 
 // Request represents a request to an AI provider

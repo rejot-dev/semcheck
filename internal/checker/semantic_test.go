@@ -27,9 +27,9 @@ func (m *mockClient) Complete(ctx context.Context, req *providers.Request) (*pro
 	}
 
 	usage := providers.Usage{
-		PromptTokens:     100,
-		CompletionTokens: 50,
-		TotalTokens:      150,
+		InputTokens:  100,
+		OutputTokens: 50,
+		TotalTokens:  150,
 	}
 
 	return resp, usage, nil
