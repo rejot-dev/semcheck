@@ -44,8 +44,8 @@ var inlineRule = config.Rule{
 	Enabled:     true,
 	Files:       config.FilePattern{}, // Not used after matching phase, empty here
 	Specs:       []config.Spec{},
-	Prompt: `Inline specification references look as follows and are usually used within a comment. Anchors are optionally added to specify subsections of a document:
-	semcheck:[type](path), for example: semcheck:file(api-compliance.md#section-1-1)`,
+	Prompt: `Inline specification references look as follows and are usually used within a comment:
+	semcheck:[type](path), where type is either url, file or rfc. Inline specs are placed close to the implementation that they govern, try to consider only the scope in which that comment is placed, for example in front of a function or class implementation. DO NOT report issues on implementation that is outside that scope`,
 	FailOn: "error", // TODO: not configurable
 }
 
@@ -86,6 +86,7 @@ func (c *SemanticChecker) CheckFiles(ctx context.Context, matches []processor.Ma
 		if err != nil {
 			return nil, fmt.Errorf("failed to compare rule %s: %w", ruleName, err)
 		}
+		log.Debug("LLM called successfully", "input_tokens", usage.InputTokens, "output_tokens", usage.OutputTokens)
 
 		// Accumulate token usage
 		result.TotalUsage.InputTokens += usage.InputTokens

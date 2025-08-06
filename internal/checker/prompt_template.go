@@ -24,6 +24,8 @@ Use the following severity level guidelines:
 - WARNING: Missing recommended features, performance issues, or issues that are not critical to the functionality of the program.
 - NOTICE: Documentation inconsistencies, confusing or misleading user experience, style issues, missing optional features, or clarifications needed that don't affect functionality.
 
+If you think implementation is missing, consider that it might be omitted in this analysis and lower it's severity.
+
 Your final output should be a JSON array of objects, each representing an issue. Use the following structure:
 {
 "reasoning": "Brief explanation why this issue has the severity level you assigned",
