@@ -1,5 +1,3 @@
-//go:build ignore
-
 // inlined from: https://github.com/theory/jsonpath/blob/48554e0502cd108828c99e48ef90f56382bc7e93/spec/selector.go#L272
 package jsonpath
 

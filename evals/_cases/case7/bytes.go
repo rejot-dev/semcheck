@@ -1,5 +1,3 @@
-//go:build ignore
-
 // inlined from:
 //
 //	https://raw.githubusercontent.com/buger/jsonparser/61b32cfdfa0f5d368ef7c7daef28ce12d538740f/bytes_safe.go

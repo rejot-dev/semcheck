@@ -1,5 +1,3 @@
-//go:build ignore
-
 // inline from: https://github.com/hashicorp/mdns/blob/0a7b2c25bdf749f2eb2e995a15ba1a828ecc7c71/client.go
 
 // Copyright (c) HashiCorp, Inc.

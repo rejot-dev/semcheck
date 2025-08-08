@@ -14,9 +14,9 @@ rules:
     enabled: true
     files:
       include:
-        - "./evals/cases/case1/impl.go"
+        - "./evals/_cases/case1/impl.go"
     specs:
-      - path: "./evals/cases/case1/spec.md"
+      - path: "./evals/_cases/case1/spec.md"
     fail_on: "error"
 
   - name: "case2"
@@ -25,9 +25,9 @@ rules:
     enabled: true
     files:
       include:
-        - "./evals/cases/case2/impl.go"
+        - "./evals/_cases/case2/impl.go"
     specs:
-      - path: "./evals/cases/case2/spec.md"
+      - path: "./evals/_cases/case2/spec.md"
     fail_on: "error"
 
   - name: "case3"
@@ -37,9 +37,9 @@ rules:
     enabled: true
     files:
       include:
-        - "./evals/cases/case3/impl.go"
+        - "./evals/_cases/case3/impl.go"
     specs:
-      - path: "./evals/cases/case3/spec.md"
+      - path: "./evals/_cases/case3/spec.md"
     fail_on: "error"
 
   - name: "case4"
@@ -49,9 +49,9 @@ rules:
     enabled: true
     files:
       include:
-        - "./evals/cases/case4/impl.go"
+        - "./evals/_cases/case4/impl.go"
     specs:
-      - path: "./evals/cases/case4/spec.md"
+      - path: "./evals/_cases/case4/spec.md"
     fail_on: "error"
 
   - name: "case5"
@@ -60,9 +60,9 @@ rules:
     enabled: true
     files:
       include:
-        - "./evals/cases/case5/impl.go"
+        - "./evals/_cases/case5/impl.go"
     specs:
-      - path: "./evals/cases/case5/spec.md"
+      - path: "./evals/_cases/case5/spec.md"
     fail_on: "error"
 
   - name: "case6"
@@ -89,9 +89,9 @@ rules:
     enabled: true
     files:
       include:
-        - "./evals/cases/case6/impl.go"
+        - "./evals/_cases/case6/impl.go"
     specs:
-      - path: "./evals/cases/case6/spec.md"
+      - path: "./evals/_cases/case6/spec.md"
     fail_on: "error"
 
   - name: "case7"
@@ -113,9 +113,9 @@ rules:
     enabled: true
     files:
       include:
-        - "./evals/cases/case7/parser.go"
-        - "./evals/cases/case7/bytes.go"
-        - "./evals/cases/case7/escape.go"
+        - "./evals/_cases/case7/parser.go"
+        - "./evals/_cases/case7/bytes.go"
+        - "./evals/_cases/case7/escape.go"
     specs:
       - path: "https://www.rfc-editor.org/rfc/rfc8259.txt"
     fail_on: "error"
@@ -125,9 +125,9 @@ rules:
     enabled: true
     files:
       include:
-        - "./evals/cases/case8/client.go"
+        - "./evals/_cases/case8/client.go"
     specs:
-      - path: "./evals/cases/case8/spec.txt"
+      - path: "./evals/_cases/case8/spec.txt"
     fail_on: "error"
 
   - name: "case9"
@@ -135,8 +135,8 @@ rules:
     enabled: true
     files:
       include:
-        - "./evals/cases/case9/parse.go"
-        - "./evals/cases/case9/selector.go"
+        - "./evals/_cases/case9/parse.go"
+        - "./evals/_cases/case9/selector.go"
     specs:
       - path: "https://www.rfc-editor.org/rfc/rfc9535.txt"
     fail_on: "error"

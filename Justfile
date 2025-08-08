@@ -41,7 +41,7 @@ test-verbose:
 # Run tests with coverage
 test-coverage:
     go test -coverprofile=coverage.out.tmp ./...
-    cat coverage.out.tmp | grep -v "evals/cases" > coverage.out
+    cat coverage.out.tmp | grep -v "evals/_cases" > coverage.out
     go tool cover -html=coverage.out -o coverage.html
     @echo "Coverage report generated: coverage.html"
 
