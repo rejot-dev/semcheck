@@ -42,7 +42,7 @@ def main():
         y='total_accuracy_pct',
         color='model'
     ).encode(
-        x=alt.X('duration_seconds:Q', scale=alt.Scale(domain=[0, 225]))  # Extend x-axis to give room for labels
+        x=alt.X('duration_seconds:Q', scale=alt.Scale(domain=[0, 1380]))  # Extend x-axis to give room for labels
     )
 
     # Create text labels at 45 degree angle
@@ -51,7 +51,7 @@ def main():
         y='total_accuracy_pct',
         text='model'
     ).mark_text(
-        angle=45,
+        angle=65,
         align="left",
         dx=10,
         fontSize=14
@@ -72,7 +72,7 @@ def main():
 
     # Print summary data
     print("\nLatest results by model:")
-    summary = latest_df.select(['model', 'duration_seconds', 'total_accuracy_pct']).sort('duration_seconds')
+    summary = latest_df.select(['model', 'duration_seconds', 'total_accuracy_pct']).sort('total_accuracy_pct')
 
     for row in summary.iter_rows(named=True):
         print(f"  {row['model']:<30} {row['duration_seconds']:>8.2f}s  {row['total_accuracy_pct']:>6.1f}%")
