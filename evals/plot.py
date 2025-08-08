@@ -51,7 +51,7 @@ def main():
         y='total_accuracy_pct',
         text='model'
     ).mark_text(
-        angle=65,
+        angle=45,
         align="left",
         dx=10,
         fontSize=14
