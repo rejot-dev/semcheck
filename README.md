@@ -210,4 +210,4 @@ jobs:
 
 A (somewhat) primitive evaluation suite is available in `evals` in order to measure the accuracy of models and prompts over time.
 To get an idea which model/providers get the best results take a look at the evaluation results:
-[![Semcheck Evaluation](./evals/accuracy_duration.png)](./evals/accuracy_duration.png)
+[![Semcheck Evaluation](./evals/accuracy_duration.png)](https://semcheck.ai/model-performance.html)
