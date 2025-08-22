@@ -3,6 +3,8 @@ Changelog entries should be added to this file in reverse chronological order. O
 
 ## [Unreleased]
 
+## v1.2
+
 ### Added
 - **Anchor Support**: Added support for URL fragments/anchors for structured formats such as markdown and HTML. Include a subsection of your specification by using link fragment like `#section-3.1.1`. For HTML documents, this follows the same semantics as your browser targeting a section, for markdown you can use the header text as a link instead.
 - **Log Level CLI Option**: Added `--log-level` command line option to control logging verbosity (info, debug, error, warning)
