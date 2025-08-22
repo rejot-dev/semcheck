@@ -1,0 +1,29 @@
+---
+import Button from "~/components/button.astro";
+---
+
+<div class="flex flex-row items-center justify-center">
+  <div class="flex max-w-md flex-col items-center justify-between space-y-4 text-center">
+    <svg
+      class="size-28"
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1"
+      ><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path
+        d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path
+        d="M16 17H8"></path></svg
+    >
+
+    <p class="text-lg leading-relaxed">
+      Read on our blog how Semcheck was built and our take on spec-driven development with LLMs.
+    </p>
+
+    <Button href="https://labs.rejot.dev/blog/2025-08-22_spec-driven-development/"
+      >Read the blog post -></Button
+    >
+  </div>
+</div>

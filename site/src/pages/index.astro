@@ -5,6 +5,7 @@ import Footer from "~/components/footer.astro";
 import LayoutContent from "~/components/layout-content.astro";
 import Quickstart from "~/components/quickstart.astro";
 import WhySemcheck from "~/components/why-semcheck.astro";
+import CtaBlog from "~/components/cta-blog.astro";
 
 import "@fontsource/inter";
 ---
@@ -54,6 +55,12 @@ import "@fontsource/inter";
     <section class="w-full bg-white py-16 md:py-24">
       <LayoutContent>
         <WhySemcheck />
+      </LayoutContent>
+    </section>
+
+    <section class="w-full bg-white py-12 md:py-16">
+      <LayoutContent>
+        <CtaBlog />
       </LayoutContent>
     </section>
 
