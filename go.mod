@@ -1,6 +1,6 @@
 module github.com/rejot-dev/semcheck
 
-go 1.24.2
+go 1.25.7
 
 require (
 	github.com/anthropics/anthropic-sdk-go v1.4.0
@@ -11,7 +11,7 @@ require (
 	github.com/openai/openai-go v1.5.0
 	github.com/prathyushnallamothu/ollamago v1.0.0
 	github.com/yuin/goldmark v1.7.13
-	golang.org/x/net v0.38.0
+	golang.org/x/net v0.45.0
 	google.golang.org/genai v1.13.0
 )
 
@@ -45,10 +45,10 @@ require (
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	go.opencensus.io v0.24.0 // indirect
-	golang.org/x/crypto v0.36.0 // indirect
+	golang.org/x/crypto v0.42.0 // indirect
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
-	golang.org/x/sys v0.31.0 // indirect
-	golang.org/x/text v0.23.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/text v0.29.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1 // indirect
 	google.golang.org/grpc v1.66.2 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
