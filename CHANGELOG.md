@@ -3,6 +3,11 @@ Changelog entries should be added to this file in reverse chronological order. O
 
 ## [Unreleased]
 
+## v1.2.1
+
+### Changed
+- **Security**: Updated Go toolchain to 1.25.7 and `golang.org/x/net` to v0.45.0 to address known vulnerabilities (GO-2026-4441, GO-2026-4440, GO-2026-4341, GO-2026-4340, GO-2026-4337)
+
 ## v1.2
 
 ### Added
